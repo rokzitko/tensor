@@ -17,6 +17,8 @@ void MeasureOcc(MPS& psi, const SiteSet& sites);
 
 bool writetofiles;
 bool excited_state;
+bool randomMPSb;
+int nrH;
 
 int main(int argc, char* argv[]){ 
   if(argc!=2){
@@ -39,8 +41,11 @@ int main(int argc, char* argv[]){
     N = NBath+NImp;
   }
   std::cout << "N=" << N << " NBath=" << NBath << std::endl;
-  writetofiles = input.getYesNo("writetofile", false); // global var
-  excited_state = input.getYesNo("excited_state", false); // global var
+  // Global variables:
+  writetofiles = input.getYesNo("writetofile", false);
+  excited_state = input.getYesNo("excited_state", false);
+  randomMPSb = input.getYesNo("randomMPS", false);
+  nrH = input.getInt("nrH", 5);
   FindGS(inputfn, input, N, NBath); //calculates the ground state in different sectors
 }
 
@@ -115,18 +120,33 @@ void FindGS(std::string inputfn, InputGroup &input, int N, int NBath){
     std::cout <<"Using sector with " << ntot << " number of Particles"<<std::endl;
     MPS psi(state);
     Args args; //args is used to store and transport parameters between various functions
+    if (randomMPSb) {
+      psi = randomMPS(state);
+    }
     //apply the MPO a couple of times to get DMRG started. otherwise it might not converge
-    for(auto i : range1(5)){
+    for(auto i : range1(nrH)){
       psi = applyMPO(H,psi,args);
       psi.noPrime().normalize();
     }
-    auto [GSenergy, GS] = dmrg(H,psi,sweeps,{"Quiet",true}); // call itensor dmrg
+    auto [GS0, GS] = dmrg(H,psi,sweeps,{"Quiet",true}); // call itensor dmrg
+    printfln("Eigenvalue = %.20f",GS0);
     double shift = Ec*pow(ntot-n0,2); // occupancy dependent effective energy shift
     shift += U/2.; // RZ, for convenience
-    GSenergy += shift;
+    double GSenergy = GS0+shift;
     printfln("Ground state energy = %.20f",GSenergy);
     MeasureOcc(GS, sites);
     GSenergies.push_back(GSenergy);
+    // Norm
+    double normGS = inner(GS, GS);
+    printfln("norm = %.20f", normGS);
+    double GS0bis = inner(GS, H, GS);
+    printfln("Eigenvalue(bis) = %.20f",GS0bis);
+    printfln("diff = %.20f", GS0-GS0bis);
+    // Energy deviation, residual value
+    double deltaE = sqrt(inner(H, GS, H, GS) - pow(inner(GS, H, GS),2));
+    double residuum = inner(GS,H,GS) - GS0*inner(GS,GS);
+    printfln("deltaE = %.20f", deltaE);
+    printfln("residuum = %.20f", residuum);
     if (excited_state) {
       auto wfs = std::vector<MPS>(1);
       wfs.at(0) = GS;
