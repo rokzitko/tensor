@@ -147,6 +147,9 @@ void FindGS(std::string inputfn, InputGroup &input, int N, int NBath){
     double residuum = inner(GS,H,GS) - GS0*inner(GS,GS);
     printfln("deltaE = %.20f", deltaE);
     printfln("residuum = %.20f", residuum);
+    // Overlap w.r.t. the initial approximation
+    double overlap = inner(psi, GS);
+    printfln("overlap = %.20f", overlap);
     if (excited_state) {
       auto wfs = std::vector<MPS>(1);
       wfs.at(0) = GS;
