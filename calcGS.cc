@@ -18,6 +18,7 @@ void MeasureOcc(MPS& psi, const SiteSet& sites);
 bool writetofiles;
 bool excited_state;
 bool randomMPSb;
+bool printDimensions;
 int nrH;
 
 int main(int argc, char* argv[]){ 
@@ -129,7 +130,7 @@ void FindGS(std::string inputfn, InputGroup &input, int N, int NBath){
       psi = applyMPO(H,psi,args);
       psi.noPrime().normalize();
     }
-    auto [GS0, GS] = dmrg(H,psi,sweeps,{"Quiet",true}); // call itensor dmrg
+    auto [GS0, GS] = dmrg(H,psi,sweeps,{"Quiet",!printDimensions}); // call itensor dmrg
     printfln("Eigenvalue = %.20f",GS0);
     double shift = Ec*pow(ntot-n0,2); // occupancy dependent effective energy shift
     shift += U/2.; // RZ, for convenience
