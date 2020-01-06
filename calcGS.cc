@@ -58,7 +58,7 @@ void FindGS(std::string inputfn, InputGroup &input, int N, int NBath){
   std::vector<double> GSenergies(0); // result: lowest energy in each occupancy sector
   std::vector<double> ESenergies(0); // optionally: first excited state in each occupancy sector
   int nhalf = N; // total nr of electrons at half-filling
-  int nref = (input.getYesNo("refisn0", "false") ? round(n0) : nhalf);
+  int nref = (input.getYesNo("refisn0", false) ? round(n0) : nhalf);
   numPart.push_back(nref);
   const int nrange = input.getInt("nrange", 1);
   for (int i = 1; i <= nrange; i++) {
