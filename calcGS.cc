@@ -58,11 +58,12 @@ void FindGS(std::string inputfn, InputGroup &input, int N, int NBath){
   std::vector<double> GSenergies(0); // result: lowest energy in each occupancy sector
   std::vector<double> ESenergies(0); // optionally: first excited state in each occupancy sector
   int nhalf = N; // total nr of electrons at half-filling
-  numPart.push_back(nhalf);
+  int nref = (input.getYesNo("refisn0", "false") ? nhalf : round(n0));
+  numPart.push_back(nref);
   const int nrange = input.getInt("nrange", 1);
   for (int i = 1; i <= nrange; i++) {
-    numPart.push_back(nhalf+i);
-    numPart.push_back(nhalf-i);
+    numPart.push_back(nref+i);
+    numPart.push_back(nref-i);
   }
   //the sweeps object defines the accuracy used for each update cycle in DMRG
   //the used parameters are read from the input file with the following meaning:
