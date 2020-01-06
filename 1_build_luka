@@ -3,4 +3,4 @@
 module purge
 module load gimkl/2018b
 export ITENSOR=~/libraries/itensor
-make
+make -f Makefile_luka
