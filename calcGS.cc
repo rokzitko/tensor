@@ -20,6 +20,7 @@ bool excited_state;
 bool randomMPSb;
 bool printDimensions;
 int nrH;
+double EnergyErrgoal;
 
 int main(int argc, char* argv[]){ 
   if(argc!=2){
@@ -54,6 +55,7 @@ int main(int argc, char* argv[]){
 void FindGS(std::string inputfn, InputGroup &input, int N, int NBath){
   double U = input.getReal("U"), alpha = input.getReal("alpha"), gamma = input.getReal("gamma");
   double Ec = input.getReal("Ec", 0), n0 = input.getReal("n0", NBath);
+  double EnergyErrgoal = input.getReal("EnergyErrgoal", 1e-15);
   std::vector<int> numPart(0); // input: occupancies of interest
   std::vector<double> GSenergies(0); // result: lowest energy in each occupancy sector
   std::vector<double> ESenergies(0); // optionally: first excited state in each occupancy sector
@@ -130,7 +132,7 @@ void FindGS(std::string inputfn, InputGroup &input, int N, int NBath){
       psi = applyMPO(H,psi,args);
       psi.noPrime().normalize();
     }
-    auto [GS0, GS] = dmrg(H,psi,sweeps,{"Quiet",!printDimensions}); // call itensor dmrg
+    auto [GS0, GS] = dmrg(H,psi,sweeps,{"Quiet",!printDimensions, "EnergyErrgoal",EnergyErrgoal}); // call itensor dmrg
     printfln("Eigenvalue = %.20f",GS0);
     double shift = Ec*pow(ntot-n0,2); // occupancy dependent effective energy shift
     shift += U/2.; // RZ, for convenience

@@ -1,5 +1,4 @@
 #!/bin/bash
-# RZ, Dec 2019
 module purge
 module load gimkl/2018b
 export ITENSOR=~/libraries/itensor

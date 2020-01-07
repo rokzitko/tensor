@@ -3,3 +3,6 @@ calcGS
 calcGS.o
 1_build_luka
 Makefile_luka
+Make_local
+2_build_local
+.DS_Store
