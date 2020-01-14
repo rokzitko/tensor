@@ -44,7 +44,7 @@ int main(int argc, char* argv[]){
   }
   std::cout << "N=" << N << " NBath=" << NBath << std::endl;
   // Global variables:
-  writetofiles = input.getYesNo("writetofile", false);
+  writetofiles = input.getYesNo("writetofiles", false);
   excited_state = input.getYesNo("excited_state", false);
   randomMPSb = input.getYesNo("randomMPS", false);
   nrH = input.getInt("nrH", 5);

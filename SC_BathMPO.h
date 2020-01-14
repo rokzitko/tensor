@@ -1,7 +1,7 @@
 #include <vector>
 using namespace itensor;
 
-bool verbose = true;
+bool verbose = false;
 
 //fills the MPO tensors
 void Fill_SCBath_MPO(MPO& H, const SiteSet& sites_, const std::vector<double>& eps_, 
