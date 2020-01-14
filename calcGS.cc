@@ -7,12 +7,15 @@
 #include <fstream>
 #include <iomanip>
 #include <vector>
+#include <map>
 
 using namespace itensor;
 
 void GetBathParams(double U, double epsimp, double gamma, std::vector<double>& eps, std::vector<double>& V, int NBath);
 void MyDMRG(MPS& psi, MPO& H, double& energy, Args args);
 void FindGS(std::string inputfn, InputGroup &input, int N, int NBath);
+void FindGS(std::string inputfn, InputGroup &input, int N, int NBath, double, double, double, double, double);
+void gamma_sweep(std::string inputfn, InputGroup &input, int N, int NBath);
 void MeasureOcc(MPS& psi, const SiteSet& sites);
 
 bool writetofiles;
@@ -43,22 +46,42 @@ int main(int argc, char* argv[]){
   }
   std::cout << "N=" << N << " NBath=" << NBath << std::endl;
   // Global variables:
-  writetofiles = input.getYesNo("writetofile", false);
+  writetofiles = input.getYesNo("writetofiles", false);
   excited_state = input.getYesNo("excited_state", false);
   randomMPSb = input.getYesNo("randomMPS", false);
   nrH = input.getInt("nrH", 5);
-  FindGS(inputfn, input, N, NBath); //calculates the ground state in different sectors
+  bool sweep = input.getYesNo("gamma_sweep", false);
+  std::cout << "sweep=" << sweep << std::endl;
+  if (sweep) {
+    gamma_sweep(inputfn, input, N, NBath);
+  } else {
+    FindGS(inputfn, input, N, NBath);
+  }
 }
 
-//calculates the groundstates and the energie of the three relevant particle number sectors
 void FindGS(std::string inputfn, InputGroup &input, int N, int NBath){
-  double U = input.getReal("U"), alpha = input.getReal("alpha"), gamma = input.getReal("gamma");
-  double Ec = input.getReal("Ec", 0), n0 = input.getReal("n0", NBath);
+  FindGS(inputfn, input, N, NBath,
+         input.getReal("U"), input.getReal("alpha"), input.getReal("gamma"), input.getReal("Ec", 0), input.getReal("n0", NBath));
+}
+
+void gamma_sweep(std::string inputfn, InputGroup &input, int N, int NBath){
+  double gamma_a = input.getReal("gamma_a");
+  double gamma_b = input.getReal("gamma_b");
+  double gamma_step = input.getReal("gamma_step"); // may be negative
+  for (double gamma = gamma_a; (gamma_step > 0 ? gamma < gamma_b+1e-6 : gamma > gamma_b-1e-6); gamma += gamma_step) {
+    std::cout << std::endl << "gamma=" << gamma << std::endl << std::endl;
+    FindGS(inputfn, input, N, NBath,
+           input.getReal("U"), input.getReal("alpha"), gamma, input.getReal("Ec", 0), input.getReal("n0", NBath));
+  }
+}
+
+
+void FindGS(std::string inputfn, InputGroup &input, int N, int NBath, double U, double alpha, double gamma, double Ec, double n0){
   std::vector<int> numPart(0); // input: occupancies of interest
   std::vector<double> GSenergies(0); // result: lowest energy in each occupancy sector
   std::vector<double> ESenergies(0); // optionally: first excited state in each occupancy sector
   int nhalf = N; // total nr of electrons at half-filling
-  int nref = (input.getYesNo("refisn0", "false") ? round(n0) : nhalf);
+  int nref = (input.getYesNo("refisn0", false) ? round(n0) : nhalf);
   numPart.push_back(nref);
   const int nrange = input.getInt("nrange", 1);
   for (int i = 1; i <= nrange; i++) {
@@ -81,7 +104,18 @@ void FindGS(std::string inputfn, InputGroup &input, int N, int NBath){
   int nrsweeps = input.getInt("nrsweeps", 15);
   auto sweeps = Sweeps(nrsweeps,sw_table);
   std::streambuf *coutbuf = std::cout.rdbuf();
+  std::ofstream out;
+  std::map<int, MPS> psistore;
+  MPS psi;
   for(auto ntot: numPart) {
+    if (writetofiles) {
+      bool sweep = input.getYesNo("gamma_sweep", false);
+      string filename = (sweep ? "output" + std::to_string(gamma) + "_" + std::to_string(ntot) + ".txt" :
+                         "output" + std::to_string(ntot) + ".txt");
+      std::cerr << "Writing to " << filename << std::endl;
+      out = std::ofstream(filename);
+      std::cout.rdbuf(out.rdbuf());
+    }
     std::vector<double> eps; // vector containing on-site energies of the bath !one-indexed! 
     std::vector<double> V; //vector containing hoppinga amplitudes to the bath !one-indexed! 
     const double epsimp = -U/2.;
@@ -97,10 +131,6 @@ void FindGS(std::string inputfn, InputGroup &input, int N, int NBath){
     const double d = 2./NBath;  // d=2D/NBath
     const double g = alpha * d;
     Fill_SCBath_MPO(H, sites, eps, V, Ueff, g); // defined in SC_BathMPO.h, fills the MPO with the necessary entries
-    if (writetofiles) {
-      std::ofstream out("output" + std::to_string(ntot) + ".txt");
-      std::cout.rdbuf(out.rdbuf());
-    }
     //initialize the MPS in a product state with the correct particle number
     //since the itensor conserves the number of particles, in this step we 
     //choose in which sector of particle number we perform the calculation
@@ -120,15 +150,19 @@ void FindGS(std::string inputfn, InputGroup &input, int N, int NBath){
     }
     assert(tot == ntot);
     std::cout <<"Using sector with " << ntot << " number of Particles"<<std::endl;
-    MPS psi(state);
     Args args; //args is used to store and transport parameters between various functions
-    if (randomMPSb) {
-      psi = randomMPS(state);
-    }
-    //apply the MPO a couple of times to get DMRG started. otherwise it might not converge
-    for(auto i : range1(nrH)){
-      psi = applyMPO(H,psi,args);
-      psi.noPrime().normalize();
+    if (psistore.count(ntot)) {
+      psi = psistore[ntot];
+    } else {
+      psi = MPS(state);
+      if (randomMPSb) {
+        psi = randomMPS(state);
+      }
+      //apply the MPO a couple of times to get DMRG started. otherwise it might not converge
+      for(auto i : range1(nrH)){
+        psi = applyMPO(H,psi,args);
+        psi.noPrime().normalize();
+      }
     }
     auto [GS0, GS] = dmrg(H,psi,sweeps,{"Quiet",!printDimensions}); // call itensor dmrg
     printfln("Eigenvalue = %.20f",GS0);
@@ -161,6 +195,7 @@ void FindGS(std::string inputfn, InputGroup &input, int N, int NBath){
       MeasureOcc(ES, sites);
       ESenergies.push_back(ESenergy);
     }
+    psistore[ntot] = GS;
   } 
   std::cout.rdbuf(coutbuf);
   for(auto i : range(GSenergies.size())) {
