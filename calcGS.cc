@@ -7,6 +7,7 @@
 #include <fstream>
 #include <iomanip>
 #include <vector>
+#include <map>
 
 using namespace itensor;
 
@@ -19,6 +20,7 @@ bool writetofiles;
 bool excited_state;
 bool randomMPSb;
 bool printDimensions;
+bool calcweights;
 int nrH;
 double EnergyErrgoal;
 
@@ -47,6 +49,7 @@ int main(int argc, char* argv[]){
   writetofiles = input.getYesNo("writetofiles", false);
   excited_state = input.getYesNo("excited_state", false);
   randomMPSb = input.getYesNo("randomMPS", false);
+  calcweights = input.getYesNo("calcweights", false);
   nrH = input.getInt("nrH", 5);
   FindGS(inputfn, input, N, NBath); //calculates the ground state in different sectors
 }
@@ -82,6 +85,7 @@ void FindGS(std::string inputfn, InputGroup &input, int N, int NBath){
   auto sw_table = InputGroup(inputsw,"sweeps");
   int nrsweeps = input.getInt("nrsweeps", 15);
   auto sweeps = Sweeps(nrsweeps,sw_table);
+  std::map<int, MPS> psistore;
   std::streambuf *coutbuf = std::cout.rdbuf();
   for(auto ntot: numPart) {
     std::vector<double> eps; // vector containing on-site energies of the bath !one-indexed! 
@@ -163,6 +167,8 @@ void FindGS(std::string inputfn, InputGroup &input, int N, int NBath){
       MeasureOcc(ES, sites);
       ESenergies.push_back(ESenergy);
     }
+    if (calcweights)
+      psistore[ntot] = GS;
   } 
   std::cout.rdbuf(coutbuf);
   for(auto i : range(GSenergies.size())) {
@@ -170,6 +176,22 @@ void FindGS(std::string inputfn, InputGroup &input, int N, int NBath){
     if (excited_state)
       std::cout << " " << ESenergies.at(i);
     std::cout<< std::endl;
+  }
+  std::vector<std::pair<double, int>> Energy_Number;
+  for(auto i : range(GSenergies.size()))
+    Energy_Number.push_back(std::make_pair(GSenergies[i], numPart[i]));
+  sort(Energy_Number.begin(), Energy_Number.end());
+  int N_GS = Energy_Number[0].second;
+  std::cout << "N_GS=" << N_GS << std::endl;
+  if (calcweights) {
+    if (!(psistore.count(N_GS) == 1 && psistore.count(N_GS+1) == 1 && psistore.count(N_GS-1) == 1)) {
+      std::cout << "ERROR: we don't have info about the required occupancy sectors" << std::endl;
+      exit(1);
+    }
+    MPS & psiGS = psistore[N_GS];
+    MPS & psiNp = psistore[N_GS+1];
+    MPS & psiNm = psistore[N_GS-1];
+    // TO DO
   }
 }
 
