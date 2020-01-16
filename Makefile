@@ -14,13 +14,19 @@ LIBGFLAGS=-L'$(ITENSOR_LIBDIR)' $(ITENSOR_LIBGFLAGS)
 %.o: %.cc $(ITENSOR_LIBS) $(TENSOR_HEADERS)
 	$(CCCOM) -c $(CCFLAGS) -o $@ $<
 
+calcGS-middle.o: calcGS.cc $(ITENSOR_LIBS) $(TENSOR_HEADERS)
+	$(CCCOM) -DMIDDLE_IMP -c $(CCFLAGS) -o $@ $<
+
 .debug_objs/%.o: %.cc $(ITENSOR_GLIBS) $(TENSOR_HEADERS)
 	$(CCCOM) -c $(CCGFLAGS) -o $@ $<
 
 #Targets -----------------
 
-build: calcGS
+build: calcGS calcGS-middle
 
 calcGS: calcGS.o $(ITENSOR_LIBS) $(TENSOR_HEADERS)
 	$(CCCOM) $(CCFLAGS) calcGS.o -o calcGS $(LIBFLAGS)
+
+calcGS-middle: calcGS-middle.o $(ITENSOR_LIBS) $(TENSOR_HEADERS)
+	$(CCCOM) $(CCFLAGS) calcGS-middle.o -o calcGS-middle $(LIBFLAGS)
 

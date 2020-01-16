@@ -1,0 +1,5 @@
+#!/bin/bash
+$HOME/repos/tensor/calcGS inputFile_0.1.txt | tee result_0.1.dat
+$HOME/repos/tensor/calcGS inputFile_1.txt | tee result_1.dat
+
+

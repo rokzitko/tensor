@@ -1,4 +1,3 @@
-
 calcGS
 calcGS.o
 1_build_luka
@@ -6,3 +5,7 @@ Makefile_luka
 2_build_local
 Make_local
 .DS_Store
+input.txt
+calcGS-middle
+calcGS-middle.o
+rok

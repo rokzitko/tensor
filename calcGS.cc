@@ -1,7 +1,11 @@
 #include <itensor/all.h>
 #include <itensor/util/args.h>
-#include "SC_BathMPO.h"
-// #include "lanczos.h" // Daniel's DMRG
+
+#ifndef MIDDLE_IMP
+ #include "SC_BathMPO.h"
+#else
+ #include "SC_BathMPO_MiddleImp.h"
+#endif
 
 #include <iostream>
 #include <fstream>
@@ -217,16 +221,16 @@ void MeasureOcc(MPS& psi, const SiteSet& sites){
 
 // The sum (tot) corresponds to \bar{\Delta}', Eq. (4) in Braun, von Delft, PRB 50, 9527 (1999), first proposed by Dan Ralph.
 // It reduces to Delta_BCS in the thermodynamic limit (if the impurity is decoupled, Gamma=0).
-// For Gamma>0, there is no guarantee that all values 'sq' are well-defined, because the expr <C+CC+C>-<C+C><C+C> may be negative.
+// For Gamma>0, there is no guarantee that all values 'sq' are real, because the expr <C+CC+C>-<C+C><C+C> may be negative.
 void MeasurePairing(MPS& psi, const SiteSet& sites, double g){
   std::cout << "site pairing = ";
-  double tot = 0;
+  std::complex<double> tot = 0;
   for(auto i : range1(length(psi)) ){
     psi.position(i);
     auto val2  = psi.A(i) * sites.op("Cdagup*Cup*Cdagdn*Cdn", i) * dag(prime(psi.A(i),"Site"));
     auto val1u = psi.A(i) * sites.op("Cdagup*Cup", i) * dag(prime(psi.A(i),"Site"));
     auto val1d = psi.A(i) * sites.op("Cdagdn*Cdn", i) * dag(prime(psi.A(i),"Site"));
-    auto sq = g * sqrt( std::real(val2.cplx()) - std::real(val1u.cplx()) * std::real(val1d.cplx()) );
+    auto sq = g * sqrt( val2.cplx() - val1u.cplx() * val1d.cplx() );
     std::cout << sq << " ";
     if (i != 1) tot += sq; // exclude the impurity site in the sum
   }
