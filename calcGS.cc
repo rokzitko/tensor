@@ -15,6 +15,7 @@ void GetBathParams(double U, double epsimp, double gamma, std::vector<double>& e
 void MyDMRG(MPS& psi, MPO& H, double& energy, Args args);
 void FindGS(std::string inputfn, InputGroup &input, int N, int NBath);
 void MeasureOcc(MPS& psi, const SiteSet& sites);
+void MeasurePairing(MPS& psi, const SiteSet& sites, double);
 
 bool writetofiles;
 bool excited_state;
@@ -143,6 +144,7 @@ void FindGS(std::string inputfn, InputGroup &input, int N, int NBath){
     double GSenergy = GS0+shift;
     printfln("Ground state energy = %.20f",GSenergy);
     MeasureOcc(GS, sites);
+    MeasurePairing(GS, sites, g);
     GSenergies.push_back(GSenergy);
     // Norm
     double normGS = inner(GS, GS);
@@ -198,6 +200,7 @@ void FindGS(std::string inputfn, InputGroup &input, int N, int NBath){
 //prints the occupation number of an MPS psi
 //instructive to learn how to calculate local observables
 void MeasureOcc(MPS& psi, const SiteSet& sites){
+  std::cout << "site occupancies = ";
   double tot = 0;
   for(auto i : range1(length(psi)) ){
     //position call very important! otherwise one would need to 
@@ -207,6 +210,25 @@ void MeasureOcc(MPS& psi, const SiteSet& sites){
     auto val = psi.A(i) * sites.op("Ntot",i)* dag(prime(psi.A(i),"Site"));
     std::cout << std::real(val.cplx()) << " ";
     tot += std::real(val.cplx());
+  }
+  std::cout << std::endl;
+  Print(tot);
+}
+
+// The sum (tot) corresponds to \bar{\Delta}', Eq. (4) in Braun, von Delft, PRB 50, 9527 (1999), first proposed by Dan Ralph.
+// It reduces to Delta_BCS in the thermodynamic limit (if the impurity is decoupled, Gamma=0).
+// For Gamma>0, there is no guarantee that all values 'sq' are well-defined, because the expr <C+CC+C>-<C+C><C+C> may be negative.
+void MeasurePairing(MPS& psi, const SiteSet& sites, double g){
+  std::cout << "site pairing = ";
+  double tot = 0;
+  for(auto i : range1(length(psi)) ){
+    psi.position(i);
+    auto val2  = psi.A(i) * sites.op("Cdagup*Cup*Cdagdn*Cdn", i) * dag(prime(psi.A(i),"Site"));
+    auto val1u = psi.A(i) * sites.op("Cdagup*Cup", i) * dag(prime(psi.A(i),"Site"));
+    auto val1d = psi.A(i) * sites.op("Cdagdn*Cdn", i) * dag(prime(psi.A(i),"Site"));
+    auto sq = g * sqrt( std::real(val2.cplx()) - std::real(val1u.cplx()) * std::real(val1d.cplx()) );
+    std::cout << sq << " ";
+    if (i != 1) tot += sq; // exclude the impurity site in the sum
   }
   std::cout << std::endl;
   Print(tot);
