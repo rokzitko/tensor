@@ -232,7 +232,7 @@ void MeasurePairing(MPS& psi, const SiteSet& sites, double g){
     auto val1d = psi.A(i) * sites.op("Cdagdn*Cdn", i) * dag(prime(psi.A(i),"Site"));
     auto sq = g * sqrt( val2.cplx() - val1u.cplx() * val1d.cplx() );
     std::cout << sq << " ";
-    if (i != 1) tot += sq; // exclude the impurity site in the sum
+    if (i != 1) tot += sq; // exclude the impurity site in the sum (todo: fix for imp in the middle)
   }
   std::cout << std::endl;
   Print(tot);
