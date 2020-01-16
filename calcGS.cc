@@ -20,6 +20,7 @@ void MyDMRG(MPS& psi, MPO& H, double& energy, Args args);
 void FindGS(std::string inputfn, InputGroup &input, int N, int NBath);
 void MeasureOcc(MPS& psi, const SiteSet& sites);
 void MeasurePairing(MPS& psi, const SiteSet& sites, double);
+void MeasureAmplitudes(MPS& psi, const SiteSet& sites, double);
 
 bool writetofiles;
 bool excited_state;
@@ -28,6 +29,7 @@ bool printDimensions;
 bool calcweights;
 int nrH;
 double EnergyErrgoal;
+int impindex; // impurity position in the chain (1 based)
 
 int main(int argc, char* argv[]){ 
   if(argc!=2){
@@ -49,7 +51,13 @@ int main(int argc, char* argv[]){
     }
     N = NBath+NImp;
   }
-  std::cout << "N=" << N << " NBath=" << NBath << std::endl;
+#ifdef MIDDLE_IMP
+  assert(NBath%2 == 0);   // NBath must be even
+  impindex = 1+NBath/2;
+#else
+  impindex = 1;
+#endif
+  std::cout << "N=" << N << " NBath=" << NBath << " impindex=" << impindex << std::endl;
   // Global variables:
   writetofiles = input.getYesNo("writetofiles", false);
   excited_state = input.getYesNo("excited_state", false);
@@ -149,6 +157,7 @@ void FindGS(std::string inputfn, InputGroup &input, int N, int NBath){
     printfln("Ground state energy = %.20f",GSenergy);
     MeasureOcc(GS, sites);
     MeasurePairing(GS, sites, g);
+    MeasureAmplitudes(GS, sites, g);
     GSenergies.push_back(GSenergy);
     // Norm
     double normGS = inner(GS, GS);
@@ -232,7 +241,26 @@ void MeasurePairing(MPS& psi, const SiteSet& sites, double g){
     auto val1d = psi.A(i) * sites.op("Cdagdn*Cdn", i) * dag(prime(psi.A(i),"Site"));
     auto sq = g * sqrt( val2.cplx() - val1u.cplx() * val1d.cplx() );
     std::cout << sq << " ";
-    if (i != 1) tot += sq; // exclude the impurity site in the sum (todo: fix for imp in the middle)
+    if (i != impindex) tot += sq; // exclude the impurity site in the sum
+  }
+  std::cout << std::endl;
+  Print(tot);
+}
+
+// See von Delft, Zaikin, Golubev, Tichy, PRL 77, 3189 (1996)
+void MeasureAmplitudes(MPS& psi, const SiteSet& sites, double g){
+  std::cout << "amplitudes vu = ";
+  std::complex<double> tot = 0;
+  for(auto i : range1(length(psi)) ){
+    psi.position(i);
+    auto valv = psi.A(i) * sites.op("Cdagup*Cdagdn*Cdn*Cup", i) * dag(prime(psi.A(i),"Site"));
+    auto valu = psi.A(i) * sites.op("Cdn*Cup*Cdagup*Cdagdn", i) * dag(prime(psi.A(i),"Site"));
+    auto v = sqrt( std::real(valv.cplx()) );
+    auto u = sqrt( std::real(valu.cplx()) );
+    auto pdt = v*u;
+    auto element = g * pdt;
+    std::cout << "[v=" << v << " u=" << u << " pdt=" << pdt << "] ";
+    if (i != impindex) tot += element; // exclude the impurity site in the sum
   }
   std::cout << std::endl;
   Print(tot);
