@@ -48,10 +48,10 @@ void Fill_SCBath_MPO(MPO& H, const SiteSet& sites_, const std::vector<double>& e
         W += sites_.op("Ntot",i)  * setElt(right(2)) * eps_[i-1];
         W += sites_.op("Nupdn",i) * setElt(right(2)) * U_;
 
-        W += sites_.op("Cup",i) * setElt(right(3));
-        W += sites_.op("Cdn",i) * setElt(right(4));
-        W += sites_.op("Cdagup",i) * setElt(right(5));
-        W += sites_.op("Cdagdn",i) * setElt(right(6));
+        W += sites_.op("Cup*F",i) * setElt(right(3))    * (-1);
+        W += sites_.op("Cdn*F",i) * setElt(right(4))    * (-1);
+        W += sites_.op("Cdagup*F",i) * setElt(right(5)) * (+1);
+        W += sites_.op("Cdagdn*F",i) * setElt(right(6)) * (+1);
 
         if (verbose) std::cout << "using " << eps_[i-1] <<std::endl;
     }
