@@ -15,13 +15,17 @@
 
 using namespace itensor;
 
-void GetBathParams(double U, double epsimp, double gamma, std::vector<double>& eps, std::vector<double>& V, int NBath);
-void MyDMRG(MPS& psi, MPO& H, double& energy, Args args);
+
 void FindGS(std::string inputfn, InputGroup &input, int N, int NBath);
+void GetBathParams(double U, double epsimp, double gamma, std::vector<double>& eps, std::vector<double>& V, int NBath);
+MPO initH(auto sites, int n, std::vector<double> eps, std::vector<double> V, double Ueff, double g);
+MPS initPsi(auto sites, int n);
+void MyDMRG(MPS& psi, MPO& H, double& energy, Args args);
 void MeasureOcc(MPS& psi, const SiteSet& sites);
 void MeasurePairing(MPS& psi, const SiteSet& sites, double);
 void MeasureAmplitudes(MPS& psi, const SiteSet& sites, double);
 
+bool parallel;
 bool writetofiles;
 bool excited_state;
 bool randomMPSb;
@@ -31,11 +35,14 @@ int nrH;
 double EnergyErrgoal;
 int impindex; // impurity position in the chain (1 based)
 
+
 int main(int argc, char* argv[]){ 
+  
   if(argc!=2){
     std::cout<<"Please provide input file. Usage ./calcGS inputfile.txt" << std::endl;
     return 0;
   }
+
   string inputfn{argv[1]};
   auto input = InputGroup(inputfn, "params"); //get input parameters using InputGroup from itensor
   int NImp = 1; // number of impurity orbitals
@@ -43,7 +50,8 @@ int main(int argc, char* argv[]){
   N = input.getInt("N", 0);
   if (N != 0) {
     NBath = N-NImp;
-  } else { // N not specified, try NBath
+  } 
+  else { // N not specified, try NBath
     NBath = input.getInt("NBath", 0);
     if (NBath == 0) {
       std::cout << "specify either N or NBath!" << std::endl;
@@ -67,7 +75,7 @@ int main(int argc, char* argv[]){
   FindGS(inputfn, input, N, NBath); //calculates the ground state in different sectors
 }
 
-//calculates the groundstates and the energie of the three relevant particle number sectors
+//calculates the groundstates and the energies of the relevant particle number sectors
 void FindGS(std::string inputfn, InputGroup &input, int N, int NBath){
   double U = input.getReal("U"), alpha = input.getReal("alpha"), gamma = input.getReal("gamma");
   double Ec = input.getReal("Ec", 0), n0 = input.getReal("n0", NBath);
@@ -100,56 +108,43 @@ void FindGS(std::string inputfn, InputGroup &input, int N, int NBath){
   auto sweeps = Sweeps(nrsweeps,sw_table);
   std::map<int, MPS> psistore;
   std::streambuf *coutbuf = std::cout.rdbuf();
+  
+  std::vector<double> eps; // vector containing on-site energies of the bath !one-indexed! 
+  std::vector<double> V; //vector containing hoppinga amplitudes to the bath !one-indexed!     
+  const double epsimp = -U/2.;    
+  const double Ueff = U + 2.*Ec; //effective impurity couloumb potential term
+  const double d = 2./NBath;     //d=2D/NBath, level spacing
+  const double g = alpha * d; //strenght of the SC coupling
+  
+  auto sites = Hubbard(N); //sites has to be the exact same object for both MPS and MPO, so cannot be initialized seperately
+
   for(auto ntot: numPart) {
-    std::vector<double> eps; // vector containing on-site energies of the bath !one-indexed! 
-    std::vector<double> V; //vector containing hoppinga amplitudes to the bath !one-indexed! 
-    const double epsimp = -U/2.;
-    const double epseff = epsimp - 2.*Ec*(ntot-n0) + Ec;
+    
+    const double epseff = epsimp - 2.*Ec*(ntot-n0) + Ec;  //effective impurity on-site potential
     GetBathParams(U, epseff, gamma, eps, V, NBath);
-    //sites is an ITensor thing. it defines the local hilbert space and
-    //operators living on each site of the lattice
-    //for example sites.op("N",1) gives the pariticle number operator 
-    //on the first site
-    auto sites = Hubbard(N);
-    MPO H(sites); // MPO is the hamiltonian in "MPS-form" after this line it is still a trivial operator
-    const double Ueff = U + 2.*Ec;
-    const double d = 2./NBath;  // d=2D/NBath
-    const double g = alpha * d;
-    Fill_SCBath_MPO(H, sites, eps, V, Ueff, g); // defined in SC_BathMPO.h, fills the MPO with the necessary entries
-    if (writetofiles) {
-      std::ofstream out("output" + std::to_string(ntot) + ".txt");
-      std::cout.rdbuf(out.rdbuf());
-    }
-    //initialize the MPS in a product state with the correct particle number
-    //since the itensor conserves the number of particles, in this step we 
-    //choose in which sector of particle number we perform the calculation
-    auto state = InitState(sites);
-    int tot = 0;
-    int nsc = ntot-1; // number of electrons in the SC in Gamma->0 limit
-    int npair = nsc/2; // number of pairs in the SC
-    state.set(1, "Up"); // Particle on the impurity site
-    tot++;
-    for(auto i : range1(npair)) {
-      state.set(1+i,"UpDn");
-      tot += 2;
-    }
-    if (nsc%2 == 1) {
-      state.set(1+npair+1,"Dn"); // additional spin-down electron (Sz=0)
-      tot++;
-    }
-    assert(tot == ntot);
-    std::cout <<"Using sector with " << ntot << " number of Particles"<<std::endl;
-    MPS psi(state);
+
+    //initialize H and psi
+    MPO H = initH(sites, ntot, eps, V, Ueff, g);  //This does not necessarily compile with older(?) compilers, 
+    MPS psi = initPsi(sites, ntot);               //as they dislike 'auto sites' as a function parameter.
+ 
     Args args; //args is used to store and transport parameters between various functions
-    if (randomMPSb) {
-      psi = randomMPS(state);
-    }
-    //apply the MPO a couple of times to get DMRG started. otherwise it might not converge
+    
+    //Apply the MPO a couple of times to get DMRG started, otherwise it might not converge.
     for(auto i : range1(nrH)){
       psi = applyMPO(H,psi,args);
       psi.noPrime().normalize();
-    }
-    auto [GS0, GS] = dmrg(H,psi,sweeps,{"Quiet",!printDimensions, "EnergyErrgoal",EnergyErrgoal}); // call itensor dmrg
+      }
+    
+
+    auto [GS0, GS] = dmrg(H,psi,sweeps,{"Quiet",!printDimensions, "EnergyErrgoal",EnergyErrgoal}); // call itensor dmrg 
+    
+    
+
+    //Create a function which will take GS0 and GS and calculate all these values, and save them to some list.
+    //Then print these lists at the end of main{}.
+    //relevant values: Eigenvalue, GS energy, norm, ...
+
+
     printfln("Eigenvalue = %.20f",GS0);
     double shift = Ec*pow(ntot-n0,2); // occupancy dependent effective energy shift
     shift += U/2.; // RZ, for convenience
@@ -185,6 +180,9 @@ void FindGS(std::string inputfn, InputGroup &input, int N, int NBath){
     if (calcweights)
       psistore[ntot] = GS;
   } 
+
+
+  //Print out energies
   std::cout.rdbuf(coutbuf);
   for(auto i : range(GSenergies.size())) {
     std::cout<< "n = "<< numPart[i] << "  E= "<< std::setprecision(16) << GSenergies.at(i);
@@ -192,6 +190,8 @@ void FindGS(std::string inputfn, InputGroup &input, int N, int NBath){
       std::cout << " " << ESenergies.at(i);
     std::cout<< std::endl;
   }
+
+  //Print which sector has the GS
   std::vector<std::pair<double, int>> Energy_Number;
   for(auto i : range(GSenergies.size()))
     Energy_Number.push_back(std::make_pair(GSenergies[i], numPart[i]));
@@ -209,6 +209,72 @@ void FindGS(std::string inputfn, InputGroup &input, int N, int NBath){
     // TO DO
   }
 }
+
+//NOT NECESSARYLY FOR EVERY n,TAKE OUT OF THE LOOP!
+//initialize the Hamiltonian
+MPO initH(auto sites, int n, std::vector<double> eps, std::vector<double> V, double Ueff, double g){
+  
+  //sites is an ITensor thing. it defines the local hilbert space and
+  //operators living on each site of the lattice
+  //for example sites.op("N",1) gives the pariticle number operator 
+  //on the first site
+  
+  MPO H(sites); // MPO is the hamiltonian in "MPS-form" after this line it is still a trivial operator
+
+  Fill_SCBath_MPO(H, sites, eps, V, Ueff, g); // defined in SC_BathMPO.h, fills the MPO with the necessary entries
+  if (writetofiles) {
+    std::ofstream out("output" + std::to_string(n) + ".txt");
+    std::cout.rdbuf(out.rdbuf());
+  }
+  return H;
+}
+
+//initialize the MPS in a product state with the correct particle number
+MPS initPsi(auto sites, int n){
+  
+  auto state = InitState(sites);
+  
+  int tot = 0;
+  int nsc = n-1; // number of electrons in the SC in Gamma->0 limit
+  int npair = nsc/2; // number of pairs in the SC
+  
+
+  //Up electron at the impurity site and npair UpDn pairs. 
+  state.set(impindex, "Up"); 
+  tot++;
+
+  int j=0;
+  int i=1;
+  for(i; j < npair; i++){ //In order to avoid adding a pair to the impurity site   
+    if (i!=impindex){             //i counts sites, j counts added pairs.
+      j++;
+      state.set(i, "UpDn");
+      tot += 2;
+    }
+  }     
+
+  //If ncs is odd, add another Dn electron.
+  if (nsc%2 == 1) {
+    if (i!=impindex){
+      state.set(i,"Dn"); 
+      tot++;
+    }
+    else{
+      state.set(i+1,"Dn"); 
+      tot++;
+    }
+  }
+
+  assert(tot == n);
+  std::cout <<"Using sector with " << n << " number of Particles"<<std::endl;
+  MPS psi(state);
+  if (randomMPSb) {
+    psi = randomMPS(state);
+  }
+ 
+  return psi;
+}
+
 
 //prints the occupation number of an MPS psi
 //instructive to learn how to calculate local observables
@@ -280,3 +346,4 @@ void GetBathParams(double U, double epsimp, double gamma, std::vector<double>& e
     V.push_back( Vval );
   }
 }
+
