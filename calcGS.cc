@@ -15,8 +15,12 @@
 
 using namespace itensor;
 
-
-void FindGS(std::string inputfn, InputGroup &input, int N, int NBath);
+void FindGS(std::string inputfn, InputGroup &input, auto sites, int N, int NBath, 
+  std::map<int, MPS>& psiStore, std::map<int, double>& GSEstore, std::map<int, MPS> ESpsiStore, std::map<int, double>& ESEstore, 
+  std::map<int, double>& GS0bisStore, std::map<int, double>& deltaEStore, std::map<int, double>& residuumStore);
+void calculateAndPrint(InputGroup &input, int N, auto sites, 
+  std::map<int, MPS> psiStore, std::map<int, double> GSEstore,std::map<int, MPS> ESpsiStore, std::map<int, double> ESEstore, 
+  std::map<int, double> GS0bisStore, std::map<int, double> deltaEStore, std::map<int, double> residuumStore);
 void GetBathParams(double U, double epsimp, double gamma, std::vector<double>& eps, std::vector<double>& V, int NBath);
 MPO initH(auto sites, int n, std::vector<double> eps, std::vector<double> V, double Ueff, double g);
 MPS initPsi(auto sites, int n);
@@ -25,15 +29,19 @@ void MeasureOcc(MPS& psi, const SiteSet& sites);
 void MeasurePairing(MPS& psi, const SiteSet& sites, double);
 void MeasureAmplitudes(MPS& psi, const SiteSet& sites, double);
 
-bool parallel;
-bool writetofiles;
-bool excited_state;
-bool randomMPSb;
-bool printDimensions;
-bool calcweights;
-int nrH;
-double EnergyErrgoal;
-int impindex; // impurity position in the chain (1 based)
+//all bools have default value false
+bool writetofiles; 
+bool excited_state;   //if true computes the first excited state
+bool randomMPSb;      //it true sets the initial state to random
+bool printDimensions; //if true prints dmrg() prints info during the sweep
+bool calcweights;     //if true calculates the spectral weights of the two closes spectroscopically availabe excitations
+bool refisn0;         //if true the energies will be computed in the sectors centered around the one with n = round(n0) + 1
+
+double EnergyErrgoal; //the convergence value at which dmrg() will stop the sweeps; default = machine precision
+int nrH;              //number of times to apply H to psi before comencing the sweep - akin to a power method; default = 5
+int nrange;           //the number of energies computed is 2*nrange + 1
+
+int impindex;         //impurity position in the chain (1 based)
 
 
 int main(int argc, char* argv[]){ 
@@ -43,8 +51,11 @@ int main(int argc, char* argv[]){
     return 0;
   }
 
+
+  //read parameters from the input file
   string inputfn{argv[1]};
   auto input = InputGroup(inputfn, "params"); //get input parameters using InputGroup from itensor
+  
   int NImp = 1; // number of impurity orbitals
   int N, NBath;   // N=number of sites, Nbath=number of bath sites
   N = input.getInt("N", 0);
@@ -66,67 +77,97 @@ int main(int argc, char* argv[]){
   impindex = 1;
 #endif
   std::cout << "N=" << N << " NBath=" << NBath << " impindex=" << impindex << std::endl;
+  
   // Global variables:
   writetofiles = input.getYesNo("writetofiles", false);
   excited_state = input.getYesNo("excited_state", false);
   randomMPSb = input.getYesNo("randomMPS", false);
+  printDimensions = input.getYesNo("printDimensions", false);
   calcweights = input.getYesNo("calcweights", false);
+  refisn0 = input.getYesNo("refisn0", false);
+  
   nrH = input.getInt("nrH", 5);
-  FindGS(inputfn, input, N, NBath); //calculates the ground state in different sectors
+  EnergyErrgoal = input.getReal("EnergyErrgoal", 1e-16);
+  nrange = input.getInt("nrange", 1);
+
+  //THESE ARE ALL TO BE PASSED TO calculateAndPrint()
+  std::map<int, MPS> psiStore;      //stores ground states
+  std::map<int, double> GSEstore;   //stores ground state energies
+  std::map<int, MPS> ESpsiStore;  //stores excited states
+  std::map<int, double> ESEstore;   //stores excited state energies
+
+  std::map<int, double> GS0bisStore; //stores <GS|H|GS>
+  std::map<int, double> deltaEStore; //stores sqrt(<GS|H^2|GS> - <GS|H|GS>^2)
+  std::map<int, double> residuumStore; //stores <GS|H|GS> - GSE*<GS|GS>
+
+  auto sites = Hubbard(N); 
+
+  //calculates the ground state in different particle number sectors according to n0, nrange, refisn0 and stores ground states and energies 
+  FindGS(inputfn, input, sites, N, NBath, psiStore, GSEstore, ESpsiStore, ESEstore, GS0bisStore, deltaEStore, residuumStore); 
+  calculateAndPrint(input, N, sites, psiStore, GSEstore, ESpsiStore, ESEstore, GS0bisStore, deltaEStore, residuumStore); 
+  //calculateAndPrint();
+
 }
 
 //calculates the groundstates and the energies of the relevant particle number sectors
-void FindGS(std::string inputfn, InputGroup &input, int N, int NBath){
+void FindGS(std::string inputfn, InputGroup &input, auto sites, int N, int NBath, 
+  std::map<int, MPS>& psiStore, std::map<int, double>& GSEstore, std::map<int, MPS> ESpsiStore, std::map<int, double>& ESEstore, std::map<int, double>& GS0bisStore, std::map<int, double>& deltaEStore, std::map<int, double>& residuumStore){
+
   double U = input.getReal("U"), alpha = input.getReal("alpha"), gamma = input.getReal("gamma");
   double Ec = input.getReal("Ec", 0), n0 = input.getReal("n0", NBath);
-  double EnergyErrgoal = input.getReal("EnergyErrgoal", 1e-15);
+  
   std::vector<int> numPart(0); // input: occupancies of interest
   std::vector<double> GSenergies(0); // result: lowest energy in each occupancy sector
   std::vector<double> ESenergies(0); // optionally: first excited state in each occupancy sector
   int nhalf = N; // total nr of electrons at half-filling
-  int nref = (input.getYesNo("refisn0", false) ? round(n0)+1 : nhalf);
+  int nref = (refisn0 ? round(n0)+1 : nhalf); //calculation of the energies is centered around this n
   numPart.push_back(nref);
-  const int nrange = input.getInt("nrange", 1);
+
   for (int i = 1; i <= nrange; i++) {
     numPart.push_back(nref+i);
     numPart.push_back(nref-i);
   }
-  //the sweeps object defines the accuracy used for each update cycle in DMRG
-  //the used parameters are read from the input file with the following meaning:
+
+  //The sweeps object defines the accuracy used for each update cycle in DMRG.
+  //The used parameters are read from the input file with the following meaning:
   // maxdim:  maximal bond dimension -> start low approach ground state roughly, then increase
   // mindim:  minimal bond dimension used, can be helpfull to improve DMRG convergence
   // cutoff:  truncated weight i.e.: sum of all discared squared Schmidt values 
-  // niter:   during DMRG, one has to solve an eigenvalue problem usually using a krylov 
+  // niter:   uring DMRG, one has to solve an eigenvalue problem usually using a krylov 
   //          method. niter is the number of krylov vectors used. Since DMRG is variational
   //          it does not matter if we use only very few krylov vectors. We only want to 
-  //          move in the direction of the ground state.
-  // noise:   if non-zero a so-called noise term is added to DMRG which improves the convergence.
-  //          this term must be zero towards the end, as the ground state is otherwise incorrect.
+  //          move in the direction of the ground state - it seems that in late sweeps it is 
+  //          a good idea to have niter at least 5 or 7.
+  // noise:   if non-zero, a so-called noise term is added to DMRG which improves the convergence.
+  //          This term must be zero towards the end, as the ground state is otherwise incorrect.
   auto inputsw = InputGroup(inputfn,"sweeps");
   auto sw_table = InputGroup(inputsw,"sweeps");
   int nrsweeps = input.getInt("nrsweeps", 15);
   auto sweeps = Sweeps(nrsweeps,sw_table);
-  std::map<int, MPS> psistore;
-  std::streambuf *coutbuf = std::cout.rdbuf();
+
   
-  std::vector<double> eps; // vector containing on-site energies of the bath !one-indexed! 
-  std::vector<double> V; //vector containing hoppinga amplitudes to the bath !one-indexed!     
+  std::vector<double> eps;        // vector containing on-site energies of the bath !one-indexed! 
+  std::vector<double> V;          //vector containing hopping amplitudes to the bath !one-indexed!     
   const double epsimp = -U/2.;    
-  const double Ueff = U + 2.*Ec; //effective impurity couloumb potential term
-  const double d = 2./NBath;     //d=2D/NBath, level spacing
-  const double g = alpha * d; //strenght of the SC coupling
+  const double Ueff = U + 2.*Ec;  //effective impurity couloumb potential term
+  const double d = 2./NBath;      //d=2D/NBath, level spacing
+  const double g = alpha * d;     //strenght of the SC coupling
   
-  auto sites = Hubbard(N); //sites has to be the exact same object for both MPS and MPO, so cannot be initialized seperately
+  //auto sites = Hubbard(N); 
 
   for(auto ntot: numPart) {
     
+    std::cout << "\nSweeps in a sector with " << ntot << " particles.\n";  
+
     const double epseff = epsimp - 2.*Ec*(ntot-n0) + Ec;  //effective impurity on-site potential
+    
+    //Read the bath parameters (fills in the vectors eps and V).
     GetBathParams(U, epseff, gamma, eps, V, NBath);
 
     //initialize H and psi
-    MPO H = initH(sites, ntot, eps, V, Ueff, g);  //This does not necessarily compile with older(?) compilers, 
-    MPS psi = initPsi(sites, ntot);               //as they dislike 'auto sites' as a function parameter.
- 
+    MPO H = initH(sites, ntot, eps, V, Ueff, g);  //This does not necessarily compile with older(?) compilers, as
+    MPS psi = initPsi(sites, ntot);               //it dislikes 'auto sites' as a function parameter. Works on spinon.
+
     Args args; //args is used to store and transport parameters between various functions
     
     //Apply the MPO a couple of times to get DMRG started, otherwise it might not converge.
@@ -135,82 +176,39 @@ void FindGS(std::string inputfn, InputGroup &input, int N, int NBath){
       psi.noPrime().normalize();
       }
     
-
     auto [GS0, GS] = dmrg(H,psi,sweeps,{"Quiet",!printDimensions, "EnergyErrgoal",EnergyErrgoal}); // call itensor dmrg 
     
-    
-
-    //Create a function which will take GS0 and GS and calculate all these values, and save them to some list.
-    //Then print these lists at the end of main{}.
-    //relevant values: Eigenvalue, GS energy, norm, ...
-
-
-    printfln("Eigenvalue = %.20f",GS0);
     double shift = Ec*pow(ntot-n0,2); // occupancy dependent effective energy shift
-    shift += U/2.; // RZ, for convenience
+    shift += U/2.; // RZ, for convenience    
+    
     double GSenergy = GS0+shift;
-    printfln("Ground state energy = %.20f",GSenergy);
-    MeasureOcc(GS, sites);
-    MeasurePairing(GS, sites, g);
-    MeasureAmplitudes(GS, sites, g);
-    GSenergies.push_back(GSenergy);
-    // Norm
-    double normGS = inner(GS, GS);
-    printfln("norm = %.20f", normGS);
+
+    psiStore[ntot] = GS;
+    GSEstore[ntot] = GSenergy; 
+
+    //values that need H are calculated here and stored, in order to avoid storing the entire hamiltonian
     double GS0bis = inner(GS, H, GS);
-    printfln("Eigenvalue(bis) = %.20f",GS0bis);
-    printfln("diff = %.20f", GS0-GS0bis);
-    // Energy deviation, residual value
     double deltaE = sqrt(inner(H, GS, H, GS) - pow(inner(GS, H, GS),2));
     double residuum = inner(GS,H,GS) - GS0*inner(GS,GS);
-    printfln("deltaE = %.20f", deltaE);
-    printfln("residuum = %.20f", residuum);
-    // Overlap w.r.t. the initial approximation
-    double overlap = inner(psi, GS);
-    printfln("overlap = %.20f", overlap);
+
+    GS0bisStore[ntot] = GS0bis; 
+    deltaEStore[ntot] = deltaE;
+    residuumStore[ntot] = residuum;
+
+
     if (excited_state) {
       auto wfs = std::vector<MPS>(1);
       wfs.at(0) = GS;
       auto [ESenergy, ES] = dmrg(H,wfs,psi,sweeps,{"Quiet",true,"Weight",11.0});
       ESenergy += shift;
-      printfln("Excited state energy = %.20f",ESenergy);
-      MeasureOcc(ES, sites);
-      ESenergies.push_back(ESenergy);
+      ESEstore[ntot]=ESenergy;
+      ESpsiStore[ntot]=ES;
     }
-    if (calcweights)
-      psistore[ntot] = GS;
-  } 
+      
+  }//end for loop
+}//end FindGS
 
 
-  //Print out energies
-  std::cout.rdbuf(coutbuf);
-  for(auto i : range(GSenergies.size())) {
-    std::cout<< "n = "<< numPart[i] << "  E= "<< std::setprecision(16) << GSenergies.at(i);
-    if (excited_state)
-      std::cout << " " << ESenergies.at(i);
-    std::cout<< std::endl;
-  }
-
-  //Print which sector has the GS
-  std::vector<std::pair<double, int>> Energy_Number;
-  for(auto i : range(GSenergies.size()))
-    Energy_Number.push_back(std::make_pair(GSenergies[i], numPart[i]));
-  sort(Energy_Number.begin(), Energy_Number.end());
-  int N_GS = Energy_Number[0].second;
-  std::cout << "N_GS=" << N_GS << std::endl;
-  if (calcweights) {
-    if (!(psistore.count(N_GS) == 1 && psistore.count(N_GS+1) == 1 && psistore.count(N_GS-1) == 1)) {
-      std::cout << "ERROR: we don't have info about the required occupancy sectors" << std::endl;
-      exit(1);
-    }
-    MPS & psiGS = psistore[N_GS];
-    MPS & psiNp = psistore[N_GS+1];
-    MPS & psiNm = psistore[N_GS-1];
-    // TO DO
-  }
-}
-
-//NOT NECESSARYLY FOR EVERY n,TAKE OUT OF THE LOOP!
 //initialize the Hamiltonian
 MPO initH(auto sites, int n, std::vector<double> eps, std::vector<double> V, double Ueff, double g){
   
@@ -266,14 +264,172 @@ MPS initPsi(auto sites, int n){
   }
 
   assert(tot == n);
-  std::cout <<"Using sector with " << n << " number of Particles"<<std::endl;
+
   MPS psi(state);
+  
   if (randomMPSb) {
     psi = randomMPS(state);
   }
  
   return psi;
 }
+
+
+/*
+  //THESE ARE ALL TO BE PASSED TO calculateAndPrint()
+  std::map<int, MPS> psiStore;  //stores ground states
+  std::map<int, double> GSEstore; //stores ground state energies
+  std::map<int, double> ESEstore; //stores excited state energies
+  
+  std::map<int, double> GS0bisStore; //stores <GS|H|GS>
+  std::map<int, double> deltaEStore; //stores sqrt(<GS|H^2|GS> - <GS|H|GS>^2)
+  std::map<int, double> residuumStore; //stores <GS|H|GS> - GSE*<GS|GS>
+*/
+
+//Loops over all particle sectors and prints relevant quantities.
+void calculateAndPrint(InputGroup &input, int N, auto sites, std::map<int, MPS> psiStore, std::map<int, double> GSEstore,std::map<int, MPS> ESpsiStore, std::map<int, double> ESEstore, std::map<int, double> GS0bisStore, std::map<int, double> deltaEStore, std::map<int, double> residuumStore){
+  
+  //set up numPart, a vector of all calculated ns, and initialize Nbath and g
+  double n0 = input.getReal("n0", N-1);   
+  double alpha = input.getReal("alpha");
+
+  const int NBath = N-1;
+  const double d = 2./NBath;      //d=2D/NBath, level spacing
+  const double g = alpha * d;     //strenght of the SC coupling
+
+  std::vector<int> numPart(0); // calculated occupancies
+  int nref = (refisn0 ? round(n0)+1 : N); //calculation of the energies is centered around this n
+  numPart.push_back(nref);
+  
+  for (int i = 1; i <= nrange; i++) {
+    numPart.push_back(nref+i);
+    numPart.push_back(nref-i);
+  } 
+
+
+  //print data for every sector
+  for(auto n: numPart) {
+
+    printfln("\n");
+    printfln("RESULTS FOR THE SECTOR WITH %i PARTICLES:", n);
+
+    printfln("Ground state energy = %.20f",GSEstore[n]);
+    
+    MPS & GS = psiStore[n];
+    
+    //norm
+    double normGS = inner(GS, GS);
+    printfln("norm = %.20f", normGS);
+    //occupancy; site pairing; v and u amplitudes 
+    MeasureOcc(GS, sites);
+    MeasurePairing(GS, sites, g);
+    MeasureAmplitudes(GS, sites, g);
+    
+    
+    double & GS0 = GSEstore[n];
+    double & GS0bis = GS0bisStore[n];
+    double & deltaE = deltaEStore[n];
+    double & residuum = residuumStore[n];
+    //various measures of convergence (energy deviation, residual value)
+    printfln("Eigenvalue(bis): <GS|H|GS> = %.20f",GS0bis);
+    printfln("diff: E_GS - <GS|H|GS> = %.20f", GS0-GS0bis);
+    printfln("deltaE: sqrt(<GS|H^2|GS> - <GS|H|GS>^2) = %.20f", deltaE);
+    printfln("residuum: <GS|H|GS> - E_GS*<GS|GS> = %.20f", residuum);
+
+    if (excited_state){
+      MPS & ES = ESpsiStore[n];
+      double & ESenergy = ESEstore[n]; 
+      MeasureOcc(ES, sites);
+      printfln("Excited state energy = %.20f",ESenergy);
+     } 
+  } //end of n-for loop
+
+  printfln("\n");
+  //Print out energies again:
+  for(auto n: numPart){
+    printfln("n = %.20f  E = %.20f", n, GSEstore[n]);  
+
+  }
+
+  //Find the sector with the global GS:
+  int N_GS;
+  double EGS = std::numeric_limits<double>::infinity();
+  for(auto n: numPart){
+    if (GSEstore[n] < EGS) {
+      EGS = GSEstore[n];
+      N_GS = n;
+  }
+  }
+  printfln("N_GS = %i",N_GS);
+
+  //Calculate the spectral weights, according to this: https://itensor.org/docs.cgi?page=formulas/measure_mps
+  if (calcweights) {
+    if ( GSEstore.find(N_GS+1) == GSEstore.end() && GSEstore.find(N_GS+1) == GSEstore.end() ) {
+      printfln("ERROR: we don't have info about the required occupancy sectors");
+      exit(1);
+    }
+
+    //define the wavefunctions
+    MPS & psiGS = psiStore[N_GS];
+    MPS & psiNp = psiStore[N_GS+1];
+    MPS & psiNm = psiStore[N_GS-1];
+    
+    //define the operators
+    auto c_up = op(sites,"Cup",impindex);
+    auto c_dn = op(sites,"Cdn",impindex);
+    auto c_dag_up = op(sites,"Cdagup",impindex);
+    auto c_dag_dn = op(sites,"Cdagdn",impindex);
+    
+    //orthogonalize all MPS around the impurity site
+    psiGS.position(impindex);
+    psiNp.position(impindex);
+    psiNm.position(impindex);
+   
+
+    //THIS GIVES ZEROS FOR ANY COMBINATION! WORK OUT WHAT IS WRONG.
+
+    //add electron with spin UP    
+    MPS psiGS_addUP = psiGS;
+    auto newTensor = c_dag_up*psiGS(impindex);
+    newTensor.noPrime();
+    psiGS_addUP.set(impindex,newTensor);
+
+
+    //add electron with spin UP    
+    MPS psiGS_addDN = psiGS;
+    newTensor = c_dag_dn*psiGS(impindex);
+    newTensor.noPrime();
+    psiGS_addDN.set(impindex,newTensor);
+    //get |psi_NGS>, <psi_NGS+1| and <psi_NGS-1|
+    //auto NGS_ket = psiGS(impindex);
+
+
+    double neki = inner(psiNm, psiGS_addUP);
+    double neki1 = inner(psiNm, psiGS_addDN);
+
+    printfln("tuki: %.20f", neki);
+    printfln("tuki: %.20f", neki1);
+    
+    /*
+    //compute scalar products
+    double addEl_up = elt(Np_bra * c_dag_up * NGS_ket);
+    double addEl_dn = elt(Np_bra * c_dag_dn * NGS_ket);
+    double takeEl_up = elt(Nm_bra * c_up * NGS_ket);
+    double takeEl_dn = elt(Nm_bra * c_dn * NGS_ket);
+
+    //print
+    printfln("Spectral function weights:");
+    printfln("Adding an electron:");
+    printfln("-spin up: %.20f", addEl_up);
+    printfln("-spin down: %.20f", addEl_dn);
+    printfln("Taking away an electron:");
+    printfln("-spin up: %.20f", takeEl_up);
+    printfln("-spin down: %.20f", takeEl_dn);
+    */
+  }  
+
+} //end of calculateAndPrint()
+
 
 
 //prints the occupation number of an MPS psi
