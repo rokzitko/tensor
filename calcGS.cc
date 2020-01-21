@@ -24,6 +24,8 @@ void calculateAndPrint(InputGroup &input, int N, auto sites,
 void GetBathParams(double U, double epsimp, double gamma, std::vector<double>& eps, std::vector<double>& V, int NBath);
 MPO initH(auto sites, int n, std::vector<double> eps, std::vector<double> V, double Ueff, double g);
 MPS initPsi(auto sites, int n);
+double ExpectationValueAddEl(auto sites, MPS psi1, MPS psi2, std::string spin);
+double ExpectationValueTakeEl(auto sites, MPS psi1, MPS psi2, std::string spin);
 void MyDMRG(MPS& psi, MPO& H, double& energy, Args args);
 void MeasureOcc(MPS& psi, const SiteSet& sites);
 void MeasurePairing(MPS& psi, const SiteSet& sites, double);
@@ -157,7 +159,7 @@ void FindGS(std::string inputfn, InputGroup &input, auto sites, int N, int NBath
 
   for(auto ntot: numPart) {
     
-    std::cout << "\nSweeps in a sector with " << ntot << " particles.\n";  
+    std::cout << "\nSweeping in the sector with " << ntot << " particles.\n";  
 
     const double epseff = epsimp - 2.*Ec*(ntot-n0) + Ec;  //effective impurity on-site potential
     
@@ -275,17 +277,6 @@ MPS initPsi(auto sites, int n){
 }
 
 
-/*
-  //THESE ARE ALL TO BE PASSED TO calculateAndPrint()
-  std::map<int, MPS> psiStore;  //stores ground states
-  std::map<int, double> GSEstore; //stores ground state energies
-  std::map<int, double> ESEstore; //stores excited state energies
-  
-  std::map<int, double> GS0bisStore; //stores <GS|H|GS>
-  std::map<int, double> deltaEStore; //stores sqrt(<GS|H^2|GS> - <GS|H|GS>^2)
-  std::map<int, double> residuumStore; //stores <GS|H|GS> - GSE*<GS|GS>
-*/
-
 //Loops over all particle sectors and prints relevant quantities.
 void calculateAndPrint(InputGroup &input, int N, auto sites, std::map<int, MPS> psiStore, std::map<int, double> GSEstore,std::map<int, MPS> ESpsiStore, std::map<int, double> ESEstore, std::map<int, double> GS0bisStore, std::map<int, double> deltaEStore, std::map<int, double> residuumStore){
   
@@ -307,7 +298,7 @@ void calculateAndPrint(InputGroup &input, int N, auto sites, std::map<int, MPS> 
   } 
 
 
-  //print data for every sector
+  //print data for each sector
   for(auto n: numPart) {
 
     printfln("\n");
@@ -344,7 +335,7 @@ void calculateAndPrint(InputGroup &input, int N, auto sites, std::map<int, MPS> 
      } 
   } //end of n-for loop
 
-  printfln("\n");
+  printfln("");
   //Print out energies again:
   for(auto n: numPart){
     printfln("n = %.20f  E = %.20f", n, GSEstore[n]);  
@@ -372,65 +363,46 @@ void calculateAndPrint(InputGroup &input, int N, auto sites, std::map<int, MPS> 
     //define the wavefunctions
     MPS & psiGS = psiStore[N_GS];
     MPS & psiNp = psiStore[N_GS+1];
-    MPS & psiNm = psiStore[N_GS-1];
+    MPS & psiNm = psiStore[N_GS-1];   
     
-    //define the operators
-    auto c_up = op(sites,"Cup",impindex);
-    auto c_dn = op(sites,"Cdn",impindex);
-    auto c_dag_up = op(sites,"Cdagup",impindex);
-    auto c_dag_dn = op(sites,"Cdagdn",impindex);
+    printfln(""); 
+    printfln("Spectral weights:");
+
+    ExpectationValueAddEl(sites, psiNp, psiGS, "up");
+    ExpectationValueAddEl(sites, psiNp, psiGS, "dn");
     
-    //orthogonalize all MPS around the impurity site
-    psiGS.position(impindex);
-    psiNp.position(impindex);
-    psiNm.position(impindex);
-   
-
-    //THIS GIVES ZEROS FOR ANY COMBINATION! WORK OUT WHAT IS WRONG.
-
-    //add electron with spin UP    
-    MPS psiGS_addUP = psiGS;
-    auto newTensor = c_dag_up*psiGS(impindex);
-    newTensor.noPrime();
-    psiGS_addUP.set(impindex,newTensor);
-
-
-    //add electron with spin UP    
-    MPS psiGS_addDN = psiGS;
-    newTensor = c_dag_dn*psiGS(impindex);
-    newTensor.noPrime();
-    psiGS_addDN.set(impindex,newTensor);
-    //get |psi_NGS>, <psi_NGS+1| and <psi_NGS-1|
-    //auto NGS_ket = psiGS(impindex);
-
-
-    double neki = inner(psiNm, psiGS_addUP);
-    double neki1 = inner(psiNm, psiGS_addDN);
-
-    printfln("tuki: %.20f", neki);
-    printfln("tuki: %.20f", neki1);
-    
-    /*
-    //compute scalar products
-    double addEl_up = elt(Np_bra * c_dag_up * NGS_ket);
-    double addEl_dn = elt(Np_bra * c_dag_dn * NGS_ket);
-    double takeEl_up = elt(Nm_bra * c_up * NGS_ket);
-    double takeEl_dn = elt(Nm_bra * c_dn * NGS_ket);
-
-    //print
-    printfln("Spectral function weights:");
-    printfln("Adding an electron:");
-    printfln("-spin up: %.20f", addEl_up);
-    printfln("-spin down: %.20f", addEl_dn);
-    printfln("Taking away an electron:");
-    printfln("-spin up: %.20f", takeEl_up);
-    printfln("-spin down: %.20f", takeEl_dn);
-    */
+    ExpectationValueTakeEl(sites, psiNm, psiGS, "up");
+    ExpectationValueTakeEl(sites, psiNm, psiGS, "dn");
   }  
 
 } //end of calculateAndPrint()
 
+//calculates <psi1|c_dag|psi2>
+double ExpectationValueAddEl(auto sites, MPS psi1, MPS psi2, std::string spin){
 
+
+  auto newTensor = noPrime(op(sites,"Cdag"+spin, impindex)*psi2(impindex)); 
+  psi2.set(impindex,newTensor);
+
+  auto res = inner(psi1, psi2);
+    
+  std::cout << "Electron in with spin " << spin << ": " << res << "\n";  
+
+}
+
+//calculates <psi1|c|psi2>
+double ExpectationValueTakeEl(auto sites, MPS psi1, MPS psi2, std::string spin){
+
+
+  auto newTensor = noPrime(op(sites,"C"+spin, impindex)*psi2(impindex)); 
+  psi2.set(impindex,newTensor);
+
+  auto res = inner(psi1, psi2);
+    
+  std::cout << "Electron out with spin " << spin << ": " << res << "\n";  
+
+}
+	
 
 //prints the occupation number of an MPS psi
 //instructive to learn how to calculate local observables
