@@ -13,6 +13,9 @@
 #include <vector>
 #include <map>
 
+#include <omp.h>
+
+
 using namespace itensor;
 
 void FindGS(std::string inputfn, InputGroup &input, auto sites, int N, int NBath, 
@@ -38,6 +41,7 @@ bool randomMPSb;      //it true sets the initial state to random
 bool printDimensions; //if true prints dmrg() prints info during the sweep
 bool calcweights;     //if true calculates the spectral weights of the two closes spectroscopically availabe excitations
 bool refisn0;         //if true the energies will be computed in the sectors centered around the one with n = round(n0) + 1
+bool parallel;        //if true enables openMP parallel calculation of the for loop in findGS()
 
 double EnergyErrgoal; //the convergence value at which dmrg() will stop the sweeps; default = machine precision
 int nrH;              //number of times to apply H to psi before comencing the sweep - akin to a power method; default = 5
@@ -87,7 +91,8 @@ int main(int argc, char* argv[]){
   printDimensions = input.getYesNo("printDimensions", false);
   calcweights = input.getYesNo("calcweights", false);
   refisn0 = input.getYesNo("refisn0", false);
-  
+  parallel = input.getYesNo("parallel", false);
+
   nrH = input.getInt("nrH", 5);
   EnergyErrgoal = input.getReal("EnergyErrgoal", 1e-16);
   nrange = input.getInt("nrange", 1);
@@ -95,19 +100,23 @@ int main(int argc, char* argv[]){
   //THESE ARE ALL TO BE PASSED TO calculateAndPrint()
   std::map<int, MPS> psiStore;      //stores ground states
   std::map<int, double> GSEstore;   //stores ground state energies
-  std::map<int, MPS> ESpsiStore;  //stores excited states
+  std::map<int, MPS> ESpsiStore;    //stores excited states
   std::map<int, double> ESEstore;   //stores excited state energies
 
+  //These quantities require the knowledge of H, so they are calculated in FindGS and saved here.
   std::map<int, double> GS0bisStore; //stores <GS|H|GS>
   std::map<int, double> deltaEStore; //stores sqrt(<GS|H^2|GS> - <GS|H|GS>^2)
   std::map<int, double> residuumStore; //stores <GS|H|GS> - GSE*<GS|GS>
 
+  //sites is an ITensor thing. it defines the local hilbert space and
+  //operators living on each site of the lattice
+  //for example sites.op("N",1) gives the pariticle number operator 
+  //on the first site
   auto sites = Hubbard(N); 
 
   //calculates the ground state in different particle number sectors according to n0, nrange, refisn0 and stores ground states and energies 
   FindGS(inputfn, input, sites, N, NBath, psiStore, GSEstore, ESpsiStore, ESEstore, GS0bisStore, deltaEStore, residuumStore); 
   calculateAndPrint(input, N, sites, psiStore, GSEstore, ESpsiStore, ESEstore, GS0bisStore, deltaEStore, residuumStore); 
-  //calculateAndPrint();
 
 }
 
@@ -147,7 +156,6 @@ void FindGS(std::string inputfn, InputGroup &input, auto sites, int N, int NBath
   int nrsweeps = input.getInt("nrsweeps", 15);
   auto sweeps = Sweeps(nrsweeps,sw_table);
 
-  
   std::vector<double> eps;        // vector containing on-site energies of the bath !one-indexed! 
   std::vector<double> V;          //vector containing hopping amplitudes to the bath !one-indexed!     
   const double epsimp = -U/2.;    
@@ -155,10 +163,13 @@ void FindGS(std::string inputfn, InputGroup &input, auto sites, int N, int NBath
   const double d = 2./NBath;      //d=2D/NBath, level spacing
   const double g = alpha * d;     //strenght of the SC coupling
   
-  //auto sites = Hubbard(N); 
-
-  for(auto ntot: numPart) {
+  #pragma omp parallel for if(parallel)
+  for (int i=0; i<numPart.size(); i++){
+  
+  //for(auto ntot : numPart) {
     
+    auto ntot = numPart[i];
+
     std::cout << "\nSweeping in the sector with " << ntot << " particles.\n";  
 
     const double epseff = epsimp - 2.*Ec*(ntot-n0) + Ec;  //effective impurity on-site potential
@@ -178,7 +189,7 @@ void FindGS(std::string inputfn, InputGroup &input, auto sites, int N, int NBath
       psi.noPrime().normalize();
       }
     
-    auto [GS0, GS] = dmrg(H,psi,sweeps,{"Quiet",!printDimensions, "EnergyErrgoal",EnergyErrgoal}); // call itensor dmrg 
+    auto [GS0, GS] = dmrg(H,psi,sweeps,{"Silent",parallel, "Quiet",!printDimensions, "EnergyErrgoal",EnergyErrgoal}); // call itensor dmrg 
     
     double shift = Ec*pow(ntot-n0,2); // occupancy dependent effective energy shift
     shift += U/2.; // RZ, for convenience    
@@ -214,11 +225,6 @@ void FindGS(std::string inputfn, InputGroup &input, auto sites, int N, int NBath
 //initialize the Hamiltonian
 MPO initH(auto sites, int n, std::vector<double> eps, std::vector<double> V, double Ueff, double g){
   
-  //sites is an ITensor thing. it defines the local hilbert space and
-  //operators living on each site of the lattice
-  //for example sites.op("N",1) gives the pariticle number operator 
-  //on the first site
-  
   MPO H(sites); // MPO is the hamiltonian in "MPS-form" after this line it is still a trivial operator
 
   Fill_SCBath_MPO(H, sites, eps, V, Ueff, g); // defined in SC_BathMPO.h, fills the MPO with the necessary entries
@@ -233,8 +239,8 @@ MPO initH(auto sites, int n, std::vector<double> eps, std::vector<double> V, dou
 MPS initPsi(auto sites, int n){
   
   auto state = InitState(sites);
-  
-  int tot = 0;
+
+  int tot = 0;  
   int nsc = n-1; // number of electrons in the SC in Gamma->0 limit
   int npair = nsc/2; // number of pairs in the SC
   
@@ -253,7 +259,7 @@ MPS initPsi(auto sites, int n){
     }
   }     
 
-  //If ncs is odd, add another Dn electron.
+  //If ncs is odd, add another Dn electron, but not to the impurity site.
   if (nsc%2 == 1) {
     if (i!=impindex){
       state.set(i,"Dn"); 
@@ -280,7 +286,7 @@ MPS initPsi(auto sites, int n){
 //Loops over all particle sectors and prints relevant quantities.
 void calculateAndPrint(InputGroup &input, int N, auto sites, std::map<int, MPS> psiStore, std::map<int, double> GSEstore,std::map<int, MPS> ESpsiStore, std::map<int, double> ESEstore, std::map<int, double> GS0bisStore, std::map<int, double> deltaEStore, std::map<int, double> residuumStore){
   
-  //set up numPart, a vector of all calculated ns, and initialize Nbath and g
+  //set up numPart, a vector of all calculated ns, and Nbath and g
   double n0 = input.getReal("n0", N-1);   
   double alpha = input.getReal("alpha");
 
@@ -296,7 +302,6 @@ void calculateAndPrint(InputGroup &input, int N, auto sites, std::map<int, MPS> 
     numPart.push_back(nref+i);
     numPart.push_back(nref-i);
   } 
-
 
   //print data for each sector
   for(auto n: numPart) {
@@ -315,7 +320,6 @@ void calculateAndPrint(InputGroup &input, int N, auto sites, std::map<int, MPS> 
     MeasureOcc(GS, sites);
     MeasurePairing(GS, sites, g);
     MeasureAmplitudes(GS, sites, g);
-    
     
     double & GS0 = GSEstore[n];
     double & GS0bis = GS0bisStore[n];
@@ -353,7 +357,7 @@ void calculateAndPrint(InputGroup &input, int N, auto sites, std::map<int, MPS> 
   }
   printfln("N_GS = %i",N_GS);
 
-  //Calculate the spectral weights, according to this: https://itensor.org/docs.cgi?page=formulas/measure_mps
+  //Calculate the spectral weights:
   if (calcweights) {
     if ( GSEstore.find(N_GS+1) == GSEstore.end() && GSEstore.find(N_GS+1) == GSEstore.end() ) {
       printfln("ERROR: we don't have info about the required occupancy sectors");
@@ -367,6 +371,7 @@ void calculateAndPrint(InputGroup &input, int N, auto sites, std::map<int, MPS> 
     
     printfln(""); 
     printfln("Spectral weights:");
+    printfln("(Spectral weight is the square of the absolute value of the number.)");
 
     ExpectationValueAddEl(sites, psiNp, psiGS, "up");
     ExpectationValueAddEl(sites, psiNp, psiGS, "dn");
@@ -377,30 +382,28 @@ void calculateAndPrint(InputGroup &input, int N, auto sites, std::map<int, MPS> 
 
 } //end of calculateAndPrint()
 
-//calculates <psi1|c_dag|psi2>
+//calculates <psi1|c_dag|psi2>, according to http://itensor.org/docs.cgi?vers=cppv3&page=formulas/mps_onesite_op
 double ExpectationValueAddEl(auto sites, MPS psi1, MPS psi2, std::string spin){
 
-
-  auto newTensor = noPrime(op(sites,"Cdag"+spin, impindex)*psi2(impindex)); 
-  psi2.set(impindex,newTensor);
+  psi2.position(impindex); //set orthogonality center
+  auto newTensor = noPrime(op(sites,"Cdag"+spin, impindex)*psi2(impindex)); //apply the local operator
+  psi2.set(impindex,newTensor); //plug in the new tensor, with the operator applied
 
   auto res = inner(psi1, psi2);
     
   std::cout << "Electron in with spin " << spin << ": " << res << "\n";  
-
 }
 
 //calculates <psi1|c|psi2>
 double ExpectationValueTakeEl(auto sites, MPS psi1, MPS psi2, std::string spin){
-
-
+  
+  psi2.position(impindex);
   auto newTensor = noPrime(op(sites,"C"+spin, impindex)*psi2(impindex)); 
   psi2.set(impindex,newTensor);
 
   auto res = inner(psi1, psi2);
     
   std::cout << "Electron out with spin " << spin << ": " << res << "\n";  
-
 }
 	
 
