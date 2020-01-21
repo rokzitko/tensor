@@ -35,7 +35,7 @@ void MeasurePairing(MPS& psi, const SiteSet& sites, double);
 void MeasureAmplitudes(MPS& psi, const SiteSet& sites, double);
 
 //all bools have default value false
-bool writetofiles; 
+bool writetofiles;    //if true writes MPS and MPO to file
 bool excited_state;   //if true computes the first excited state
 bool randomMPSb;      //it true sets the initial state to random
 bool printDimensions; //if true prints dmrg() prints info during the sweep
@@ -56,7 +56,6 @@ int main(int argc, char* argv[]){
     std::cout<<"Please provide input file. Usage ./calcGS inputfile.txt" << std::endl;
     return 0;
   }
-
 
   //read parameters from the input file
   string inputfn{argv[1]};
@@ -165,11 +164,10 @@ void FindGS(std::string inputfn, InputGroup &input, auto sites, int N, int NBath
   
   #pragma omp parallel for if(parallel)
   for (int i=0; i<numPart.size(); i++){
-  
-  //for(auto ntot : numPart) {
-    
     auto ntot = numPart[i];
-
+  
+  //for(auto ntot : numPart) {  -- omp dislikes this for loop
+    
     std::cout << "\nSweeping in the sector with " << ntot << " particles.\n";  
 
     const double epseff = epsimp - 2.*Ec*(ntot-n0) + Ec;  //effective impurity on-site potential
@@ -221,7 +219,6 @@ void FindGS(std::string inputfn, InputGroup &input, auto sites, int N, int NBath
   }//end for loop
 }//end FindGS
 
-
 //initialize the Hamiltonian
 MPO initH(auto sites, int n, std::vector<double> eps, std::vector<double> V, double Ueff, double g){
   
@@ -244,7 +241,6 @@ MPS initPsi(auto sites, int n){
   int nsc = n-1; // number of electrons in the SC in Gamma->0 limit
   int npair = nsc/2; // number of pairs in the SC
   
-
   //Up electron at the impurity site and npair UpDn pairs. 
   state.set(impindex, "Up"); 
   tot++;
@@ -274,7 +270,6 @@ MPS initPsi(auto sites, int n){
   assert(tot == n);
 
   MPS psi(state);
-  
   if (randomMPSb) {
     psi = randomMPS(state);
   }
@@ -312,7 +307,6 @@ void calculateAndPrint(InputGroup &input, int N, auto sites, std::map<int, MPS> 
     printfln("Ground state energy = %.20f",GSEstore[n]);
     
     MPS & GS = psiStore[n];
-    
     //norm
     double normGS = inner(GS, GS);
     printfln("norm = %.20f", normGS);
@@ -343,7 +337,6 @@ void calculateAndPrint(InputGroup &input, int N, auto sites, std::map<int, MPS> 
   //Print out energies again:
   for(auto n: numPart){
     printfln("n = %.20f  E = %.20f", n, GSEstore[n]);  
-
   }
 
   //Find the sector with the global GS:
@@ -353,7 +346,7 @@ void calculateAndPrint(InputGroup &input, int N, auto sites, std::map<int, MPS> 
     if (GSEstore[n] < EGS) {
       EGS = GSEstore[n];
       N_GS = n;
-  }
+    }
   }
   printfln("N_GS = %i",N_GS);
 
