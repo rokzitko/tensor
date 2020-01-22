@@ -162,7 +162,7 @@ void FindGS(std::string inputfn, InputGroup &input, auto sites, int N, int NBath
   const double d = 2./NBath;      //d=2D/NBath, level spacing
   const double g = alpha * d;     //strenght of the SC coupling
   
-  #pragma omp parallel for if(parallel)
+  #pragma omp parallel for if(parallel) private(eps, V)
   for (int i=0; i<numPart.size(); i++){
     auto ntot = numPart[i];
   
