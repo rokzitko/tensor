@@ -15,7 +15,6 @@
 
 #include <omp.h>
 
-
 using namespace itensor;
 
 void FindGS(std::string inputfn, InputGroup &input, auto sites, int N, int NBath, 
@@ -56,6 +55,7 @@ int main(int argc, char* argv[]){
     std::cout<<"Please provide input file. Usage ./calcGS inputfile.txt" << std::endl;
     return 0;
   }
+
 
   //read parameters from the input file
   string inputfn{argv[1]};
@@ -188,6 +188,7 @@ void FindGS(std::string inputfn, InputGroup &input, auto sites, int N, int NBath
       }
     
     auto [GS0, GS] = dmrg(H,psi,sweeps,{"Silent",parallel, "Quiet",!printDimensions, "EnergyErrgoal",EnergyErrgoal}); // call itensor dmrg 
+    //auto [GS0, GS] = dmrg(H,psi,sweeps,{"Quiet",!printDimensions, "EnergyErrgoal",EnergyErrgoal}); // call itensor dmrg 
     
     double shift = Ec*pow(ntot-n0,2); // occupancy dependent effective energy shift
     shift += U/2.; // RZ, for convenience    
