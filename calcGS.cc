@@ -188,7 +188,6 @@ void FindGS(std::string inputfn, InputGroup &input, auto sites, int N, int NBath
       }
     
     auto [GS0, GS] = dmrg(H,psi,sweeps,{"Silent",parallel, "Quiet",!printDimensions, "EnergyErrgoal",EnergyErrgoal}); // call itensor dmrg 
-    //auto [GS0, GS] = dmrg(H,psi,sweeps,{"Quiet",!printDimensions, "EnergyErrgoal",EnergyErrgoal}); // call itensor dmrg 
     
     double shift = Ec*pow(ntot-n0,2); // occupancy dependent effective energy shift
     shift += U/2.; // RZ, for convenience    
@@ -353,26 +352,34 @@ void calculateAndPrint(InputGroup &input, int N, auto sites, std::map<int, MPS> 
 
   //Calculate the spectral weights:
   if (calcweights) {
-    if ( GSEstore.find(N_GS+1) == GSEstore.end() && GSEstore.find(N_GS+1) == GSEstore.end() ) {
-      printfln("ERROR: we don't have info about the required occupancy sectors");
-      exit(1);
-    }
-
-    //define the wavefunctions
-    MPS & psiGS = psiStore[N_GS];
-    MPS & psiNp = psiStore[N_GS+1];
-    MPS & psiNm = psiStore[N_GS-1];   
     
+    MPS & psiGS = psiStore[N_GS];
+
     printfln(""); 
     printfln("Spectral weights:");
     printfln("(Spectral weight is the square of the absolute value of the number.)");
 
-    ExpectationValueAddEl(sites, psiNp, psiGS, "up");
-    ExpectationValueAddEl(sites, psiNp, psiGS, "dn");
-    
-    ExpectationValueTakeEl(sites, psiNm, psiGS, "up");
-    ExpectationValueTakeEl(sites, psiNm, psiGS, "dn");
-  }  
+    if ( GSEstore.find(N_GS+1) != GSEstore.end() ){ //if the N_GS+1 state was computed, print the <N+1|c^dag|N> terms
+
+      MPS & psiNp = psiStore[N_GS+1];
+
+      ExpectationValueAddEl(sites, psiNp, psiGS, "up");
+      ExpectationValueAddEl(sites, psiNp, psiGS, "dn");
+    }
+
+    if ( GSEstore.find(N_GS+1) != GSEstore.end() ){ //if the N_GS-1 state was computed, print the <N-1|c|N> terms
+
+      MPS & psiNm = psiStore[N_GS-1];   
+
+      ExpectationValueTakeEl(sites, psiNm, psiGS, "up");
+      ExpectationValueTakeEl(sites, psiNm, psiGS, "dn");
+    }
+  
+    else {      
+      printfln("ERROR: we don't have info about the N_GS - 1 occupancy sector.");
+    }
+
+  } //end of if (calcweights)  
 
 } //end of calculateAndPrint()
 
