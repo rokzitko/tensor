@@ -367,6 +367,10 @@ void calculateAndPrint(InputGroup &input, int N, auto sites, std::map<int, MPS> 
       ExpectationValueAddEl(sites, psiNp, psiGS, "dn");
     }
 
+    else {      
+      printfln("ERROR: we don't have info about the N_GS + 1 occupancy sector.");
+    }
+
     if ( GSEstore.find(N_GS+1) != GSEstore.end() ){ //if the N_GS-1 state was computed, print the <N-1|c|N> terms
 
       MPS & psiNm = psiStore[N_GS-1];   
