@@ -33,4 +33,17 @@ calcGS: calcGS.o FindGS.o $(ITENSOR_LIBS) $(TENSOR_HEADERS)
 calcGS-middle: calcGS.o FindGS-middle.o $(ITENSOR_LIBS) $(TENSOR_HEADERS)
 	$(CCCOM) $(CCFLAGS) calcGS.o FindGS-middle.o -o calcGS-middle $(LIBFLAGS)
 
-build: calcGStargets
+# calcPT targets -----------------
+
+calcPTtargets: calcPT calcPT-middle
+
+calcPT: calcPT.o FindGS.o $(ITENSOR_LIBS) $(TENSOR_HEADERS)
+	$(CCCOM) $(CCFLAGS) calcPT.o FindGS.o -o calcPT $(LIBFLAGS)
+
+calcPT-middle: calcPT.o FindGS-middle.o $(ITENSOR_LIBS) $(TENSOR_HEADERS)
+	$(CCCOM) $(CCFLAGS) calcPT.o FindGS-middle.o -o calcPT-middle $(LIBFLAGS)
+
+
+buildPT: calcPTtargets
+buildGS: calcGStargets
+build: calcGStargets calcPTtargets

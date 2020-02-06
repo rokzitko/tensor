@@ -39,13 +39,13 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
       exit(1);
     }
     p.N = p.NBath+p.NImp;
-  }
-#ifdef MIDDLE_IMP
-  assert(p.NBath%2 == 0);   // NBath must be even
-  p.impindex = 1+p.NBath/2;
-#else
-  p.impindex = 1;
-#endif
+  } 
+  #ifdef MIDDLE_IMP
+    assert(p.NBath%2 == 0);   // NBath must be even
+    p.impindex = 1+p.NBath/2;
+  #else
+    p.impindex = 1;
+  #endif
   std::cout << "N=" << p.N << " NBath=" << p.NBath << " impindex=" << p.impindex << std::endl;
 
   // sites is an ITensor thing. it defines the local hilbert space and
@@ -85,13 +85,16 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
     p.numPart.push_back(nref-i);
   }
   
+  p.gamma0 = input.getReal("gamma0", 0.5);
+  p.gamma1 = input.getReal("gamma1", 1.5);
+  p.precision = input.getReal("precision", 1e-5);
+  p.maxIter = input.getInt("maxIter", 30);
+
   return input;
 }
 
 //calculates the groundstates and the energies of the relevant particle number sectors
-void FindGS(InputGroup &input,
-  std::map<int, MPS>& psiStore, std::map<int, double>& GSEstore, std::map<int, MPS> ESpsiStore, std::map<int, double>& ESEstore, std::map<int, double>& GS0bisStore, std::map<int, double>& deltaEStore, std::map<int, double>& residuumStore,
-           const params &p){
+void FindGS(InputGroup &input, store &s, params &p){
   
   std::vector<double> GSenergies(0); // result: lowest energy in each occupancy sector
   std::vector<double> ESenergies(0); // optionally: first excited state in each occupancy sector
@@ -126,8 +129,8 @@ void FindGS(InputGroup &input,
     GetBathParams(epseff, eps, V, p);
 
     //initialize H and psi
-    MPO H = initH(eps, V, p);  //This does not necessarily compile with older(?) compilers, as
-    MPS psi = initPsi(ntot, p);               //it dislikes 'auto sites' as a function parameter. Works on spinon.
+    MPO H = initH(eps, V, p);   //This does not necessarily compile with older(?) compilers, as
+    MPS psi = initPsi(ntot, p); //it dislikes 'auto sites' as a function parameter. Works on spinon.
 
     Args args; //args is used to store and transport parameters between various functions
     
@@ -144,38 +147,38 @@ void FindGS(InputGroup &input,
     
     double GSenergy = GS0+shift;
 
-    psiStore[ntot] = GS;
-    GSEstore[ntot] = GSenergy; 
+    s.psiStore[ntot] = GS;
+    s.GSEstore[ntot] = GSenergy; 
 
     //values that need H are calculated here and stored, in order to avoid storing the entire hamiltonian
     double GS0bis = inner(GS, H, GS);
     double deltaE = sqrt(inner(H, GS, H, GS) - pow(inner(GS, H, GS),2));
     double residuum = inner(GS,H,GS) - GS0*inner(GS,GS);
 
-    GS0bisStore[ntot] = GS0bis; 
-    deltaEStore[ntot] = deltaE;
-    residuumStore[ntot] = residuum;
+    s.GS0bisStore[ntot] = GS0bis; 
+    s.deltaEStore[ntot] = deltaE;
+    s.residuumStore[ntot] = residuum;
 
     if (p.excited_state) {
       auto wfs = std::vector<MPS>(1);
       wfs.at(0) = GS;
       auto [ESenergy, ES] = dmrg(H,wfs,psi,sweeps,{"Quiet",true,"Weight",11.0});
       ESenergy += shift;
-      ESEstore[ntot]=ESenergy;
-      ESpsiStore[ntot]=ES;
+      s.ESEstore[ntot]=ESenergy;
+      s.ESpsiStore[ntot]=ES;
     }
   }//end for loop
 }//end FindGS
 
 //initialize the Hamiltonian
-MPO initH(std::vector<double> eps, std::vector<double> V, const params &p){
+MPO initH(std::vector<double> eps, std::vector<double> V, params &p){
   MPO H(p.sites); // MPO is the hamiltonian in "MPS-form" after this line it is still a trivial operator
   Fill_SCBath_MPO(H, eps, V, p); // defined in SC_BathMPO.h, fills the MPO with the necessary entries
   return H;
 }
 
 //initialize the MPS in a product state with the correct particle number
-MPS initPsi(int ntot, const params &p){
+MPS initPsi(int ntot, params &p){
   auto state = InitState(p.sites);
 
   const int nsc = ntot-1;  // number of electrons in the SC in Gamma->0 limit
@@ -216,16 +219,15 @@ MPS initPsi(int ntot, const params &p){
 
 
 //Loops over all particle sectors and prints relevant quantities.
-void calculateAndPrint(InputGroup &input, std::map<int, MPS> psiStore, std::map<int, double> GSEstore,std::map<int, MPS> ESpsiStore, std::map<int, double> ESEstore, std::map<int, double> GS0bisStore, std::map<int, double> deltaEStore, std::map<int, double> residuumStore,
-                       const params &p){
+void calculateAndPrint(InputGroup &input, store &s, params &p){
   //print data for each sector
   for(auto ntot: p.numPart) {
     printfln("\n");
     printfln("RESULTS FOR THE SECTOR WITH %i PARTICLES:", ntot);
 
-    printfln("Ground state energy = %.20f",GSEstore[ntot]);
+    printfln("Ground state energy = %.20f",s.GSEstore[ntot]);
     
-    MPS & GS = psiStore[ntot];
+    MPS & GS = s.psiStore[ntot];
     //norm
     double normGS = inner(GS, GS);
     printfln("norm = %.20f", normGS);
@@ -234,10 +236,10 @@ void calculateAndPrint(InputGroup &input, std::map<int, MPS> psiStore, std::map<
     MeasurePairing(GS, p);
     MeasureAmplitudes(GS, p);
     
-    double & GS0 = GSEstore[ntot];
-    double & GS0bis = GS0bisStore[ntot];
-    double & deltaE = deltaEStore[ntot];
-    double & residuum = residuumStore[ntot];
+    double & GS0 = s.GSEstore[ntot];
+    double & GS0bis = s.GS0bisStore[ntot];
+    double & deltaE = s.deltaEStore[ntot];
+    double & residuum = s.residuumStore[ntot];
     //various measures of convergence (energy deviation, residual value)
     printfln("Eigenvalue(bis): <GS|H|GS> = %.20f",GS0bis);
     printfln("diff: E_GS - <GS|H|GS> = %.20f", GS0-GS0bis);
@@ -245,8 +247,8 @@ void calculateAndPrint(InputGroup &input, std::map<int, MPS> psiStore, std::map<
     printfln("residuum: <GS|H|GS> - E_GS*<GS|GS> = %.20f", residuum);
 
     if (p.excited_state){
-      MPS & ES = ESpsiStore[ntot];
-      double & ESenergy = ESEstore[ntot]; 
+      MPS & ES = s.ESpsiStore[ntot];
+      double & ESenergy = s.ESEstore[ntot]; 
       MeasureOcc(ES, p);
       printfln("Excited state energy = %.20f",ESenergy);
      } 
@@ -255,15 +257,15 @@ void calculateAndPrint(InputGroup &input, std::map<int, MPS> psiStore, std::map<
   printfln("");
   //Print out energies again:
   for(auto ntot: p.numPart){
-    printfln("ntot = %.20f  E = %.20f", ntot, GSEstore[ntot]);  
+    printfln("ntot = %.20f  E = %.20f", ntot, s.GSEstore[ntot]);  
   }
 
   //Find the sector with the global GS:
   int N_GS;
   double EGS = std::numeric_limits<double>::infinity();
   for(auto ntot: p.numPart){
-    if (GSEstore[ntot] < EGS) {
-      EGS = GSEstore[ntot];
+    if (s.GSEstore[ntot] < EGS) {
+      EGS = s.GSEstore[ntot];
       N_GS = ntot;
     }
   }
@@ -271,15 +273,15 @@ void calculateAndPrint(InputGroup &input, std::map<int, MPS> psiStore, std::map<
 
   //Calculate the spectral weights:
   if (p.calcweights) {
-    MPS & psiGS = psiStore[N_GS];
+    MPS & psiGS = s.psiStore[N_GS];
 
     printfln(""); 
     printfln("Spectral weights:");
     printfln("(Spectral weight is the square of the absolute value of the number.)");
 
-    if ( GSEstore.find(N_GS+1) != GSEstore.end() ){ //if the N_GS+1 state was computed, print the <N+1|c^dag|N> terms
+    if ( s.GSEstore.find(N_GS+1) != s.GSEstore.end() ){ //if the N_GS+1 state was computed, print the <N+1|c^dag|N> terms
 
-      MPS & psiNp = psiStore[N_GS+1];
+      MPS & psiNp = s.psiStore[N_GS+1];
 
       ExpectationValueAddEl(psiNp, psiGS, "up", p);
       ExpectationValueAddEl(psiNp, psiGS, "dn", p);
@@ -289,9 +291,9 @@ void calculateAndPrint(InputGroup &input, std::map<int, MPS> psiStore, std::map<
       printfln("ERROR: we don't have info about the N_GS+1 occupancy sector.");
     }
 
-    if ( GSEstore.find(N_GS-1) != GSEstore.end() ){ //if the N_GS-1 state was computed, print the <N-1|c|N> terms
+    if ( s.GSEstore.find(N_GS-1) != s.GSEstore.end() ){ //if the N_GS-1 state was computed, print the <N-1|c|N> terms
 
-      MPS & psiNm = psiStore[N_GS-1];   
+      MPS & psiNm = s.psiStore[N_GS-1];   
 
       ExpectationValueTakeEl(psiNm, psiGS, "up", p);
       ExpectationValueTakeEl(psiNm, psiGS, "dn", p);
@@ -300,9 +302,7 @@ void calculateAndPrint(InputGroup &input, std::map<int, MPS> psiStore, std::map<
     else {      
       printfln("ERROR: we don't have info about the N_GS-1 occupancy sector.");
     }
-
   } //end of if (calcweights)  
-
 } //end of calculateAndPrint()
 
 //calculates <psi1|c_dag|psi2>, according to http://itensor.org/docs.cgi?vers=cppv3&page=formulas/mps_onesite_op
@@ -387,7 +387,7 @@ void MeasureAmplitudes(MPS& psi, const params &p){
 }
 
 //fills the vectors eps and V with the correct values for given gamma and number of bath sites
-void GetBathParams(double epseff, std::vector<double>& eps, std::vector<double>& V, const params &p) {
+void GetBathParams(double epseff, std::vector<double>& eps, std::vector<double>& V, params &p) {
   double dEnergy = 2./p.NBath;
   double Vval = std::sqrt( 2*p.gamma/(M_PI*p.NBath) ); // pi!
   std::cout << "Vval=" << Vval << std::endl;

@@ -2,6 +2,8 @@
 *.o
 calcGS
 calcGS-middle
+calcPT
+calcPT-middle
 1_build_luka
 2_build_local
 Makefile_luka
