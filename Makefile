@@ -23,9 +23,9 @@ FindGS-middle.o: FindGS.cc $(ITENSOR_LIBS) $(TENSOR_HEADERS)
 .debug_objs/%.o: %.cc $(ITENSOR_GLIBS) $(TENSOR_HEADERS)
 	$(CCCOM) -c $(CCGFLAGS) -o $@ $<
 
-#Targets -----------------
+# calcGS targets -----------------
 
-build: calcGS calcGS-middle
+calcGStargets: calcGS calcGS-middle
 
 calcGS: calcGS.o FindGS.o $(ITENSOR_LIBS) $(TENSOR_HEADERS)
 	$(CCCOM) $(CCFLAGS) calcGS.o FindGS.o -o calcGS $(LIBFLAGS)
@@ -33,3 +33,4 @@ calcGS: calcGS.o FindGS.o $(ITENSOR_LIBS) $(TENSOR_HEADERS)
 calcGS-middle: calcGS.o FindGS-middle.o $(ITENSOR_LIBS) $(TENSOR_HEADERS)
 	$(CCCOM) $(CCFLAGS) calcGS.o FindGS-middle.o -o calcGS-middle $(LIBFLAGS)
 
+build: calcGStargets
