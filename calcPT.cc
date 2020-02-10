@@ -14,13 +14,13 @@
 double FindPT(InputGroup &input, store &s, params &p);
 
 int main(int argc, char* argv[]){
-  params p;
-  store s;
-  InputGroup input = parse_cmd_line(argc, argv, p);
+	params p;
+	store s;
+	InputGroup input = parse_cmd_line(argc, argv, p);
 
 	double PTgamma = FindPT(input, s, p);
 
-  std::cout << "Phase transition at Gamma = " << PTgamma << "\n";  
+	std::cout << "Phase transition at Gamma = " << PTgamma << "\n";  
 
 }
 
@@ -60,6 +60,7 @@ double DeltaE(InputGroup &input, store &s, params &p) {
 
 
 // find the phase transition point Gamma for a given set of parameters, using the secant method; gamma0, gamma1 are initial points
+// https://en.wikipedia.org/wiki/Secant_method
 double FindPT(InputGroup &input, store &s, params &p)  {
  	
  	p.gamma = p.gamma0;	//overwrite gamma and calculate DeltaE with it
@@ -75,6 +76,9 @@ double FindPT(InputGroup &input, store &s, params &p)  {
 	double Delta2 = DeltaE(input, s, p);
 
 	int iteration=0;
+
+	std::cout << "\nIteration " << iteration << ": gamma = " << gamma2 << ", Delta = " << Delta2 << "\n";  
+
 	while ( abs(Delta2) > p.precision && iteration < p.maxIter ) {
 		iteration++;
 
