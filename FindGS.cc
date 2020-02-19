@@ -73,7 +73,7 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   p.U = input.getReal("U");
   p.gamma = input.getReal("gamma");
   p.Ec = input.getReal("Ec", 0);
-  p.epsimp = -p.U/2.;    
+  p.epsimp = input.getReal("epsimp", -p.U/2.);    
   p.Ueff = p.U + 2.*p.Ec;
 
   p.numPart={};
@@ -129,8 +129,8 @@ void FindGS(InputGroup &input, store &s, params &p){
     GetBathParams(epseff, eps, V, p);
 
     //initialize H and psi
-    MPO H = initH(eps, V, p);   //This does not necessarily compile with older(?) compilers, as
-    MPS psi = initPsi(ntot, p); //it dislikes 'auto sites' as a function parameter. Works on spinon.
+    MPO H = initH(eps, V, p); 
+    MPS psi = initPsi(ntot, p);   
 
     Args args; //args is used to store and transport parameters between various functions
     
@@ -162,7 +162,7 @@ void FindGS(InputGroup &input, store &s, params &p){
     if (p.excited_state) {
       auto wfs = std::vector<MPS>(1);
       wfs.at(0) = GS;
-      auto [ESenergy, ES] = dmrg(H,wfs,psi,sweeps,{"Quiet",true,"Weight",11.0});
+      auto [ESenergy, ES] = dmrg(H,wfs,psi,sweeps,{"Silent",p.parallel,"Quiet",true,"Weight",11.0});
       ESenergy += shift;
       s.ESEstore[ntot]=ESenergy;
       s.ESpsiStore[ntot]=ES;
@@ -257,7 +257,7 @@ void calculateAndPrint(InputGroup &input, store &s, params &p){
   printfln("");
   //Print out energies again:
   for(auto ntot: p.numPart){
-    printfln("ntot = %.20f  E = %.20f", ntot, s.GSEstore[ntot]);  
+    printfln("n = %.20f  E = %.20f", ntot, s.GSEstore[ntot]);  
   }
 
   //Find the sector with the global GS:
@@ -390,7 +390,7 @@ void MeasureAmplitudes(MPS& psi, const params &p){
 void GetBathParams(double epseff, std::vector<double>& eps, std::vector<double>& V, params &p) {
   double dEnergy = 2./p.NBath;
   double Vval = std::sqrt( 2*p.gamma/(M_PI*p.NBath) ); // pi!
-  std::cout << "Vval=" << Vval << std::endl;
+  //std::cout << "Vval=" << Vval << std::endl;
   eps.resize(0);
   V.resize(0);
   eps.push_back(epseff);

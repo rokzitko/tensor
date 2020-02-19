@@ -63,15 +63,25 @@ double DeltaE(InputGroup &input, store &s, params &p) {
 // https://en.wikipedia.org/wiki/Secant_method
 double FindPT(InputGroup &input, store &s, params &p)  {
  	
+	std::cout << "\nStarting iteration\n";  
+
+
  	p.gamma = p.gamma0;	//overwrite gamma and calculate DeltaE with it
  	double gamma0 = p.gamma0;	//save the first initial guess
  	double Delta0 = DeltaE(input, s, p);
+
+ 	std::cout << "Delta0 = " << Delta0 << ", gamma0 = " << gamma0 << "\n";  
 
  	p.gamma = p.gamma1;	//overwrite gamma and calculate DeltaE with it
  	double gamma1 = p.gamma1;	//save the second initial guess 
 	double Delta1 = DeltaE(input, s, p);
 
-	double gamma2 = gamma1 - Delta1 * ((gamma1 - gamma0)/(Delta1 - Delta0));
+ 	std::cout << "Delta1 = " << Delta1 << ", gamma1 = " << gamma1 << "\n";  
+
+	double gamma2 = std::max(0.0, gamma1 - Delta1 * ((gamma1 - gamma0)/(Delta1 - Delta0)) ); //if gamma is negative, set it to zero. gamma < 0 results in a zero norm error.
+
+	std::cout << "Next gamma is:" << gamma2 << "\n"; //debugging purposes 
+
 	p.gamma = gamma2;	//overwrite gamma and calculate DeltaE with it
 	double Delta2 = DeltaE(input, s, p);
 
@@ -88,7 +98,7 @@ double FindPT(InputGroup &input, store &s, params &p)  {
 		gamma1 = gamma2;
 		Delta1 = Delta2;
 
-		gamma2 = gamma1 - Delta1 * ((gamma1 - gamma0)/(Delta1 - Delta0));
+		gamma2 = std::max(0.0, gamma1 - Delta1 * ((gamma1 - gamma0)/(Delta1 - Delta0)) );
 		p.gamma = gamma2;
 		Delta2 = DeltaE(input, s, p);
 
