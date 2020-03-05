@@ -225,12 +225,12 @@ void calculateAndPrint(InputGroup &input, store &s, params &p){
     printfln("\n");
     printfln("RESULTS FOR THE SECTOR WITH %i PARTICLES:", ntot);
 
-    printfln("Ground state energy = %.20f",s.GSEstore[ntot]);
+    printfln("Ground state energy = %.17g",s.GSEstore[ntot]);
     
     MPS & GS = s.psiStore[ntot];
     //norm
     double normGS = inner(GS, GS);
-    printfln("norm = %.20f", normGS);
+    printfln("norm = %.17g", normGS);
     //occupancy; site pairing; v and u amplitudes 
     MeasureOcc(GS, p);
     MeasurePairing(GS, p);
@@ -241,23 +241,23 @@ void calculateAndPrint(InputGroup &input, store &s, params &p){
     double & deltaE = s.deltaEStore[ntot];
     double & residuum = s.residuumStore[ntot];
     //various measures of convergence (energy deviation, residual value)
-    printfln("Eigenvalue(bis): <GS|H|GS> = %.20f",GS0bis);
-    printfln("diff: E_GS - <GS|H|GS> = %.20f", GS0-GS0bis);
-    printfln("deltaE: sqrt(<GS|H^2|GS> - <GS|H|GS>^2) = %.20f", deltaE);
-    printfln("residuum: <GS|H|GS> - E_GS*<GS|GS> = %.20f", residuum);
+    printfln("Eigenvalue(bis): <GS|H|GS> = %.17g",GS0bis);
+    printfln("diff: E_GS - <GS|H|GS> = %.17g", GS0-GS0bis);
+    printfln("deltaE: sqrt(<GS|H^2|GS> - <GS|H|GS>^2) = %.17g", deltaE);
+    printfln("residuum: <GS|H|GS> - E_GS*<GS|GS> = %.17g", residuum);
 
     if (p.excited_state){
       MPS & ES = s.ESpsiStore[ntot];
       double & ESenergy = s.ESEstore[ntot]; 
       MeasureOcc(ES, p);
-      printfln("Excited state energy = %.20f",ESenergy);
+      printfln("Excited state energy = %.17g",ESenergy);
      } 
   } //end of n-for loop
 
   printfln("");
   //Print out energies again:
   for(auto ntot: p.numPart){
-    printfln("n = %.20f  E = %.20f", ntot, s.GSEstore[ntot]);  
+    printfln("n = %.17g  E = %.17g", ntot, s.GSEstore[ntot]);  
   }
 
   //Find the sector with the global GS:
@@ -341,7 +341,7 @@ void MeasureOcc(MPS& psi, const params &p){
     //this way, only the local operator at site i is needed
     psi.position(i);
     auto val = psi.A(i) * p.sites.op("Ntot",i)* dag(prime(psi.A(i),"Site"));
-    std::cout << std::real(val.cplx()) << " ";
+    std::cout << std::setprecision(17) << std::real(val.cplx()) << " ";
     tot += std::real(val.cplx());
   }
   std::cout << std::endl;
@@ -360,7 +360,7 @@ void MeasurePairing(MPS& psi, const params &p){
     auto val1u = psi.A(i) * p.sites.op("Cdagup*Cup", i) * dag(prime(psi.A(i),"Site"));
     auto val1d = psi.A(i) * p.sites.op("Cdagdn*Cdn", i) * dag(prime(psi.A(i),"Site"));
     auto sq = p.g * sqrt( val2.cplx() - val1u.cplx() * val1d.cplx() );
-    std::cout << sq << " ";
+    std::cout << std::setprecision(17) << sq << " ";
     if (i != p.impindex) tot += sq; // exclude the impurity site in the sum
   }
   std::cout << std::endl;
