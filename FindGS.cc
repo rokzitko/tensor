@@ -61,6 +61,7 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   p.refisn0 = input.getYesNo("refisn0", false);
   p.parallel = input.getYesNo("parallel", false);
   p.verbose = input.getYesNo("verbose", false);
+  p.band_level_shift = input.getYesNo("band_level_shift", false);
 
   p.EnergyErrgoal = input.getReal("EnergyErrgoal", 1e-16);
   p.nrH = input.getInt("nrH", 5);
@@ -120,7 +121,7 @@ void FindGS(InputGroup &input, store &s, params &p){
   std::vector<double> V;          //vector containing hopping amplitudes to the bath !one-indexed!
   
   #pragma omp parallel for if(p.parallel) private(eps, V)
-  for (int i=0; i<p.numPart.size(); i++){
+  for (size_t i=0; i<p.numPart.size(); i++){
     auto ntot = p.numPart[i];
     std::cout << "\nSweeping in the sector with " << ntot << " particles.\n";  
 
@@ -191,7 +192,7 @@ MPS initPsi(int ntot, params &p){
 
   int j=0;
   int i=1;
-  for(i; j < npair; i++){ //In order to avoid adding a pair to the impurity site   
+  for(; j < npair; i++){ //In order to avoid adding a pair to the impurity site   
     if (i!=p.impindex){             //i counts sites, j counts added pairs.
       j++;
       state.set(i, "UpDn");
@@ -306,7 +307,7 @@ void calculateAndPrint(InputGroup &input, store &s, params &p){
 } //end of calculateAndPrint()
 
 //calculates <psi1|c_dag|psi2>, according to http://itensor.org/docs.cgi?vers=cppv3&page=formulas/mps_onesite_op
-double ExpectationValueAddEl(MPS psi1, MPS psi2, std::string spin, const params &p){
+void ExpectationValueAddEl(MPS psi1, MPS psi2, std::string spin, const params &p){
 
   psi2.position(p.impindex); //set orthogonality center
   auto newTensor = noPrime(op(p.sites,"Cdag"+spin, p.impindex)*psi2(p.impindex)); //apply the local operator
@@ -318,7 +319,7 @@ double ExpectationValueAddEl(MPS psi1, MPS psi2, std::string spin, const params 
 }
 
 //calculates <psi1|c|psi2>
-double ExpectationValueTakeEl(MPS psi1, MPS psi2, std::string spin, const params &p){
+void ExpectationValueTakeEl(MPS psi1, MPS psi2, std::string spin, const params &p){
   
   psi2.position(p.impindex);
   auto newTensor = noPrime(op(p.sites,"C"+spin, p.impindex)*psi2(p.impindex)); 
@@ -390,13 +391,15 @@ void MeasureAmplitudes(MPS& psi, const params &p){
 void GetBathParams(double epseff, std::vector<double>& eps, std::vector<double>& V, params &p) {
   double dEnergy = 2./p.NBath;
   double Vval = std::sqrt( 2*p.gamma/(M_PI*p.NBath) ); // pi!
-  //std::cout << "Vval=" << Vval << std::endl;
+  if (p.verbose)
+    std::cout << "Vval=" << Vval << std::endl;
   eps.resize(0);
   V.resize(0);
   eps.push_back(epseff);
   V.push_back(0.);
+  const double band_level_shift = (p.band_level_shift ? -p.g/2.0 : 0.0);
   for(auto k: range1(p.NBath)){
-    eps.push_back( -1 + (k-0.5)*dEnergy );
+    eps.push_back( -1 + (k-0.5)*dEnergy + band_level_shift );
     V.push_back( Vval );
   }
 }

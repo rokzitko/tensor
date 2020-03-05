@@ -16,13 +16,14 @@ struct params {
   Hubbard sites;        // itensor object
 
   // all bools have default value false
-  bool excited_state;   // if true computes the first excited state
-  bool randomMPSb;      // it true sets the initial state to random
-  bool printDimensions; // if true prints dmrg() prints info during the sweep
-  bool calcweights;     // if true calculates the spectral weights of the two closes spectroscopically availabe excitations
-  bool refisn0;         // if true the energies will be computed in the sectors centered around the one with n = round(n0) + 1
-  bool parallel;        // if true enables openMP parallel calculation of the for loop in findGS()
-  bool verbose;         // verbosity level
+  bool excited_state;    // if true computes the first excited state
+  bool randomMPSb;       // it true sets the initial state to random
+  bool printDimensions;  // if true prints dmrg() prints info during the sweep
+  bool calcweights;      // if true calculates the spectral weights of the two closes spectroscopically availabe excitations
+  bool refisn0;          // if true the energies will be computed in the sectors centered around the one with n = round(n0) + 1
+  bool parallel;         // if true enables openMP parallel calculation of the for loop in findGS()
+  bool verbose;          // verbosity level
+  bool band_level_shift; //
 
   double EnergyErrgoal; // the convergence value at which dmrg() will stop the sweeps; default = machine precision
   int nrH;              // number of times to apply H to psi before comencing the sweep - akin to a power method; default = 5
@@ -69,8 +70,8 @@ void calculateAndPrint(InputGroup &input, store &s, params &p);
 void GetBathParams(double epseff, std::vector<double>& eps, std::vector<double>& V, params &p);
 MPO initH(std::vector<double> eps, std::vector<double> V, params &p);
 MPS initPsi(int ntot, params &p);
-double ExpectationValueAddEl(MPS psi1, MPS psi2, std::string spin, const params &p);
-double ExpectationValueTakeEl(MPS psi1, MPS psi2, std::string spin, const params &p);
+void ExpectationValueAddEl(MPS psi1, MPS psi2, std::string spin, const params &p);
+void ExpectationValueTakeEl(MPS psi1, MPS psi2, std::string spin, const params &p);
 void MyDMRG(MPS& psi, MPO& H, double& energy, Args args);
 void MeasureOcc(MPS& psi, const params &);
 void MeasurePairing(MPS& psi, const params &);
