@@ -1,5 +1,5 @@
 #!/bin/bash
-cp result_0.1.dat result_0.1.dat.prev
-cp result_1.dat result_1.dat.prev
-$HOME/repos/tensor/calcGS inputFile_0.1.txt | tee result_0.1.dat
-$HOME/repos/tensor/calcGS inputFile_1.txt | tee result_1.dat
+calcGS inputFile_0.1.txt >result_0.1.dat
+calcGS inputFile_1.txt >result_1.dat
+mycompare result_0.1.dat
+mycompare result_1.dat

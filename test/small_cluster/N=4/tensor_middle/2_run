@@ -1,5 +1,6 @@
 #!/bin/bash
-$HOME/repos/tensor/calcGS-middle inputFile_0.1.txt | tee result_0.1.dat
-$HOME/repos/tensor/calcGS-middle inputFile_1.txt | tee result_1.dat
-
+calcGS-middle inputFile_0.1.txt >result_0.1.dat
+calcGS-middle inputFile_1.txt >result_1.dat
+mycompare result_0.1.dat
+mycompare result_1.dat
 

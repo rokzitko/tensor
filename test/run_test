@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# ensure we can find calcGS and mycompare executables
+HERE=`pwd`
+export PATH=$HERE:$HERE/..:$PATH
+
+dir=$(dirname "$1")
+test=$(basename "$1")
+echo $dir
+cd $dir
+./$test
