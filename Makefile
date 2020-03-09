@@ -14,10 +14,10 @@ LIBGFLAGS=-L'$(ITENSOR_LIBDIR)' $(ITENSOR_LIBGFLAGS)
 %.o: %.cc $(ITENSOR_LIBS) $(TENSOR_HEADERS)
 	$(CCCOM) -c $(CCFLAGS) -o $@ $<
 
-FindGS.o: FindGS.cc $(ITENSOR_LIBS) $(TENSOR_HEADERS)
+FindGS.o: FindGS.cc $(ITENSOR_LIBS) $(TENSOR_HEADERS) SC_BathMPO.h
 	$(CCCOM) -c $(CCFLAGS) -o $@ $<
 
-FindGS-middle.o: FindGS.cc $(ITENSOR_LIBS) $(TENSOR_HEADERS)
+FindGS-middle.o: FindGS.cc $(ITENSOR_LIBS) $(TENSOR_HEADERS) SC_BathMPO_MiddleImp.h
 	$(CCCOM) -DMIDDLE_IMP -c $(CCFLAGS) -o $@ $<
 
 .debug_objs/%.o: %.cc $(ITENSOR_GLIBS) $(TENSOR_HEADERS)

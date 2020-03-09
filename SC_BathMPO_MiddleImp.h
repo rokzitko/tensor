@@ -132,7 +132,7 @@ void Fill_SCBath_MPO(MPO& H, const std::vector<double>& eps_,
         W += p.sites.op("Id",i) * setElt(left(1), right(1));
 
         W += p.sites.op("Ntot",i)  * setElt(left(1), right(2)) * eps_[0]; // use index 0
-        W += p.sites.op("Nupdn",i) * setElt(left(1), right(2)) * p.U;
+        W += p.sites.op("Nupdn",i) * setElt(left(1), right(2)) * p.Ueff;
         
         // hybridizations
         W += p.sites.op("Cup*F",    i)*setElt(left(1),right(3)) * (-1);
