@@ -3,6 +3,8 @@ params{
      U=10
      gamma = 1
      N = 5
+     
+     calc_weights = true
 }
 
 

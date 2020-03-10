@@ -16,16 +16,16 @@ struct params {
   Hubbard sites;        // itensor object
 
   // all bools have default value false
-  bool excited_state;    // if true computes the first excited state
-  bool randomMPSb;       // it true sets the initial state to random
-  bool printDimensions;  // if true prints dmrg() prints info during the sweep
-  bool calcweights;      // if true calculates the spectral weights of the two closes spectroscopically availabe excitations
-  bool refisn0;          // if true the energies will be computed in the sectors centered around the one with n = round(n0) + 1
-  bool parallel;         // if true enables openMP parallel calculation of the for loop in findGS()
+  bool excited_state;    // computes the first excited state
+  bool randomMPSb;       // sets the initial state to random
+  bool printDimensions;  // prints dmrg() prints info during the sweep
+  bool calcweights;      // calculates the spectral weights of the two closes spectroscopically availabe excitations
+  bool refisn0;          // the energies will be computed in the sectors centered around the one with n = round(n0) + 1
+  bool parallel;         // enables openMP parallel calculation of the for loop in findGS()
   bool verbose;          // verbosity level
-  bool band_level_shift; //
+  bool band_level_shift; // shifts the band levels for a constant in order to make H particle-hole symmetric
 
-  double EnergyErrgoal; // the convergence value at which dmrg() will stop the sweeps; default = machine precision
+  double EnergyErrgoal; // the convergence value at which dmrg() will stop the sweeps; default is machine precision
   int nrH;              // number of times to apply H to psi before comencing the sweep - akin to a power method; default = 5
   int nrange;           // the number of energies computed is 2*nrange + 1
 
@@ -50,7 +50,7 @@ struct params {
 
 };
 
-// lists of quantities, calculated in FindGS 
+// lists of quantities calculated in FindGS 
 struct store
 {
   std::map<int, MPS> psiStore;      // ground states

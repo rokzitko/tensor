@@ -13,6 +13,9 @@ defined($what) or die "Syntax: compare <filename>.";
 my $ref = $what . ".ref";
 -e $ref or die "$ref not found.";
 
+#for the middle_notMiddle test, which passes another argument:
+my $second_argument = shift;
+
 open(A, "<", $what) or die;
 open(B, "<", $ref) or die;
 
@@ -28,6 +31,8 @@ while (<B>) {
 while (<A>) {
   chomp($a = $_);
   chomp($b = <B>);
+
+  next if (($a =~ /occupancies/ or $a =~ /amplitudes/ ) and defined($second_argument)); #if the test is middle_notMiddle, do not compare occupancies and amplitudes 	
   next if ($a =~ /sqrt/); # these lines lead to false positives, ignore them
   next if ($a eq $b); # equal as strings, ok
   # extract first floating-point number after equality sign

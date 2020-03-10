@@ -1,0 +1,4 @@
+#!/bin/bash
+
+calcGS inputFile.txt >result.dat
+mycompare result.dat

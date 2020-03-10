@@ -5,6 +5,9 @@ params{
      N = 5
      verbose = true
      band_level_shift = true
+
+     calc_weights = true
+
 }
 
 

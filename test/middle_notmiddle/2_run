@@ -1,0 +1,9 @@
+#!/bin/bash
+
+#COMPARE the new calcGS results (result_A.dat) with the reference calcGS-middle results (result_A.dat.ref) and the opposite,
+#new calcGS-middle results (result_B.dat) with the reference calcGS results (result_B.dat.ref)
+
+calcGS inputFile.txt > result_A.dat
+calcGS-middle inputFile.txt >result_B.dat
+mycompare result_A.dat M
+mycompare result_B.dat M

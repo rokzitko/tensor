@@ -4,6 +4,8 @@ params{
      gamma = 1
      N = 5
      verbose = true
+
+     calc_weights = true
 }
 
 
