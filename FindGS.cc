@@ -397,6 +397,8 @@ void GetBathParams(double epseff, std::vector<double>& eps, std::vector<double>&
   V.resize(0);
   eps.push_back(epseff);
   V.push_back(0.);
+  // Note: different sign compared to the paper because of the difference of
+  // sign in the definition of the pairing term.
   const double band_level_shift = (p.band_level_shift ? -p.g/2.0 : 0.0);
   for(auto k: range1(p.NBath)){
     eps.push_back( -1 + (k-0.5)*dEnergy + band_level_shift );
