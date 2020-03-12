@@ -24,7 +24,8 @@ void Fill_SCBath_MPO_Ec(MPO& H, const std::vector<double>& eps_,
                                 cupA,      1,
                                 cdnA,      1,
                                 cupC+cdnC, 1,
-                                cupA+cdnA, 1,     Out, "Link" ));
+                                cupA+cdnA, 1,
+                                qn0,       1, Out, "Link" ));
 
     }
 
@@ -69,7 +70,7 @@ void Fill_SCBath_MPO_Ec(MPO& H, const std::vector<double>& eps_,
 
         W += p.sites.op("Cdn*Cup",i)        * setElt(left(1),right(7)) * p.g;
         W += p.sites.op("Cdagup*Cdagdn",i)  * setElt(left(1),right(8)) * p.g;
-        W += p.sites.op("Ntot", i)          * setElt(left(1),right(9)) * p.Ec; // !
+        W += p.sites.op("Ntot", i)          * setElt(left(1),right(9)) * 2.0*p.Ec; // !
 
         W += p.sites.op("Id",i)*setElt(left(2),right(2));
         W += p.sites.op("F" ,i)*setElt(left(3),right(3));
@@ -99,9 +100,9 @@ void Fill_SCBath_MPO_Ec(MPO& H, const std::vector<double>& eps_,
         Index left = dag( links.at(i-1) );
 
         W = ITensor(left, p.sites.si(i), p.sites.siP(i) );
-        
-        W += p.sites.op("Ntot",  i) * setElt(left(1)) * eps_[i-1];
-        W += p.sites.op("Nupdn",i)  * setElt(left(1)) * p.g;
+
+        W += p.sites.op("Ntot",  i) * setElt(left(1)) * (eps_[i-1] + p.Ec*(1.0-2.0*p.n0)); // !
+        W += p.sites.op("Nupdn",i)  * setElt(left(1)) * (p.g + 2.0*p.Ec); // !
 
         W += p.sites.op("Id",    i) * setElt(left(2)) ;
         W += p.sites.op("Cdagup",i) * setElt(left(3)) * v_[i-1];
@@ -114,7 +115,7 @@ void Fill_SCBath_MPO_Ec(MPO& H, const std::vector<double>& eps_,
         W += p.sites.op("Ntot",         i) * setElt(left(9)); // !
 
         if (p.verbose) std::cout << "using " << eps_[i-1] << " and "<<v_[i-1]<<std::endl;
-    }   
-    
+    }
+
   }
 

@@ -96,7 +96,7 @@ void Fill_SCBath_MPO(MPO& H, const std::vector<double>& eps_,
         Index left = dag( links.at(i-1) );
 
         W = ITensor(left, p.sites.si(i), p.sites.siP(i) );
-        
+
         W += p.sites.op("Ntot",  i) * setElt(left(1)) * eps_[i-1];
         W += p.sites.op("Nupdn",i)  * setElt(left(1)) * p.g;
 
@@ -110,7 +110,7 @@ void Fill_SCBath_MPO(MPO& H, const std::vector<double>& eps_,
         W += p.sites.op("Cdn*Cup",      i) * setElt(left(8));
 
         if (p.verbose) std::cout << "using " << eps_[i-1] << " and "<<v_[i-1]<<std::endl;
-    }   
-    
+    }
+
   }
 

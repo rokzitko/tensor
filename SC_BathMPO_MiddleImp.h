@@ -16,7 +16,7 @@ void Fill_SCBath_MPO_MiddleImp(MPO& H, const std::vector<double>& eps_,
 
     std::vector<Index> links;
     links.push_back( Index() );
-    
+
     if(length(H)%2 != 1){
         // currently only allow an odd total number of sites
         Error("Total number of sites should be odd so that the number of bath sites is even");
@@ -33,7 +33,7 @@ void Fill_SCBath_MPO_MiddleImp(MPO& H, const std::vector<double>& eps_,
                                 cdnA,      1,
                                 cupA+cdnA, 1,
                                 cupC+cdnC, 1,     Out, "Link" ));
-        
+
     }
     //first we create the link indices which carry quantum number information
     for(auto i : range1( impSite, length(H)-1 )){
@@ -44,7 +44,7 @@ void Fill_SCBath_MPO_MiddleImp(MPO& H, const std::vector<double>& eps_,
                                 cdnC,      1,
                                 cupA+cdnA, 1,
                                 cupC+cdnC, 1,     Out, "Link" ));
-        
+
     }
 
     //then we just fill the MPO tensors which can be viewed
@@ -133,7 +133,7 @@ void Fill_SCBath_MPO_MiddleImp(MPO& H, const std::vector<double>& eps_,
 
         W += p.sites.op("Ntot",i)  * setElt(left(1), right(2)) * epseff;
         W += p.sites.op("Nupdn",i) * setElt(left(1), right(2)) * p.Ueff;
-        
+
         // hybridizations
         W += p.sites.op("Cup*F",    i)*setElt(left(1),right(3)) * (-1);
         W += p.sites.op("Cdn*F",    i)*setElt(left(1),right(4)) * (-1);
@@ -199,7 +199,7 @@ void Fill_SCBath_MPO_MiddleImp(MPO& H, const std::vector<double>& eps_,
         Index left = dag( links.at(i-1) );
 
         W = ITensor(left, p.sites.si(i), p.sites.siP(i) );
-        
+
         W += p.sites.op("Ntot",  i) * setElt(left(1)) * eps_[i-1]; // use index i-1
         W += p.sites.op("Nupdn",i)  * setElt(left(1)) * p.g;
 
@@ -213,7 +213,7 @@ void Fill_SCBath_MPO_MiddleImp(MPO& H, const std::vector<double>& eps_,
         W += p.sites.op("Cdn*Cup",      i) * setElt(left(8));
 
         if (p.verbose) std::cout << "using " << eps_[i-1] << " and "<<v_[i-1]<<std::endl;
-    }   
-    
+    }
+
   }
 
