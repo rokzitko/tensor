@@ -2,8 +2,8 @@
 using namespace itensor;
 
 //fills the MPO tensors
-void Fill_SCBath_MPO(MPO& H, const std::vector<double>& eps_,
-                const std::vector<double>& v_, double epseff, const params &p)
+void Fill_SCBath_MPO_Ec(MPO& H, const std::vector<double>& eps_,
+                const std::vector<double>& v_, const params &p)
 {
       //QN objects are necessary to have abelian symmetries in MPS
       QN    qn0  ( {"Sz",  0},{"Nf", 0} ),
@@ -43,15 +43,15 @@ void Fill_SCBath_MPO(MPO& H, const std::vector<double>& eps_,
         W = ITensor(right, p.sites.si(i), p.sites.siP(i) );
         W += p.sites.op("Id",i) * setElt(right(1));
 
-        W += p.sites.op("Ntot",i)  * setElt(right(2)) * epseff;
-        W += p.sites.op("Nupdn",i) * setElt(right(2)) * p.Ueff;
+        W += p.sites.op("Ntot",i)  * setElt(right(2)) * p.epsimp; // not eps_[i-1]!
+        W += p.sites.op("Nupdn",i) * setElt(right(2)) * p.U; // not Ueff!
 
         W += p.sites.op("Cup*F",i) * setElt(right(3))    * (-1);
         W += p.sites.op("Cdn*F",i) * setElt(right(4))    * (-1);
         W += p.sites.op("Cdagup*F",i) * setElt(right(5)) * (+1);
         W += p.sites.op("Cdagdn*F",i) * setElt(right(6)) * (+1);
 
-        if (p.verbose) std::cout << "using " << eps_[i-1] <<std::endl;
+        if (p.verbose) std::cout << "using p.epsimp and p.U for impurity" <<std::endl;
     }
 
     // sites 2 ... N-1 are matrices
@@ -64,11 +64,12 @@ void Fill_SCBath_MPO(MPO& H, const std::vector<double>& eps_,
 
         W += p.sites.op("Id",i) * setElt(left(1), right(1));
 
-        W += p.sites.op("Ntot",i)           * setElt(left(1),right(2)) * eps_[i-1];
-        W += p.sites.op("Nupdn",i)          * setElt(left(1),right(2)) * p.g;
+        W += p.sites.op("Ntot",i)           * setElt(left(1),right(2)) * (eps_[i-1] + p.Ec*(1.0-2.0*p.n0)); // !
+        W += p.sites.op("Nupdn",i)          * setElt(left(1),right(2)) * (p.g + 2.0*p.Ec); // !
 
         W += p.sites.op("Cdn*Cup",i)        * setElt(left(1),right(7)) * p.g;
         W += p.sites.op("Cdagup*Cdagdn",i)  * setElt(left(1),right(8)) * p.g;
+        W += p.sites.op("Ntot", i)          * setElt(left(1),right(9)) * p.Ec; // !
 
         W += p.sites.op("Id",i)*setElt(left(2),right(2));
         W += p.sites.op("F" ,i)*setElt(left(3),right(3));
@@ -77,6 +78,7 @@ void Fill_SCBath_MPO(MPO& H, const std::vector<double>& eps_,
         W += p.sites.op("F" ,i)*setElt(left(6),right(6));
         W += p.sites.op("Id",i)*setElt(left(7),right(7));
         W += p.sites.op("Id",i)*setElt(left(8),right(8));
+        W += p.sites.op("Id",i)*setElt(left(9),right(9));
 
         W += p.sites.op("Cdagup",i)*setElt(left(3),right(2))* v_[i-1];
         W += p.sites.op("Cdagdn",i)*setElt(left(4),right(2))* v_[i-1];
@@ -85,6 +87,7 @@ void Fill_SCBath_MPO(MPO& H, const std::vector<double>& eps_,
 
         W += p.sites.op("Cdagup*Cdagdn",i)*setElt(left(7),right(2));
         W += p.sites.op("Cdn*Cup",i)      *setElt(left(8),right(2));
+        W += p.sites.op("Ntot",i)         *setElt(left(9),right(2)); // !
 
         if (p.verbose) std::cout << "using " << eps_[i-1] << " and "<<v_[i-1]<<std::endl;
     }
@@ -108,6 +111,7 @@ void Fill_SCBath_MPO(MPO& H, const std::vector<double>& eps_,
 
         W += p.sites.op("Cdagup*Cdagdn",i) * setElt(left(7));
         W += p.sites.op("Cdn*Cup",      i) * setElt(left(8));
+        W += p.sites.op("Ntot",         i) * setElt(left(9)); // !
 
         if (p.verbose) std::cout << "using " << eps_[i-1] << " and "<<v_[i-1]<<std::endl;
     }   

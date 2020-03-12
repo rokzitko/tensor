@@ -6,16 +6,15 @@
 #include <iomanip>
 #include <vector>
 #include <map>
+#include <stdexcept>
 
 #include <omp.h>
 
 #include "FindGS.h"
 
-#ifndef MIDDLE_IMP
- #include "SC_BathMPO.h"
-#else
- #include "SC_BathMPO_MiddleImp.h"
-#endif
+#include "SC_BathMPO.h"
+#include "SC_BathMPO_MiddleImp.h"
+#include "SC_BathMPO_Ec.h"
 
 InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   if(argc!=2){
@@ -27,6 +26,8 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   p.inputfn = {argv[1]};
   auto input = InputGroup{p.inputfn, "params"}; //get input parameters using InputGroup from itensor
 
+  p.MPO = input.getString("MPO", "std");
+  
   p.NImp = 1;
   p.N = input.getInt("N", 0);
   if (p.N != 0) {
@@ -40,12 +41,13 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
     }
     p.N = p.NBath+p.NImp;
   } 
-  #ifdef MIDDLE_IMP
+  if (p.MPO == "middle") {
     assert(p.NBath%2 == 0);   // NBath must be even
     p.impindex = 1+p.NBath/2;
-  #else
+  } else if (p.MPO == "std" || p.MPO == "Ec") {
     p.impindex = 1;
-  #endif
+  } else
+    throw std::runtime_error("Unknown MPO type");
   std::cout << "N=" << p.N << " NBath=" << p.NBath << " impindex=" << p.impindex << std::endl;
 
   // sites is an ITensor thing. it defines the local hilbert space and
@@ -75,7 +77,10 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   p.gamma = input.getReal("gamma");
   p.Ec = input.getReal("Ec", 0);
   p.epsimp = input.getReal("epsimp", -p.U/2.);    
-  p.Ueff = p.U + 2.*p.Ec;
+
+  // for Ec_trick mapping
+  p.Ueff = p.U + 2.*p.Ec;                            // effective impurity e-e repulstion
+  // p.epseff cannot be set here, because it depends on ntot (number of electrons in a given sector)
 
   p.numPart={};
   const int nhalf = p.N; // total nr of electrons at half-filling
@@ -96,7 +101,7 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
 
 //calculates the groundstates and the energies of the relevant particle number sectors
 void FindGS(InputGroup &input, store &s, params &p){
-  
+
   std::vector<double> GSenergies(0); // result: lowest energy in each occupancy sector
   std::vector<double> ESenergies(0); // optionally: first excited state in each occupancy sector
 
@@ -117,36 +122,32 @@ void FindGS(InputGroup &input, store &s, params &p){
   int nrsweeps = input.getInt("nrsweeps", 15);
   auto sweeps = Sweeps(nrsweeps,sw_table);
 
-  std::vector<double> eps;        // vector containing on-site energies of the bath !one-indexed!
-  std::vector<double> V;          //vector containing hopping amplitudes to the bath !one-indexed!
-  
-  #pragma omp parallel for if(p.parallel) private(eps, V)
+  #pragma omp parallel for if(p.parallel)
   for (size_t i=0; i<p.numPart.size(); i++){
-    auto ntot = p.numPart[i];
-    std::cout << "\nSweeping in the sector with " << ntot << " particles.\n";  
+    int ntot = p.numPart[i];
+    std::cout << "\nSweeping in the sector with " << ntot << " particles.\n";
+
+    std::vector<double> eps;        // vector containing on-site energies of the bath !one-indexed!
+    std::vector<double> V;          // vector containing hopping amplitudes to the bath !one-indexed!
 
     //Read the bath parameters (fills in the vectors eps and V).
-    const double epseff = p.epsimp - 2.*p.Ec*(ntot-p.n0) + p.Ec;  //effective impurity on-site potential
-    GetBathParams(epseff, eps, V, p);
+    GetBathParams(eps, V, p);
 
     //initialize H and psi
-    MPO H = initH(eps, V, p); 
-    MPS psi = initPsi(ntot, p);   
+    auto [H, Eshift] = initH(eps, V, ntot, p);
+    auto psi = initPsi(ntot, p);
 
     Args args; //args is used to store and transport parameters between various functions
-    
+
     //Apply the MPO a couple of times to get DMRG started, otherwise it might not converge.
     for(auto i : range1(p.nrH)){
       psi = applyMPO(H,psi,args);
       psi.noPrime().normalize();
       }
-    
+
     auto [GS0, GS] = dmrg(H,psi,sweeps,{"Silent",p.parallel, "Quiet",!p.printDimensions, "EnergyErrgoal",p.EnergyErrgoal}); // call itensor dmrg 
-    
-    double shift = p.Ec*pow(ntot-p.n0,2); // occupancy dependent effective energy shift
-    shift += p.U/2.; // RZ, for convenience    
-    
-    double GSenergy = GS0+shift;
+
+    double GSenergy = GS0+Eshift;
 
     s.psiStore[ntot] = GS;
     s.GSEstore[ntot] = GSenergy; 
@@ -164,7 +165,7 @@ void FindGS(InputGroup &input, store &s, params &p){
       auto wfs = std::vector<MPS>(1);
       wfs.at(0) = GS;
       auto [ESenergy, ES] = dmrg(H,wfs,psi,sweeps,{"Silent",p.parallel,"Quiet",true,"Weight",11.0});
-      ESenergy += shift;
+      ESenergy += Eshift;
       s.ESEstore[ntot]=ESenergy;
       s.ESpsiStore[ntot]=ES;
     }
@@ -172,10 +173,24 @@ void FindGS(InputGroup &input, store &s, params &p){
 }//end FindGS
 
 //initialize the Hamiltonian
-MPO initH(std::vector<double> eps, std::vector<double> V, params &p){
+std::tuple<MPO, double> initH(std::vector<double> eps, std::vector<double> V, int ntot, params &p){
+  double Eshift;  // constant term in the Hamiltonian
   MPO H(p.sites); // MPO is the hamiltonian in "MPS-form" after this line it is still a trivial operator
-  Fill_SCBath_MPO(H, eps, V, p); // defined in SC_BathMPO.h, fills the MPO with the necessary entries
-  return H;
+  if (p.MPO == "std") {
+    Eshift = p.Ec*pow(ntot-p.n0,2); // occupancy dependent effective energy shift
+    double epseff = p.epsimp - 2.*p.Ec*(ntot-p.n0) + p.Ec;
+    Fill_SCBath_MPO(H, eps, V, epseff, p); // defined in SC_BathMPO.h, fills the MPO with the necessary entries
+  } else if (p.MPO == "middle") {
+    Eshift = p.Ec*pow(ntot-p.n0,2); // occupancy dependent effective energy shift
+    double epseff = p.epsimp - 2.*p.Ec*(ntot-p.n0) + p.Ec;
+    Fill_SCBath_MPO_MiddleImp(H, eps, V, epseff, p);
+  } else if (p.MPO == "Ec") {
+    Eshift = p.Ec*pow(p.n0, 2);
+    Fill_SCBath_MPO_Ec(H, eps, V, p);
+  } else
+    throw std::runtime_error("Unknown MPO type");
+  Eshift += p.U/2.; // RZ, for convenience
+  return std::make_tuple(H, Eshift);
 }
 
 //initialize the MPS in a product state with the correct particle number
@@ -185,7 +200,7 @@ MPS initPsi(int ntot, params &p){
   const int nsc = ntot-1;  // number of electrons in the SC in Gamma->0 limit
   const int npair = nsc/2; // number of pairs in the SC
   int tot = 0; // for assertion test
-  
+
   //Up electron at the impurity site and npair UpDn pairs. 
   state.set(p.impindex, "Up"); 
   tot++;
@@ -198,7 +213,7 @@ MPS initPsi(int ntot, params &p){
       state.set(i, "UpDn");
       tot += 2;
     }
-  }     
+  }
 
   //If ncs is odd, add another Dn electron, but not to the impurity site.
   if (nsc%2 == 1) {
@@ -227,7 +242,7 @@ void calculateAndPrint(InputGroup &input, store &s, params &p){
     printfln("RESULTS FOR THE SECTOR WITH %i PARTICLES:", ntot);
 
     printfln("Ground state energy = %.17g",s.GSEstore[ntot]);
-    
+
     MPS & GS = s.psiStore[ntot];
     //norm
     double normGS = inner(GS, GS);
@@ -236,7 +251,7 @@ void calculateAndPrint(InputGroup &input, store &s, params &p){
     MeasureOcc(GS, p);
     MeasurePairing(GS, p);
     MeasureAmplitudes(GS, p);
-    
+
     double & GS0 = s.GSEstore[ntot];
     double & GS0bis = s.GS0bisStore[ntot];
     double & deltaE = s.deltaEStore[ntot];
@@ -249,16 +264,16 @@ void calculateAndPrint(InputGroup &input, store &s, params &p){
 
     if (p.excited_state){
       MPS & ES = s.ESpsiStore[ntot];
-      double & ESenergy = s.ESEstore[ntot]; 
+      double & ESenergy = s.ESEstore[ntot];
       MeasureOcc(ES, p);
       printfln("Excited state energy = %.17g",ESenergy);
-     } 
+     }
   } //end of n-for loop
 
   printfln("");
   //Print out energies again:
   for(auto ntot: p.numPart){
-    printfln("n = %.17g  E = %.17g", ntot, s.GSEstore[ntot]);  
+    printfln("n = %.17g  E = %.17g", ntot, s.GSEstore[ntot]);
   }
 
   //Find the sector with the global GS:
@@ -288,7 +303,7 @@ void calculateAndPrint(InputGroup &input, store &s, params &p){
       ExpectationValueAddEl(psiNp, psiGS, "dn", p);
     }
 
-    else {      
+    else {
       printfln("ERROR: we don't have info about the N_GS+1 occupancy sector.");
     }
 
@@ -299,8 +314,8 @@ void calculateAndPrint(InputGroup &input, store &s, params &p){
       ExpectationValueTakeEl(psiNm, psiGS, "up", p);
       ExpectationValueTakeEl(psiNm, psiGS, "dn", p);
     }
-  
-    else {      
+
+    else {
       printfln("ERROR: we don't have info about the N_GS-1 occupancy sector.");
     }
   } //end of if (calcweights)  
@@ -314,22 +329,22 @@ void ExpectationValueAddEl(MPS psi1, MPS psi2, std::string spin, const params &p
   psi2.set(p.impindex,newTensor); //plug in the new tensor, with the operator applied
 
   auto res = inner(psi1, psi2);
-    
-  std::cout << "weight w+ " << spin << ": " << res << "\n";  
+
+  std::cout << "weight w+ " << spin << ": " << res << "\n";
 }
 
 //calculates <psi1|c|psi2>
 void ExpectationValueTakeEl(MPS psi1, MPS psi2, std::string spin, const params &p){
-  
+
   psi2.position(p.impindex);
-  auto newTensor = noPrime(op(p.sites,"C"+spin, p.impindex)*psi2(p.impindex)); 
+  auto newTensor = noPrime(op(p.sites,"C"+spin, p.impindex)*psi2(p.impindex));
   psi2.set(p.impindex,newTensor);
 
   auto res = inner(psi1, psi2);
-    
-  std::cout << "weight w- " << spin << ": " << res << "\n";  
+
+  std::cout << "weight w- " << spin << ": " << res << "\n";
 }
-	
+
 
 //prints the occupation number of an MPS psi
 //instructive to learn how to calculate local observables
@@ -388,20 +403,20 @@ void MeasureAmplitudes(MPS& psi, const params &p){
 }
 
 //fills the vectors eps and V with the correct values for given gamma and number of bath sites
-void GetBathParams(double epseff, std::vector<double>& eps, std::vector<double>& V, params &p) {
-  double dEnergy = 2./p.NBath;
+void GetBathParams(std::vector<double>& eps, std::vector<double>& V, params &p) {
+  double d = 2./p.NBath;
   double Vval = std::sqrt( 2*p.gamma/(M_PI*p.NBath) ); // pi!
   if (p.verbose)
     std::cout << "Vval=" << Vval << std::endl;
   eps.resize(0);
   V.resize(0);
-  eps.push_back(epseff);
-  V.push_back(0.);
-  // Note: different sign compared to the paper because of the difference of
+  eps.push_back(999999.); // should not be used!
+  V.push_back(999999.);   // idem
+  // Note: different sign in band_level_shift compared to the paper because of the difference of
   // sign in the definition of the pairing term.
   const double band_level_shift = (p.band_level_shift ? -p.g/2.0 : 0.0);
   for(auto k: range1(p.NBath)){
-    eps.push_back( -1 + (k-0.5)*dEnergy + band_level_shift );
+    eps.push_back( -1 + (k-0.5)*d + band_level_shift );
     V.push_back( Vval );
   }
 }

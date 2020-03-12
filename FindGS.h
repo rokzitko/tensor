@@ -8,6 +8,8 @@ struct params {
   string inputfn;       // filename of the input file
   InputGroup input;     // itensor input parser
 
+  string MPO = "std";   // which MPO representation to use
+
   int N;                // number of sites
   int NImp;             // number of impurity orbitals
   int NBath;            // number of bath sites
@@ -38,7 +40,7 @@ struct params {
   double gamma;         // hybridisation
   double Ec;            // charging energy
   double epsimp;        // impurity level
-  double Ueff;          // effective e-e on impurity site (after mapping)
+  double Ueff;          // effective e-e on impurity site (after Ec_trick mapping)
 
   std::vector<int> numPart; // range of total occupancies of interest
 
@@ -67,8 +69,8 @@ struct store
 
 void FindGS(InputGroup &input, store &s, params &p);
 void calculateAndPrint(InputGroup &input, store &s, params &p);
-void GetBathParams(double epseff, std::vector<double>& eps, std::vector<double>& V, params &p);
-MPO initH(std::vector<double> eps, std::vector<double> V, params &p);
+void GetBathParams(std::vector<double>& eps, std::vector<double>& V, params &p);
+std::tuple<MPO, double> initH(std::vector<double> eps, std::vector<double> V, int ntot, params &p);
 MPS initPsi(int ntot, params &p);
 void ExpectationValueAddEl(MPS psi1, MPS psi2, std::string spin, const params &p);
 void ExpectationValueTakeEl(MPS psi1, MPS psi2, std::string spin, const params &p);

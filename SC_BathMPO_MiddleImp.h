@@ -2,8 +2,8 @@
 using namespace itensor;
 
 //fills the MPO tensors
-void Fill_SCBath_MPO(MPO& H, const std::vector<double>& eps_,
-                const std::vector<double>& v_, const params &p)
+void Fill_SCBath_MPO_MiddleImp(MPO& H, const std::vector<double>& eps_,
+                const std::vector<double>& v_, double epseff, const params &p)
 {
       //QN objects are necessary to have abelian symmetries in MPS
       // automatically find the correct values
@@ -131,7 +131,7 @@ void Fill_SCBath_MPO(MPO& H, const std::vector<double>& eps_,
 
         W += p.sites.op("Id",i) * setElt(left(1), right(1));
 
-        W += p.sites.op("Ntot",i)  * setElt(left(1), right(2)) * eps_[0]; // use index 0
+        W += p.sites.op("Ntot",i)  * setElt(left(1), right(2)) * epseff;
         W += p.sites.op("Nupdn",i) * setElt(left(1), right(2)) * p.Ueff;
         
         // hybridizations

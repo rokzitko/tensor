@@ -1,6 +1,6 @@
 #!/bin/bash
-calcGS-middle inputFile_0.1.txt >result_0.1.dat
-calcGS-middle inputFile_1.txt >result_1.dat
+calcGS inputFile_0.1.txt >result_0.1.dat
+calcGS inputFile_1.txt >result_1.dat
 mycompare result_0.1.dat
 mycompare result_1.dat
 
