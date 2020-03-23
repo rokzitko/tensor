@@ -22,16 +22,17 @@ int main(int argc, char* argv[]){
 
 	std::cout << "Phase transition at Gamma = " << PTgamma << "\n";  
 
+	return 0;
 }
 
 
 //Calculates Delta = E_odd - E_even = (-1)^(n_GS%2) * min( E_nGS+1 - E_nGS, E_nGS-1 - E_nGS)
 double DeltaE(InputGroup &input, store &s, params &p) {
 
-	FindGS(input, s, p);
+  FindGS(input, s, p);
 
-	//Find the sector with the global GS:
- 	int N_GS;
+  //Find the sector with the global GS:
+  int N_GS;
   double EGS = std::numeric_limits<double>::infinity();
   for(auto ntot: p.numPart){
     if (s.GSEstore[ntot] < EGS) {

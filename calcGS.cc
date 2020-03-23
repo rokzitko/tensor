@@ -20,4 +20,6 @@ int main(int argc, char* argv[]){
   FindGS(input, s, p);
   // calculates observables and prints them
   calculateAndPrint(input, s, p);
+
+  return 0;
 }
