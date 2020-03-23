@@ -42,6 +42,9 @@ struct params {
   double epsimp;        // impurity level
   double Ueff;          // effective e-e on impurity site (after Ec_trick mapping)
 
+  double EZ_imp;        // impurity Zeeman energy
+  double EZ_bulk;        // bulk Zeeman energy
+
   std::vector<int> numPart; // range of total occupancies of interest
 
   //parameters for the phase transition point iteration

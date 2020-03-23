@@ -64,6 +64,8 @@ void Fill_SCBath_MPO_MiddleImp(MPO& H, const std::vector<double>& eps_,
 
         // local H on site
         W += p.sites.op("Ntot",i)  * setElt(right(2)) * eps_[i]; // here use index i
+        W += p.sites.op("Nup",i)  * setElt(right(2)) * p.EZ_bulk; 
+        W += p.sites.op("Ndn",i)  * setElt(right(2)) * (-1) * p.EZ_bulk;
         W += p.sites.op("Nupdn",i) * setElt(right(2)) * p.g;
 
         //hybridization
@@ -91,6 +93,8 @@ void Fill_SCBath_MPO_MiddleImp(MPO& H, const std::vector<double>& eps_,
 
         // local H on site
         W += p.sites.op("Ntot",i)           * setElt(left(1),right(2)) * eps_[i]; // here use index i
+        W += p.sites.op("Nup",i)           * setElt(left(1),right(2)) * p.EZ_bulk;
+        W += p.sites.op("Ndn",i)           * setElt(left(1),right(2)) * (-1) * p.EZ_bulk;
         W += p.sites.op("Nupdn",i)          * setElt(left(1),right(2)) * p.g;
 
         // hybridizations 
@@ -132,6 +136,8 @@ void Fill_SCBath_MPO_MiddleImp(MPO& H, const std::vector<double>& eps_,
         W += p.sites.op("Id",i) * setElt(left(1), right(1));
 
         W += p.sites.op("Ntot",i)  * setElt(left(1), right(2)) * epseff;
+        W += p.sites.op("Nup",i)  * setElt(left(1), right(2)) * p.EZ_imp;
+        W += p.sites.op("Ndn",i)  * setElt(left(1), right(2)) * (-1) * p.EZ_imp;
         W += p.sites.op("Nupdn",i) * setElt(left(1), right(2)) * p.Ueff;
 
         // hybridizations
@@ -168,6 +174,8 @@ void Fill_SCBath_MPO_MiddleImp(MPO& H, const std::vector<double>& eps_,
         W += p.sites.op("Id",i) * setElt(left(1), right(1));
 
         W += p.sites.op("Ntot",i)           * setElt(left(1),right(2)) * eps_[i-1];  // use index i-1
+        W += p.sites.op("Nup",i)           * setElt(left(1),right(2)) * p.EZ_bulk;
+        W += p.sites.op("Ndn",i)           * setElt(left(1),right(2)) * (-1) * p.EZ_bulk;
         W += p.sites.op("Nupdn",i)          * setElt(left(1),right(2)) * p.g;
 
         W += p.sites.op("Cdn*Cup",i)        * setElt(left(1),right(7)) * p.g;
@@ -201,6 +209,8 @@ void Fill_SCBath_MPO_MiddleImp(MPO& H, const std::vector<double>& eps_,
         W = ITensor(left, p.sites.si(i), p.sites.siP(i) );
 
         W += p.sites.op("Ntot",  i) * setElt(left(1)) * eps_[i-1]; // use index i-1
+        W += p.sites.op("Nup",  i) * setElt(left(1)) * p.EZ_bulk;
+        W += p.sites.op("Ndn",  i) * setElt(left(1)) * (-1) * p.EZ_bulk;
         W += p.sites.op("Nupdn",i)  * setElt(left(1)) * p.g;
 
         W += p.sites.op("Id",    i) * setElt(left(2)) ;

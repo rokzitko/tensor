@@ -82,6 +82,9 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   p.Ueff = p.U + 2.*p.Ec;                            // effective impurity e-e repulstion
   // p.epseff cannot be set here, because it depends on ntot (number of electrons in a given sector)
 
+  p.EZ_imp = input.getReal("EZ_imp", 0.);
+  p.EZ_bulk = input.getReal("EZ_bulk", 0.);
+
   p.numPart={};
   const int nhalf = p.N; // total nr of electrons at half-filling
   const int nref = (p.refisn0 ? round(p.n0)+1 : nhalf); //calculation of the energies is centered around this n
