@@ -204,30 +204,63 @@ MPS initPsi(int ntot, params &p){
   const int npair = nsc/2; // number of pairs in the SC
   int tot = 0; // for assertion test
 
-  //Up electron at the impurity site and npair UpDn pairs. 
-  state.set(p.impindex, "Up"); 
-  tot++;
 
-  int j=0;
-  int i=1;
-  for(; j < npair; i++){ //In order to avoid adding a pair to the impurity site   
-    if (i!=p.impindex){             //i counts sites, j counts added pairs.
-      j++;
-      state.set(i, "UpDn");
-      tot += 2;
+  if (p.EZ_imp <= 0) { 
+    //Up electron at the impurity site and npair UpDn pairs. 
+    state.set(p.impindex, "Up"); 
+    tot++;
+
+    int j=0;
+    int i=1;
+    for(; j < npair; i++){ //In order to avoid adding a pair to the impurity site   
+      if (i!=p.impindex){             //i counts sites, j counts added pairs.
+        j++;
+        state.set(i, "UpDn");
+        tot += 2;
+      }
+    }
+
+    //If ncs is odd, add another Dn electron, but not to the impurity site.
+    if (nsc%2 == 1) {
+      if (i!=p.impindex){
+        state.set(i,"Dn"); 
+        tot++;
+      }
+      else{
+        state.set(i+1,"Dn"); 
+        tot++;
+      }
     }
   }
+  else { //If the magnetic field prefers spin down on the impurity
 
-  //If ncs is odd, add another Dn electron, but not to the impurity site.
-  if (nsc%2 == 1) {
-    if (i!=p.impindex){
-      state.set(i,"Dn"); 
-      tot++;
+    //Down electron at the impurity site and npair UpDn pairs. 
+    state.set(p.impindex, "Dn"); 
+    tot++;
+
+    int j=0;
+    int i=1;
+    for(; j < npair; i++){ //In order to avoid adding a pair to the impurity site   
+      if (i!=p.impindex){             //i counts sites, j counts added pairs.
+        j++;
+        state.set(i, "UpDn");
+        tot += 2;
+      }
     }
-    else{
-      state.set(i+1,"Dn"); 
-      tot++;
+
+    //If ncs is odd, add another Up electron, but not to the impurity site.
+    if (nsc%2 == 1) {
+      if (i!=p.impindex){
+        state.set(i,"Up"); 
+        tot++;
+      }
+      else{
+        state.set(i+1,"Up"); 
+        tot++;
+      }
     }
+
+
   }
 
   assert(tot == n);
