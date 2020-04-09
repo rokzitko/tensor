@@ -69,7 +69,7 @@ void Fill_SCBath_MPO_Ec(MPO& H, const std::vector<double>& eps_,
 
         W += p.sites.op("Ntot",i)           * setElt(left(1),right(2)) * (eps_[i-1] + p.Ec*(1.0-2.0*p.n0)); // !
         W += p.sites.op("Nup",i)            * setElt(left(1),right(2)) * p.EZ_bulk; // bulk Zeeman energy
-        W += p.sites.op("Ndn",i)            * setElt(left(1),right(2)) * (-1) * p.EZ_bulk; // bulk Zeeman energy
+        W += p.sites.op("Ndn",i)            * setElt(left(1),right(2)) * (-1.) * p.EZ_bulk; // bulk Zeeman energy
         W += p.sites.op("Nupdn",i)          * setElt(left(1),right(2)) * (p.g + 2.0*p.Ec); // !
 
         W += p.sites.op("Cdn*Cup",i)        * setElt(left(1),right(7)) * p.g;

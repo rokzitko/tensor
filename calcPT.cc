@@ -90,7 +90,7 @@ double FindPT(InputGroup &input, store &s, params &p)  {
 
 	std::cout << "\nIteration " << iteration << ": gamma = " << gamma2 << ", Delta = " << Delta2 << "\n";  
 
-	while ( abs(Delta2) > p.precision && iteration < p.maxIter ) {
+	while ( abs(Delta2) > p.precision && iteration < p.maxIter ) { //iteration ends if Delta is smalled than precision, if maxIter is hit or if the previous gamma is the same as the new one.
 		iteration++;
 
 		gamma0 = gamma1;
@@ -105,6 +105,8 @@ double FindPT(InputGroup &input, store &s, params &p)  {
 
 
 		std::cout << "\nIteration " << iteration << ": gamma = " << gamma2 << ", Delta = " << Delta2 << "\n";  
+
+		if (abs(gamma2 - gamma1) < p.precision) break;
 
 	} // end while
 

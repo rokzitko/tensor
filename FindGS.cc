@@ -204,7 +204,6 @@ MPS initPsi(int ntot, params &p){
   const int npair = nsc/2; // number of pairs in the SC
   int tot = 0; // for assertion test
 
-
   if (p.EZ_imp <= 0) { 
     //Up electron at the impurity site and npair UpDn pairs. 
     state.set(p.impindex, "Up"); 
@@ -212,7 +211,7 @@ MPS initPsi(int ntot, params &p){
 
     int j=0;
     int i=1;
-    for(; j < npair; i++){ //In order to avoid adding a pair to the impurity site   
+    for(i; j < npair; i++){ //In order to avoid adding a pair to the impurity site   
       if (i!=p.impindex){             //i counts sites, j counts added pairs.
         j++;
         state.set(i, "UpDn");
@@ -220,7 +219,7 @@ MPS initPsi(int ntot, params &p){
       }
     }
 
-    //If ncs is odd, add another Dn electron, but not to the impurity site.
+    //If ncs is odd, add another electron according to EZ_bulk preference, but not to the impurity site.
     if (nsc%2 == 1) {
       if (i!=p.impindex){
         state.set(i,"Dn"); 
@@ -232,6 +231,7 @@ MPS initPsi(int ntot, params &p){
       }
     }
   }
+  
   else { //If the magnetic field prefers spin down on the impurity
 
     //Down electron at the impurity site and npair UpDn pairs. 
@@ -240,7 +240,7 @@ MPS initPsi(int ntot, params &p){
 
     int j=0;
     int i=1;
-    for(; j < npair; i++){ //In order to avoid adding a pair to the impurity site   
+    for(i; j < npair; i++){ //In order to avoid adding a pair to the impurity site   
       if (i!=p.impindex){             //i counts sites, j counts added pairs.
         j++;
         state.set(i, "UpDn");
@@ -251,17 +251,16 @@ MPS initPsi(int ntot, params &p){
     //If ncs is odd, add another Up electron, but not to the impurity site.
     if (nsc%2 == 1) {
       if (i!=p.impindex){
-        state.set(i,"Up"); 
+        state.set(i, "Up");
         tot++;
       }
       else{
-        state.set(i+1,"Up"); 
+        state.set(i+1, "Up");
         tot++;
       }
     }
-
-
   }
+
 
   assert(tot == n);
   MPS psi(state);
