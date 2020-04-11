@@ -27,6 +27,10 @@ struct params {
   bool verbose;          // verbosity level
   bool band_level_shift; // shifts the band levels for a constant in order to make H particle-hole symmetric
   bool stupidInit;       // initialize the state with double occupancy above the fermi level and zero occupancy beneath
+  bool chargeCorrelation;// compute the impurity-superconductor correlation <n_imp n_i>
+  bool pairCorrelation;  // compute the impurity-superconductor correlation <d d c_i^dag c_i^dag>
+  bool spinCorrelation;  // compute the impurity-superconductor correlation <S_imp S_i>
+
 
   double EnergyErrgoal; // the convergence value at which dmrg() will stop the sweeps; default is machine precision
   int nrH;              // number of times to apply H to psi before comencing the sweep - akin to a power method; default = 5
@@ -78,6 +82,9 @@ std::tuple<MPO, double> initH(std::vector<double> eps, std::vector<double> V, in
 MPS initPsi(int ntot, params &p);
 void ExpectationValueAddEl(MPS psi1, MPS psi2, std::string spin, const params &p);
 void ExpectationValueTakeEl(MPS psi1, MPS psi2, std::string spin, const params &p);
+void ChargeCorrelation(MPS& psi, const params &p);
+void SpinCorrelation(MPS& psi, const params &p);
+void PairCorrelation(MPS& psi, const params &p);
 void MyDMRG(MPS& psi, MPO& H, double& energy, Args args);
 void MeasureOcc(MPS& psi, const params &);
 void MeasurePairing(MPS& psi, const params &);

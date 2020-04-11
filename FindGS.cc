@@ -64,6 +64,10 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   p.parallel = input.getYesNo("parallel", false);
   p.verbose = input.getYesNo("verbose", false);
   p.band_level_shift = input.getYesNo("band_level_shift", false);
+  p.chargeCorrelation = input.getYesNo("chargeCorrelation", false);
+  p.pairCorrelation = input.getYesNo("pairCorrelation", false);
+  p.spinCorrelation = input.getYesNo("spinCorrelation", false);
+
 
   p.EnergyErrgoal = input.getReal("EnergyErrgoal", 1e-16);
   p.nrH = input.getInt("nrH", 5);
@@ -87,7 +91,7 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
 
   p.numPart={};
   const int nhalf = p.N; // total nr of electrons at half-filling
-  const int nref = (p.refisn0 ? round(p.n0)+1 : nhalf); //calculation of the energies is centered around this n
+  const int nref = (p.refisn0 ? round(p.n0)+int(0.5 - (p.epsimp/p.U)) : nhalf); //calculation of the energies is centered around this n
   p.numPart.push_back(nref);
   for (int i = 1; i <= p.nrange; i++) {
     p.numPart.push_back(nref+i);
@@ -287,6 +291,18 @@ void calculateAndPrint(InputGroup &input, store &s, params &p){
     MeasurePairing(GS, p);
     MeasureAmplitudes(GS, p);
 
+    if (p.chargeCorrelation){
+      ChargeCorrelation(GS, p);
+    }
+
+    if (p.spinCorrelation){
+      SpinCorrelation(GS, p);
+    }
+
+    if (p.pairCorrelation){ 
+      PairCorrelation(GS, p);
+    }
+
     double & GS0 = s.GSEstore[ntot];
     double & GS0bis = s.GS0bisStore[ntot];
     double & deltaE = s.deltaEStore[ntot];
@@ -380,6 +396,214 @@ void ExpectationValueTakeEl(MPS psi1, MPS psi2, std::string spin, const params &
   std::cout << "weight w- " << spin << ": " << res << "\n";
 }
 
+//CORRELATION FUNCTIONS BETWEEN THE IMPURITY AND ALL SC LEVELS:
+//according to: http://www.itensor.org/docs.cgi?vers=cppv3&page=formulas/correlator_mps
+
+// <n_imp n_i>
+void ChargeCorrelation(MPS& psi, const params &p){
+  std::cout << "charge correlation = ";
+
+  auto impOp = op(p.sites, "Ntot", p.impindex);
+
+  double tot=0;
+  for(auto j: range1(2, length(psi))) {
+
+    auto scOp = op(p.sites, "Ntot", j);
+
+    psi.position(p.impindex);
+    
+    MPS psidag = dag(psi);  
+    psidag.prime("Link");
+
+    auto li_1 = leftLinkIndex(psi,p.impindex);
+
+    auto C = prime(psi(p.impindex),li_1)*impOp;
+    C *= prime(psidag(p.impindex),"Site");
+    for (int k=p.impindex+1; k<j; ++k){
+      C*=psi(k);
+      C*=psidag(k);
+    }
+
+    auto lj=rightLinkIndex(psi,j);
+    
+    C *= prime(psi(j),lj)*scOp;
+    C *= prime(psidag(j),"Site");
+    
+    auto result = elt(C);
+    std::cout << std::setprecision(17) << result << " ";
+    tot+=result;
+  }
+
+  std::cout << std::endl;
+  std::cout << "charge correlation tot = " << tot << "\n"; 
+}
+
+// <S_imp S_i> = <Sz_imp Sz_i> + 1/2 ( <S+_imp S-_i> + <S-_imp S+_i> )
+void SpinCorrelation(MPS& psi, const params &p){
+  std::cout << "spin correlations:\n";
+
+  auto impSz = 0.5*( op(p.sites, "Nup", p.impindex) - op(p.sites, "Ndn", p.impindex) );
+  auto impSp = op(p.sites, "Cdagup*Cdn", p.impindex);
+  auto impSm = op(p.sites, "Cdagdn*Cup", p.impindex);
+
+  double tot = 0;
+
+
+  //SzSz term
+  std::cout << "SzSz correlations: ";
+  
+  //on site term
+  psi.position(p.impindex);
+  auto onSiteSzSz = elt(psi(p.impindex) * impSz * impSz * dag(prime(psi(p.impindex),"Site")));
+  std::cout << std::setprecision(17) << onSiteSzSz << " ";
+  tot+=onSiteSzSz;
+
+  for(auto j: range1(2, length(psi))) {
+
+    auto scSz = 0.5*( op(p.sites, "Nup", j) - op(p.sites, "Ndn", j) );
+    
+    psi.position(p.impindex);
+    
+    MPS psidag = dag(psi);  
+    psidag.prime("Link");
+
+    auto li_1 = leftLinkIndex(psi,p.impindex);
+
+    auto C = prime(psi(p.impindex),li_1)*impSz;
+    C *= prime(psidag(p.impindex),"Site");
+    for (int k=p.impindex+1; k<j; ++k){
+      C*=psi(k);
+      C*=psidag(k);
+    }
+
+    auto lj=rightLinkIndex(psi,j);
+    
+    C *= prime(psi(j),lj)*scSz;
+    C *= prime(psidag(j),"Site");
+    
+    auto result = elt(C);
+    std::cout << std::setprecision(17) << result << " ";
+    tot+=result;
+  }
+  std::cout << std::endl;
+
+  //S+S- term
+  std::cout << "S+S- correlations: ";
+
+  //on site term
+  psi.position(p.impindex);
+  auto onSiteSpSm = elt(psi(p.impindex) * impSp * impSm * dag(prime(psi(p.impindex),"Site")));
+  std::cout << std::setprecision(17) << onSiteSpSm << " ";
+  tot+=0.5*onSiteSpSm; 
+
+  for(auto j: range1(2, length(psi))) {
+
+    auto scSm = op(p.sites, "Cdagdn*Cup", j);
+    
+    psi.position(p.impindex);
+    
+    MPS psidag = dag(psi);  
+    psidag.prime("Link");
+
+    auto li_1 = leftLinkIndex(psi,p.impindex);
+
+    auto C = prime(psi(p.impindex),li_1)*impSp;
+    C *= prime(psidag(p.impindex),"Site");
+    for (int k=p.impindex+1; k<j; ++k){
+      C*=psi(k);
+      C*=psidag(k);
+    }
+
+    auto lj=rightLinkIndex(psi,j);
+    
+    C *= prime(psi(j),lj)*scSm;
+    C *= prime(psidag(j),"Site");
+    
+    auto result = elt(C);
+    std::cout << std::setprecision(17) << result << " ";
+    tot+=0.5*result;
+  }
+  std::cout << std::endl;
+
+
+  //S- S+ term
+  std::cout << "S-S+ correlations: ";
+
+  //on site term
+  psi.position(p.impindex);
+  auto onSiteSmSp = elt(psi(p.impindex) * impSm * impSp * dag(prime(psi(p.impindex),"Site")));
+  std::cout << std::setprecision(17) << onSiteSmSp << " ";
+  tot+=0.5*onSiteSmSp; 
+
+  for(auto j: range1(2, length(psi))) {
+
+    auto scSp = op(p.sites, "Cdagup*Cdn", j);
+    
+    psi.position(p.impindex);
+    
+    MPS psidag = dag(psi);  
+    psidag.prime("Link");
+
+    auto li_1 = leftLinkIndex(psi,p.impindex);
+
+    auto C = prime(psi(p.impindex),li_1)*impSm;
+    C *= prime(psidag(p.impindex),"Site");
+    for (int k=p.impindex+1; k<j; ++k){
+      C*=psi(k);
+      C*=psidag(k);
+    }
+
+    auto lj=rightLinkIndex(psi,j);
+    
+    C *= prime(psi(j),lj)*scSp;
+    C *= prime(psidag(j),"Site");
+    
+    auto result = elt(C);
+    std::cout << std::setprecision(17) << result << " ";
+    tot+=0.5*result;
+  }
+  std::cout << std::endl;
+
+  std::cout << "spin correlation tot = " << tot << "\n";
+}
+
+void PairCorrelation(MPS& psi, const params &p){
+  std::cout << "pair correlation = ";
+
+  auto impOp = op(p.sites, "Cup*Cdn", p.impindex);
+
+  double tot=0;
+  for(auto j: range1(2, length(psi))) {
+
+    auto scOp = op(p.sites, "Cdagdn*Cdagup", j);
+
+    psi.position(p.impindex);
+    
+    MPS psidag = dag(psi);  
+    psidag.prime("Link");
+
+    auto li_1 = leftLinkIndex(psi,p.impindex);
+
+    auto C = prime(psi(p.impindex),li_1)*impOp;
+    C *= prime(psidag(p.impindex),"Site");
+    for (int k=p.impindex+1; k<j; ++k){
+      C*=psi(k);
+      C*=psidag(k);
+    }
+
+    auto lj=rightLinkIndex(psi,j);
+    
+    C *= prime(psi(j),lj)*scOp;
+    C *= prime(psidag(j),"Site");
+    
+    auto result = elt(C);
+    std::cout << std::setprecision(17) << result << " ";
+    tot+=result;
+  }
+
+  std::cout << std::endl;
+  std::cout << "pair correlation tot = " << tot << "\n";
+}
 
 //prints the occupation number of an MPS psi
 //instructive to learn how to calculate local observables
@@ -405,7 +629,7 @@ void MeasureOcc(MPS& psi, const params &p){
 void MeasurePairing(MPS& psi, const params &p){
   std::cout << "site pairing = ";
   std::complex<double> tot = 0;
-  for(auto i : range1(length(psi)) ){
+  for(auto i : range1(length(psi))){
     psi.position(i);
     auto val2  = psi.A(i) * p.sites.op("Cdagup*Cup*Cdagdn*Cdn", i) * dag(prime(psi.A(i),"Site"));
     auto val1u = psi.A(i) * p.sites.op("Cdagup*Cup", i) * dag(prime(psi.A(i),"Site"));
