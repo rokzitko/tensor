@@ -91,7 +91,7 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
 
   p.numPart={};
   const int nhalf = p.N; // total nr of electrons at half-filling
-  const int nref = (p.refisn0 ? round(p.n0)+int(0.5 - (p.epsimp/p.U)) : nhalf); //calculation of the energies is centered around this n
+  const int nref = (p.refisn0 ? ( round(p.n0) + round(0.5 - (p.epsimp/p.U)) ) : nhalf); //calculation of the energies is centered around this n
   p.numPart.push_back(nref);
   for (int i = 1; i <= p.nrange; i++) {
     p.numPart.push_back(nref+i);
