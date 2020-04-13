@@ -91,7 +91,7 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
 
   p.numPart={};
   const int nhalf = p.N; // total nr of electrons at half-filling
-  const int nref = (p.refisn0 ? ( round(p.n0) + round(0.5 - (p.epsimp/p.U)) ) : nhalf); //calculation of the energies is centered around this n
+  const int nref = (p.refisn0 ? ( round(p.n0 + 0.5 - (p.epsimp/p.U)) ) : nhalf); //calculation of the energies is centered around this n
   p.numPart.push_back(nref);
   for (int i = 1; i <= p.nrange; i++) {
     p.numPart.push_back(nref+i);
@@ -442,19 +442,25 @@ void ChargeCorrelation(MPS& psi, const params &p){
 void SpinCorrelation(MPS& psi, const params &p){
   std::cout << "spin correlations:\n";
 
+  //impurity spin operators
   auto impSz = 0.5*( op(p.sites, "Nup", p.impindex) - op(p.sites, "Ndn", p.impindex) );
   auto impSp = op(p.sites, "Cdagup*Cdn", p.impindex);
   auto impSm = op(p.sites, "Cdagdn*Cup", p.impindex);
 
+  auto SzSz = 0.25 * ( op(p.sites, "Nup*Nup", p.impindex) - op(p.sites, "Nup*Ndn", p.impindex) - op(p.sites, "Ndn*Nup", p.impindex) + op(p.sites, "Ndn*Ndn", p.impindex));
+
+  //squares of the impurity operators; for on-site terms
   double tot = 0;
 
 
   //SzSz term
   std::cout << "SzSz correlations: ";
   
-  //on site term
   psi.position(p.impindex);
-  auto onSiteSzSz = elt(psi(p.impindex) * impSz * impSz * dag(prime(psi(p.impindex),"Site")));
+
+  //on site term
+  auto onSiteSzSz = elt(psi(p.impindex) * SzSz *  dag(prime(psi(p.impindex),"Site")));
+  
   std::cout << std::setprecision(17) << onSiteSzSz << " ";
   tot+=onSiteSzSz;
 
@@ -490,9 +496,11 @@ void SpinCorrelation(MPS& psi, const params &p){
   //S+S- term
   std::cout << "S+S- correlations: ";
 
-  //on site term
   psi.position(p.impindex);
-  auto onSiteSpSm = elt(psi(p.impindex) * impSp * impSm * dag(prime(psi(p.impindex),"Site")));
+
+  //on site term
+  auto onSiteSpSm = elt(psi(p.impindex) * op(p.sites, "Cdagup*Cdn*Cdagdn*Cup", p.impindex) *  dag(prime(psi(p.impindex),"Site")));
+
   std::cout << std::setprecision(17) << onSiteSpSm << " ";
   tot+=0.5*onSiteSpSm; 
 
@@ -529,9 +537,11 @@ void SpinCorrelation(MPS& psi, const params &p){
   //S- S+ term
   std::cout << "S-S+ correlations: ";
 
-  //on site term
   psi.position(p.impindex);
-  auto onSiteSmSp = elt(psi(p.impindex) * impSm * impSp * dag(prime(psi(p.impindex),"Site")));
+
+  //on site term
+  auto onSiteSmSp = elt(psi(p.impindex) * op(p.sites, "Cdagdn*Cup*Cdagup*Cdn", p.impindex) *  dag(prime(psi(p.impindex),"Site")));
+
   std::cout << std::setprecision(17) << onSiteSmSp << " ";
   tot+=0.5*onSiteSmSp; 
 
