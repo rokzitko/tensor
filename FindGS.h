@@ -28,6 +28,8 @@ struct params {
   bool band_level_shift; // shifts the band levels for a constant in order to make H particle-hole symmetric
   bool stupidInit;       // initialize the state with double occupancy above the fermi level and zero occupancy beneath
 
+  bool impNupNdn;        // print the number of up and dn electrons on the impurity
+
   bool chargeCorrelation;// compute the impurity-superconductor correlation <n_imp n_i>
   bool pairCorrelation;  // compute the impurity-superconductor correlation <d d c_i^dag c_i^dag>
   bool spinCorrelation;  // compute the impurity-superconductor correlation <S_imp S_i>
@@ -89,6 +91,7 @@ void PairCorrelation(MPS& psi, const params &p);
 void expectedHopping(MPS& psi, const params &p);
 double ImpurityCorrelator(MPS& psi, auto impOp, int j, auto opj, const params &p);
 void MyDMRG(MPS& psi, MPO& H, double& energy, Args args);
+void ImpurityUpDn(MPS& psi, const params &p);
 void MeasureOcc(MPS& psi, const params &);
 void MeasurePairing(MPS& psi, const params &);
 void MeasureAmplitudes(MPS& psi, const params &);

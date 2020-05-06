@@ -64,6 +64,8 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   p.parallel = input.getYesNo("parallel", false);
   p.verbose = input.getYesNo("verbose", false);
   p.band_level_shift = input.getYesNo("band_level_shift", false);
+  
+  p.impNupNdn = input.getYesNo("impNupNdn", false);
   p.chargeCorrelation = input.getYesNo("chargeCorrelation", false);
   p.pairCorrelation = input.getYesNo("pairCorrelation", false);
   p.spinCorrelation = input.getYesNo("spinCorrelation", false);
@@ -291,21 +293,12 @@ void calculateAndPrint(InputGroup &input, store &s, params &p){
     MeasurePairing(GS, p);
     MeasureAmplitudes(GS, p);
 
-    if (p.chargeCorrelation){
-      ChargeCorrelation(GS, p);
-    }
+    if (p.impNupNdn) ImpurityUpDn(GS, p);
 
-    if (p.spinCorrelation){
-      SpinCorrelation(GS, p);
-    }
-
-    if (p.pairCorrelation){ 
-      PairCorrelation(GS, p);
-    }
-
-    if (p.hoppingExpectation){
-      expectedHopping(GS, p);
-    }
+    if (p.chargeCorrelation) ChargeCorrelation(GS, p);
+    if (p.spinCorrelation) SpinCorrelation(GS, p);
+    if (p.pairCorrelation) PairCorrelation(GS, p);
+    if (p.hoppingExpectation) expectedHopping(GS, p);
 
     double & GS0 = s.GSEstore[ntot];
     double & GS0bis = s.GS0bisStore[ntot];
@@ -607,9 +600,22 @@ double ImpurityCorrelator(MPS& psi, auto impOp, int j, auto opj, const params &p
   return elt(C);
 }
 
+//prints the occupation number Nup and Ndn at the impurity
+void ImpurityUpDn(MPS& psi, const params &p){
+  
+  std::cout << "impurity nup ndn = ";
+  psi.position(p.impindex);
+  auto valnup = psi.A(p.impindex) * p.sites.op("Nup",p.impindex)* dag(prime(psi.A(p.impindex),"Site"));
+  auto valndn = psi.A(p.impindex) * p.sites.op("Ndn",p.impindex)* dag(prime(psi.A(p.impindex),"Site"));
+
+  std::cout << std::setprecision(17) << std::real(valnup.cplx()) << " " << std::real(valndn.cplx()) << "\n";
+}
+
 //prints the occupation number of an MPS psi
 //instructive to learn how to calculate local observables
 void MeasureOcc(MPS& psi, const params &p){
+  
+  
   std::cout << "site occupancies = ";
   double tot = 0;
   for(auto i : range1(length(psi)) ){
@@ -623,6 +629,7 @@ void MeasureOcc(MPS& psi, const params &p){
   }
   std::cout << std::endl;
   Print(tot);
+
 }
 
 // The sum (tot) corresponds to \bar{\Delta}', Eq. (4) in Braun, von Delft, PRB 50, 9527 (1999), first proposed by Dan Ralph.
