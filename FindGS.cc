@@ -67,7 +67,7 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   p.chargeCorrelation = input.getYesNo("chargeCorrelation", false);
   p.pairCorrelation = input.getYesNo("pairCorrelation", false);
   p.spinCorrelation = input.getYesNo("spinCorrelation", false);
-
+  p.hoppingExpectation = input.getYesNo("hoppingExpectation", false);
 
   p.EnergyErrgoal = input.getReal("EnergyErrgoal", 1e-16);
   p.nrH = input.getInt("nrH", 5);
@@ -303,6 +303,10 @@ void calculateAndPrint(InputGroup &input, store &s, params &p){
       PairCorrelation(GS, p);
     }
 
+    if (p.hoppingExpectation){
+      expectedHopping(GS, p);
+    }
+
     double & GS0 = s.GSEstore[ntot];
     double & GS0bis = s.GS0bisStore[ntot];
     double & deltaE = s.deltaEStore[ntot];
@@ -410,26 +414,8 @@ void ChargeCorrelation(MPS& psi, const params &p){
 
     auto scOp = op(p.sites, "Ntot", j);
 
-    psi.position(p.impindex);
-    
-    MPS psidag = dag(psi);  
-    psidag.prime("Link");
+    double result = ImpurityCorrelator(psi, impOp, j, scOp, p);
 
-    auto li_1 = leftLinkIndex(psi,p.impindex);
-
-    auto C = prime(psi(p.impindex),li_1)*impOp;
-    C *= prime(psidag(p.impindex),"Site");
-    for (int k=p.impindex+1; k<j; ++k){
-      C*=psi(k);
-      C*=psidag(k);
-    }
-
-    auto lj=rightLinkIndex(psi,j);
-    
-    C *= prime(psi(j),lj)*scOp;
-    C *= prime(psidag(j),"Site");
-    
-    auto result = elt(C);
     std::cout << std::setprecision(17) << result << " ";
     tot+=result;
   }
@@ -437,6 +423,7 @@ void ChargeCorrelation(MPS& psi, const params &p){
   std::cout << std::endl;
   std::cout << "charge correlation tot = " << tot << "\n"; 
 }
+
 
 // <S_imp S_i> = <Sz_imp Sz_i> + 1/2 ( <S+_imp S-_i> + <S-_imp S+_i> )
 void SpinCorrelation(MPS& psi, const params &p){
@@ -468,26 +455,8 @@ void SpinCorrelation(MPS& psi, const params &p){
 
     auto scSz = 0.5*( op(p.sites, "Nup", j) - op(p.sites, "Ndn", j) );
     
-    psi.position(p.impindex);
-    
-    MPS psidag = dag(psi);  
-    psidag.prime("Link");
+    double result = ImpurityCorrelator(psi, impSz, j, scSz, p);
 
-    auto li_1 = leftLinkIndex(psi,p.impindex);
-
-    auto C = prime(psi(p.impindex),li_1)*impSz;
-    C *= prime(psidag(p.impindex),"Site");
-    for (int k=p.impindex+1; k<j; ++k){
-      C*=psi(k);
-      C*=psidag(k);
-    }
-
-    auto lj=rightLinkIndex(psi,j);
-    
-    C *= prime(psi(j),lj)*scSz;
-    C *= prime(psidag(j),"Site");
-    
-    auto result = elt(C);
     std::cout << std::setprecision(17) << result << " ";
     tot+=result;
   }
@@ -508,26 +477,8 @@ void SpinCorrelation(MPS& psi, const params &p){
 
     auto scSm = op(p.sites, "Cdagdn*Cup", j);
     
-    psi.position(p.impindex);
-    
-    MPS psidag = dag(psi);  
-    psidag.prime("Link");
+    double result = ImpurityCorrelator(psi, impSp, j, scSm, p);
 
-    auto li_1 = leftLinkIndex(psi,p.impindex);
-
-    auto C = prime(psi(p.impindex),li_1)*impSp;
-    C *= prime(psidag(p.impindex),"Site");
-    for (int k=p.impindex+1; k<j; ++k){
-      C*=psi(k);
-      C*=psidag(k);
-    }
-
-    auto lj=rightLinkIndex(psi,j);
-    
-    C *= prime(psi(j),lj)*scSm;
-    C *= prime(psidag(j),"Site");
-    
-    auto result = elt(C);
     std::cout << std::setprecision(17) << result << " ";
     tot+=0.5*result;
   }
@@ -549,26 +500,8 @@ void SpinCorrelation(MPS& psi, const params &p){
 
     auto scSp = op(p.sites, "Cdagup*Cdn", j);
     
-    psi.position(p.impindex);
-    
-    MPS psidag = dag(psi);  
-    psidag.prime("Link");
+    double result = ImpurityCorrelator(psi, impSm, j, scSp, p);
 
-    auto li_1 = leftLinkIndex(psi,p.impindex);
-
-    auto C = prime(psi(p.impindex),li_1)*impSm;
-    C *= prime(psidag(p.impindex),"Site");
-    for (int k=p.impindex+1; k<j; ++k){
-      C*=psi(k);
-      C*=psidag(k);
-    }
-
-    auto lj=rightLinkIndex(psi,j);
-    
-    C *= prime(psi(j),lj)*scSp;
-    C *= prime(psidag(j),"Site");
-    
-    auto result = elt(C);
     std::cout << std::setprecision(17) << result << " ";
     tot+=0.5*result;
   }
@@ -587,32 +520,91 @@ void PairCorrelation(MPS& psi, const params &p){
 
     auto scOp = op(p.sites, "Cdagdn*Cdagup", j);
 
-    psi.position(p.impindex);
-    
-    MPS psidag = dag(psi);  
-    psidag.prime("Link");
+    double result = ImpurityCorrelator(psi, impOp, j, scOp, p);
 
-    auto li_1 = leftLinkIndex(psi,p.impindex);
-
-    auto C = prime(psi(p.impindex),li_1)*impOp;
-    C *= prime(psidag(p.impindex),"Site");
-    for (int k=p.impindex+1; k<j; ++k){
-      C*=psi(k);
-      C*=psidag(k);
-    }
-
-    auto lj=rightLinkIndex(psi,j);
-    
-    C *= prime(psi(j),lj)*scOp;
-    C *= prime(psidag(j),"Site");
-    
-    auto result = elt(C);
     std::cout << std::setprecision(17) << result << " ";
     tot+=result;
   }
 
   std::cout << std::endl;
   std::cout << "pair correlation tot = " << tot << "\n";
+}
+
+//Prints <d^dag c_i + c_i^dag d> for each i. the sum of this expected value, weighted by 1/sqrt(N)
+//gives <d^dag f_0 + f_0^dag d>, where f_0 = 1/sqrt(N) sum_i c_i. This is the expected value of hopping.
+void expectedHopping(MPS& psi, const params &p){
+
+  auto impOpUp = op(p.sites, "Cup", p.impindex);
+  auto impOpDagUp = op(p.sites, "Cdagup", p.impindex);
+
+  auto impOpDn = op(p.sites, "Cdn", p.impindex);
+  auto impOpDagDn = op(p.sites, "Cdagdn", p.impindex);
+
+  double totup=0;
+  double totdn=0;
+
+  // hopping expectation values for spin up
+  std::cout << "hopping spin up = ";
+  for (auto j : range1(2, length(psi))){
+
+    auto scDagOp = op(p.sites, "Cdagup", j);
+    auto scOp = op(p.sites, "Cup", j);
+
+    double result = ImpurityCorrelator(psi, impOpUp, j, scDagOp, p);    // <d c_i^dag>
+    double resultdag = ImpurityCorrelator(psi, impOpDagUp, j, scOp, p); // <d^dag c_i>
+
+    std::cout << std::setprecision(17) << result << " " << resultdag << " ";
+    std::cout << std::setprecision(17) << result+resultdag << " ";
+    totup+=result+resultdag;
+  }
+
+  std::cout << std::endl;
+  std::cout << "hopping correlation up tot = " << totup << "\n";
+
+  // hopping expectation values for spin up
+  std::cout << "hopping spin down = ";
+  for (auto j : range1(2, length(psi))){
+
+    auto scDagOp = op(p.sites, "Cdagdn", j);
+    auto scOp = op(p.sites, "Cdn", j);
+
+    double result = ImpurityCorrelator(psi, impOpDn, j, scDagOp, p);    // <d c_i^dag>
+    double resultdag =  ImpurityCorrelator(psi, impOpDagDn, j, scOp, p); // <d^dag c_i>
+
+    std::cout << std::setprecision(17) << result << " " << resultdag << " ";
+    //std::cout << std::setprecision(17) << result+resultdag << " ";
+    totdn+=result+resultdag;
+  }
+  
+  std::cout << std::endl;
+  std::cout << "hopping correlation down tot = " << totdn << "\n";
+  
+  std::cout << "total hopping correlation = " << totup + totdn << "\n";
+}
+
+//computes the correlation between operator impOp on impurity and operator opj on j
+double ImpurityCorrelator(MPS& psi, auto impOp, int j, auto opj, const params &p){
+
+  psi.position(p.impindex);
+  
+  MPS psidag = dag(psi);
+  psidag.prime("Link");
+
+  auto li_1 = leftLinkIndex(psi,p.impindex);
+
+  auto C = prime(psi(p.impindex),li_1)*impOp;
+  C *= prime(psidag(p.impindex),"Site");
+  for (int k=p.impindex+1; k<j; ++k){
+    C*=psi(k);
+    C*=psidag(k);
+  }
+
+  auto lj=rightLinkIndex(psi,j);
+  
+  C *= prime(psi(j),lj)*opj;
+  C *= prime(psidag(j),"Site");
+  
+  return elt(C);
 }
 
 //prints the occupation number of an MPS psi
