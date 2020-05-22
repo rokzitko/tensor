@@ -64,6 +64,7 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   p.parallel = input.getYesNo("parallel", false);
   p.verbose = input.getYesNo("verbose", false);
   p.band_level_shift = input.getYesNo("band_level_shift", false);
+  p.computeEntropy = input.getYesNo("computeEntropy", false);
   
   p.impNupNdn = input.getYesNo("impNupNdn", false);
   p.chargeCorrelation = input.getYesNo("chargeCorrelation", false);
@@ -285,6 +286,7 @@ void calculateAndPrint(InputGroup &input, store &s, params &p){
     printfln("Ground state energy = %.17g",s.GSEstore[ntot]);
 
     MPS & GS = s.psiStore[ntot];
+    
     //norm
     double normGS = inner(GS, GS);
     printfln("norm = %.17g", normGS);
@@ -292,6 +294,8 @@ void calculateAndPrint(InputGroup &input, store &s, params &p){
     MeasureOcc(GS, p);
     MeasurePairing(GS, p);
     MeasureAmplitudes(GS, p);
+
+    if (p.computeEntropy) PrintEntropy(GS, p);
 
     if (p.impNupNdn) ImpurityUpDn(GS, p);
 
@@ -687,4 +691,30 @@ void GetBathParams(std::vector<double>& eps, std::vector<double>& V, params &p) 
     eps.push_back( -1 + (k-0.5)*d + band_level_shift );
     V.push_back( Vval );
   }
+}
+
+
+// Computed entanglement/von Neumann entropy between the impurity and the system.
+// Copied from https://www.itensor.org/docs.cgi?vers=cppv3&page=formulas/entanglement_mps
+void PrintEntropy(MPS& psi, const params &p){
+
+  psi.position(p.impindex);
+
+  //SVD this wavefunction to get the spectrum of density-matrix eigenvalues
+  auto l = leftLinkIndex(psi, p.impindex);
+  auto s = siteIndex(psi, p.impindex);
+  auto [U,S,V] = svd(psi(p.impindex), {l,s});
+  auto u = commonIndex(U,S);
+
+  //Apply von Neumann formula to the squares of the singular values
+  double SvN = 0.;
+  for(auto n : range1(dim(u)))
+      {
+      auto Sn = elt(S,n,n);
+      auto pp = sqr(Sn);
+      if(pp > 1E-12) SvN += -pp*log(pp);
+      }
+
+  printfln("Entanglement entropy across impurity bond b=%d, SvN = %.10f",p.impindex,SvN);
+
 }
