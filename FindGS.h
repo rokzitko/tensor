@@ -39,6 +39,8 @@ struct params {
   int nrH;              // number of times to apply H to psi before comencing the sweep - akin to a power method; default = 5
   int nrange;           // the number of energies computed is 2*nrange + 1
 
+  bool calcspin1;       
+
   double alpha;         // e-e coupling
   double n0;            // charge offset
   double d;             // d=2D/NBath, level spacing

@@ -76,6 +76,8 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   p.nrH = input.getInt("nrH", 5);
   p.nrange = input.getInt("nrange", 1);
 
+  p.calcspin1 = input.getYesNo("calcspin1", false);
+
   p.n0 = input.getReal("n0", p.N-1);
   p.alpha = input.getReal("alpha");
   p.d = 2./p.NBath;
@@ -226,15 +228,27 @@ MPS initPsi(int ntot, params &p){
       }
     }
 
-    //If ncs is odd, add another electron according to EZ_bulk preference, but not to the impurity site.
-    if (nsc%2 == 1) {
-      if (i!=p.impindex){
-        state.set(i,"Dn"); 
-        tot++;
+    if (nsc%2 == 1) { //If ncs is odd, add another electron according to EZ_bulk preference, but not to the impurity site.
+      
+      if (p.calcspin1){ //to calculate the energies in the S=1 sector, set the additional electron to Up
+        if (i!=p.impindex){
+          state.set(i,"Up"); 
+          tot++;
+        }
+        else{
+          state.set(i+1,"Up"); 
+          tot++;
+        }
       }
       else{
-        state.set(i+1,"Dn"); 
-        tot++;
+        if (i!=p.impindex){
+          state.set(i,"Dn"); 
+          tot++;
+        }
+        else{
+          state.set(i+1,"Dn"); 
+          tot++;
+        }
       }
     }
   }
@@ -257,13 +271,26 @@ MPS initPsi(int ntot, params &p){
 
     //If ncs is odd, add another Up electron, but not to the impurity site.
     if (nsc%2 == 1) {
-      if (i!=p.impindex){
-        state.set(i, "Up");
-        tot++;
+      if (p.calcspin1){
+        if (i!=p.impindex){
+          state.set(i, "Dn");
+          tot++;
+        }
+        else{
+          state.set(i+1, "Dn");
+          tot++;
+        }
       }
       else{
-        state.set(i+1, "Up");
-        tot++;
+        if (i!=p.impindex){
+          state.set(i, "Up");
+          tot++;
+        }
+        else{
+          state.set(i+1, "Up");
+          tot++;
+        }
+
       }
     }
   }
