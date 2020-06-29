@@ -65,7 +65,8 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   p.verbose = input.getYesNo("verbose", false);
   p.band_level_shift = input.getYesNo("band_level_shift", false);
   p.computeEntropy = input.getYesNo("computeEntropy", false);
-  
+  p.printTotSpinZ = input.getYesNo("printTotSpinZ", false);
+
   p.impNupNdn = input.getYesNo("impNupNdn", false);
   p.chargeCorrelation = input.getYesNo("chargeCorrelation", false);
   p.pairCorrelation = input.getYesNo("pairCorrelation", false);
@@ -223,7 +224,13 @@ MPS initPsi(int ntot, params &p){
     for(i; j < npair; i++){ //In order to avoid adding a pair to the impurity site   
       if (i!=p.impindex){             //i counts sites, j counts added pairs.
         j++;
-        state.set(i, "UpDn");
+        if (p.calcspin1 && j==npair-1){
+          state.set(i, "Up");
+          if (i+1!=p.impindex) state.set(i+1, "Up");
+          else state.set(i+2, "Up");
+        }
+        else state.set(i, "UpDn");
+        
         tot += 2;
       }
     }
@@ -302,7 +309,6 @@ MPS initPsi(int ntot, params &p){
   return psi;
 }
 
-
 //Loops over all particle sectors and prints relevant quantities.
 void calculateAndPrint(InputGroup &input, store &s, params &p){
   //print data for each sector
@@ -330,6 +336,7 @@ void calculateAndPrint(InputGroup &input, store &s, params &p){
     if (p.spinCorrelation) SpinCorrelation(GS, p);
     if (p.pairCorrelation) PairCorrelation(GS, p);
     if (p.hoppingExpectation) expectedHopping(GS, p);
+    if (p.printTotSpinZ) TotalSpinz(GS, p);
 
     double & GS0 = s.GSEstore[ntot];
     double & GS0bis = s.GS0bisStore[ntot];
@@ -447,7 +454,6 @@ void ChargeCorrelation(MPS& psi, const params &p){
   std::cout << std::endl;
   std::cout << "charge correlation tot = " << tot << "\n"; 
 }
-
 
 // <S_imp S_i> = <Sz_imp Sz_i> + 1/2 ( <S+_imp S-_i> + <S-_imp S+_i> )
 void SpinCorrelation(MPS& psi, const params &p){
@@ -640,6 +646,27 @@ void ImpurityUpDn(MPS& psi, const params &p){
   auto valndn = psi.A(p.impindex) * p.sites.op("Ndn",p.impindex)* dag(prime(psi.A(p.impindex),"Site"));
 
   std::cout << std::setprecision(17) << std::real(valnup.cplx()) << " " << std::real(valndn.cplx()) << "\n";
+}
+
+//prints total Sz of the state
+void TotalSpinz(MPS& psi, const params &p){
+
+  double totNup=0.;
+  double totNdn=0.;
+
+  for(auto j: range1(length(psi))) {
+    psi.position(j);
+
+    auto Nupi = psi.A(j) * p.sites.op("Nup",j)* dag(prime(psi.A(j),"Site"));
+    auto Ndni = psi.A(j) * p.sites.op("Ndn",j)* dag(prime(psi.A(j),"Site"));
+
+    totNup += std::real(Nupi.cplx());
+    totNdn += std::real(Ndni.cplx());
+
+  }
+
+  std::cout << std::setprecision(17) << "Total spin z: " << " Nup = " << totNup << " Ndn = " << totNdn << " Sztot = " << 0.5*(totNup-totNdn) <<  "\n";
+
 }
 
 //prints the occupation number of an MPS psi

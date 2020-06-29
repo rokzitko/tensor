@@ -27,7 +27,8 @@ struct params {
   bool verbose;          // verbosity level
   bool band_level_shift; // shifts the band levels for a constant in order to make H particle-hole symmetric
   bool computeEntropy;   // prints von Neumann entropy at the bond between impurity and next site. Works as intended is p.impindex=1.
- 
+  bool printTotSpinZ;    // prints total Nup, Ndn and Sz.
+
   bool impNupNdn;        // print the number of up and dn electrons on the impurity
 
   bool chargeCorrelation;// compute the impurity-superconductor correlation <n_imp n_i>
@@ -94,6 +95,7 @@ void expectedHopping(MPS& psi, const params &p);
 double ImpurityCorrelator(MPS& psi, auto impOp, int j, auto opj, const params &p);
 void MyDMRG(MPS& psi, MPO& H, double& energy, Args args);
 void ImpurityUpDn(MPS& psi, const params &p);
+void TotalSpinz(MPS& psi, const params &p);
 void MeasureOcc(MPS& psi, const params &);
 void MeasurePairing(MPS& psi, const params &);
 void MeasureAmplitudes(MPS& psi, const params &);
