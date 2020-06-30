@@ -224,7 +224,7 @@ MPS initPsi(int ntot, params &p){
     for(i; j < npair; i++){ //In order to avoid adding a pair to the impurity site   
       if (i!=p.impindex){             //i counts sites, j counts added pairs.
         j++;
-        if (p.calcspin1 && j==npair-1){
+        if (p.calcspin1 && j==npair){ //split the last pair into two levels, creating a S=3/2 state
           state.set(i, "Up");
           if (i+1!=p.impindex) state.set(i+1, "Up");
           else state.set(i+2, "Up");
@@ -237,16 +237,17 @@ MPS initPsi(int ntot, params &p){
 
     if (nsc%2 == 1) { //If ncs is odd, add another electron according to EZ_bulk preference, but not to the impurity site.
       
-      if (p.calcspin1){ //to calculate the energies in the S=1 sector, set the additional electron to Up
-        if (i!=p.impindex){
-          state.set(i,"Up"); 
+      if (p.calcspin1){ //to calculate the energies in the S=1 or S=3/2 sector, set the additional electron to Up
+        if (i+1!=p.impindex){
+          state.set(i,"UpDn"); 
           tot++;
         }
         else{
-          state.set(i+1,"Up"); 
+          state.set(i+1,"UpDn"); 
           tot++;
         }
       }
+
       else{
         if (i!=p.impindex){
           state.set(i,"Dn"); 
