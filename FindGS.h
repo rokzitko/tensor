@@ -50,7 +50,9 @@ struct params {
   double U;             // e-e on impurity site
   double gamma;         // hybridisation
   double Ec;            // charging energy
+  double V12;           // QD-SC capacitive coupling
   double epsimp;        // impurity level
+  double nu;            // nu=1/2-epsimp/U, computed after epsimp parsed
   double Ueff;          // effective e-e on impurity site (after Ec_trick mapping)
 
   double EZ_imp;        // impurity Zeeman energy

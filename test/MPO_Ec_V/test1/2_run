@@ -1,0 +1,4 @@
+#!/bin/bash
+PATH=../../..:../..:$PATH
+calcGS inputFile-Ec_V.txt >result-Ec_V.dat
+mycompare result-Ec_V.dat

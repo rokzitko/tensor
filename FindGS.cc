@@ -7,6 +7,7 @@
 #include <vector>
 #include <map>
 #include <stdexcept>
+#include <limits> // quiet_NaN
 
 #include <omp.h>
 
@@ -15,6 +16,7 @@
 #include "SC_BathMPO.h"
 #include "SC_BathMPO_MiddleImp.h"
 #include "SC_BathMPO_Ec.h"
+#include "SC_BathMPO_Ec_V.h"
 
 InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   if(argc!=2){
@@ -44,7 +46,7 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   if (p.MPO == "middle") {
     assert(p.NBath%2 == 0);   // NBath must be even
     p.impindex = 1+p.NBath/2;
-  } else if (p.MPO == "std" || p.MPO == "Ec") {
+  } else if (p.MPO == "std" || p.MPO == "Ec" || p.MPO == "Ec_V") {
     p.impindex = 1;
   } else
     throw std::runtime_error("Unknown MPO type");
@@ -86,7 +88,9 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   p.U = input.getReal("U");
   p.gamma = input.getReal("gamma");
   p.Ec = input.getReal("Ec", 0);
-  p.epsimp = input.getReal("epsimp", -p.U/2.);    
+  p.epsimp = input.getReal("epsimp", -p.U/2.);
+  p.nu = (p.U != 0.0 ? 0.5-p.epsimp/p.U : std::numeric_limits<double>::quiet_NaN()); // ill-defined for the non-interacting case
+  p.V12 = input.getReal("V", 0);
 
   // for Ec_trick mapping
   p.Ueff = p.U + 2.*p.Ec;                            // effective impurity e-e repulstion
@@ -190,16 +194,24 @@ std::tuple<MPO, double> initH(std::vector<double> eps, std::vector<double> V, in
   double Eshift;  // constant term in the Hamiltonian
   MPO H(p.sites); // MPO is the hamiltonian in "MPS-form" after this line it is still a trivial operator
   if (p.MPO == "std") {
+    assert(p.V12 != 0.0);
     Eshift = p.Ec*pow(ntot-p.n0,2); // occupancy dependent effective energy shift
     double epseff = p.epsimp - 2.*p.Ec*(ntot-p.n0) + p.Ec;
     Fill_SCBath_MPO(H, eps, V, epseff, p); // defined in SC_BathMPO.h, fills the MPO with the necessary entries
   } else if (p.MPO == "middle") {
+    assert(p.V12 != 0.0);
     Eshift = p.Ec*pow(ntot-p.n0,2); // occupancy dependent effective energy shift
     double epseff = p.epsimp - 2.*p.Ec*(ntot-p.n0) + p.Ec;
     Fill_SCBath_MPO_MiddleImp(H, eps, V, epseff, p);
   } else if (p.MPO == "Ec") {
+    assert(p.V12 != 0.0);
     Eshift = p.Ec*pow(p.n0, 2);
     Fill_SCBath_MPO_Ec(H, eps, V, p);
+  } else if (p.MPO == "Ec_V") {
+    Eshift = p.Ec*pow(p.n0, 2) + p.V12 * p.n0 * p.nu;
+    double epseff = p.epsimp - p.V12 * p.n0;
+    double epsishift = -p.V12 * p.nu;
+    Fill_SCBath_MPO_Ec_V(H, eps, V, epseff, epsishift, p);
   } else
     throw std::runtime_error("Unknown MPO type");
   Eshift += p.U/2.; // RZ, for convenience
@@ -221,7 +233,7 @@ MPS initPsi(int ntot, params &p){
 
     int j=0;
     int i=1;
-    for(i; j < npair; i++){ //In order to avoid adding a pair to the impurity site   
+    for(; j < npair; i++){ //In order to avoid adding a pair to the impurity site   
       if (i!=p.impindex){             //i counts sites, j counts added pairs.
         j++;
         if (p.calcspin1 && j==npair){ //split the last pair into two levels, creating a S=3/2 state
@@ -269,7 +281,7 @@ MPS initPsi(int ntot, params &p){
 
     int j=0;
     int i=1;
-    for(i; j < npair; i++){ //In order to avoid adding a pair to the impurity site   
+    for(; j < npair; i++){ //In order to avoid adding a pair to the impurity site   
       if (i!=p.impindex){             //i counts sites, j counts added pairs.
         j++;
         state.set(i, "UpDn");

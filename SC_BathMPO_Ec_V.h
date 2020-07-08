@@ -2,8 +2,8 @@
 using namespace itensor;
 
 //fills the MPO tensors
-void Fill_SCBath_MPO_Ec(MPO& H, const std::vector<double>& eps_,
-                const std::vector<double>& v_, const params &p)
+void Fill_SCBath_MPO_Ec_V(MPO& H, const std::vector<double>& eps_,
+                const std::vector<double>& v_, double epseff, double epsishift, const params &p)
 {
       //QN objects are necessary to have abelian symmetries in MPS
       QN    qn0  ( {"Sz",  0},{"Nf", 0} ),
@@ -44,7 +44,7 @@ void Fill_SCBath_MPO_Ec(MPO& H, const std::vector<double>& eps_,
         W = ITensor(right, p.sites.si(i), p.sites.siP(i) );
         W += p.sites.op("Id",i) * setElt(right(1));
 
-        W += p.sites.op("Ntot",i)  * setElt(right(2)) * p.epsimp; // not eps_[i-1]!
+        W += p.sites.op("Ntot",i)  * setElt(right(2)) * epseff; // not eps_[i-1], neither p.epsimp!!
         W += p.sites.op("Nup",i)  * setElt(right(2)) * p.EZ_imp; // impurity Zeeman energy
         W += p.sites.op("Ndn",i)  * setElt(right(2)) * (-1) * p.EZ_imp; // impurity Zeeman energy
         W += p.sites.op("Nupdn",i) * setElt(right(2)) * p.U; // not Ueff!
@@ -54,7 +54,10 @@ void Fill_SCBath_MPO_Ec(MPO& H, const std::vector<double>& eps_,
         W += p.sites.op("Cdagup*F",i) * setElt(right(5)) * (+1);
         W += p.sites.op("Cdagdn*F",i) * setElt(right(6)) * (+1);
 
-        if (p.verbose) std::cout << "using p.epsimp and p.U for impurity" <<std::endl;
+        if (p.V12 != 0.0)
+          W += p.sites.op("Ntot",i) * setElt(right(9)) * p.V12;
+
+        if (p.verbose) std::cout << "using epseff and p.U for impurity" <<std::endl;
     }
 
     // sites 2 ... N-1 are matrices
@@ -67,7 +70,7 @@ void Fill_SCBath_MPO_Ec(MPO& H, const std::vector<double>& eps_,
 
         W += p.sites.op("Id",i) * setElt(left(1), right(1));
 
-        W += p.sites.op("Ntot",i)           * setElt(left(1),right(2)) * (eps_[i-1] + p.Ec*(1.0-2.0*p.n0)); // !
+        W += p.sites.op("Ntot",i)           * setElt(left(1),right(2)) * (eps_[i-1] + epsishift + p.Ec*(1.0-2.0*p.n0)); // !!
         W += p.sites.op("Nup",i)            * setElt(left(1),right(2)) * p.EZ_bulk; // bulk Zeeman energy
         W += p.sites.op("Ndn",i)            * setElt(left(1),right(2)) * (-1.) * p.EZ_bulk; // bulk Zeeman energy
         W += p.sites.op("Nupdn",i)          * setElt(left(1),right(2)) * (p.g + 2.0*p.Ec); // !
@@ -94,7 +97,7 @@ void Fill_SCBath_MPO_Ec(MPO& H, const std::vector<double>& eps_,
         W += p.sites.op("Cdn*Cup",i)      *setElt(left(8),right(2));
         W += p.sites.op("Ntot",i)         *setElt(left(9),right(2)); // !
 
-        if (p.verbose) std::cout << "using " << eps_[i-1] << " and "<<v_[i-1]<<std::endl;
+        if (p.verbose) std::cout << "using " << eps_[i-1]+epsishift << " and "<<v_[i-1]<<std::endl;
     }
 
     //site N is a vector again
@@ -105,7 +108,7 @@ void Fill_SCBath_MPO_Ec(MPO& H, const std::vector<double>& eps_,
 
         W = ITensor(left, p.sites.si(i), p.sites.siP(i) );
 
-        W += p.sites.op("Ntot",  i) * setElt(left(1)) * (eps_[i-1] + p.Ec*(1.0-2.0*p.n0)); // !
+        W += p.sites.op("Ntot",  i) * setElt(left(1)) * (eps_[i-1] + epsishift + p.Ec*(1.0-2.0*p.n0)); // !!
         W += p.sites.op("Nup",  i)  * setElt(left(1)) * p.EZ_bulk; // bulk Zeeman energy
         W += p.sites.op("Ndn",  i)  * setElt(left(1)) * (-1) * p.EZ_bulk; // bulk Zeeman energy
         W += p.sites.op("Nupdn",i)  * setElt(left(1)) * (p.g + 2.0*p.Ec); // !
@@ -120,7 +123,7 @@ void Fill_SCBath_MPO_Ec(MPO& H, const std::vector<double>& eps_,
         W += p.sites.op("Cdn*Cup",      i) * setElt(left(8));
         W += p.sites.op("Ntot",         i) * setElt(left(9)); // !
 
-        if (p.verbose) std::cout << "using " << eps_[i-1] << " and "<<v_[i-1]<<std::endl;
+        if (p.verbose) std::cout << "using " << eps_[i-1]+epsishift << " and "<<v_[i-1]<<std::endl;
     }
 
   }
