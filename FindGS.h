@@ -59,6 +59,8 @@ struct params {
   double EZ_bulk;        // bulk Zeeman energy
 
   std::vector<int> numPart; // range of total occupancies of interest
+  std::map<int, std::vector<double>> Szs; // Szs for each n in numPart
+
 
   //parameters for the phase transition point iteration
   double gamma0;        // initial guess
@@ -71,15 +73,15 @@ struct params {
 // lists of quantities calculated in FindGS 
 struct store
 {
-  std::map<int, MPS> psiStore;      // ground states
-  std::map<int, double> GSEstore;   // ground state energies
-  std::map<int, MPS> ESpsiStore;    // excited states
-  std::map<int, double> ESEstore;   // excited state energies
+  std::map<std::pair<int, double>, MPS> psiStore;      // ground states
+  std::map<std::pair<int, double>, double> GSEstore;   // ground state energies
+  std::map<std::pair<int, double>, MPS> ESpsiStore;    // excited states
+  std::map<std::pair<int, double>, double> ESEstore;   // excited state energies
 
   //These quantities require the knowledge of H, so they are calculated in FindGS and saved here.
-  std::map<int, double> GS0bisStore; // <GS|H|GS>
-  std::map<int, double> deltaEStore; // sqrt(<GS|H^2|GS> - <GS|H|GS>^2)
-  std::map<int, double> residuumStore; // <GS|H|GS> - GSE*<GS|GS>
+  std::map<std::pair<int, double>, double> GS0bisStore; // <GS|H|GS>
+  std::map<std::pair<int, double>, double> deltaEStore; // sqrt(<GS|H^2|GS> - <GS|H|GS>^2)
+  std::map<std::pair<int, double>, double> residuumStore; // <GS|H|GS> - GSE*<GS|GS>
 };
 
 
@@ -87,7 +89,7 @@ void FindGS(InputGroup &input, store &s, params &p);
 void calculateAndPrint(InputGroup &input, store &s, params &p);
 void GetBathParams(std::vector<double>& eps, std::vector<double>& V, params &p);
 std::tuple<MPO, double> initH(std::vector<double> eps, std::vector<double> V, int ntot, params &p);
-MPS initPsi(int ntot, params &p);
+MPS initPsi(int ntot, float Sz, params &p);
 void ExpectationValueAddEl(MPS psi1, MPS psi2, std::string spin, const params &p);
 void ExpectationValueTakeEl(MPS psi1, MPS psi2, std::string spin, const params &p);
 void ChargeCorrelation(MPS& psi, const params &p);

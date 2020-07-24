@@ -93,7 +93,7 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   p.V12 = input.getReal("V", 0);
 
   // for Ec_trick mapping
-  p.Ueff = p.U + 2.*p.Ec;                            // effective impurity e-e repulstion
+  p.Ueff = p.U + 2.*p.Ec;                            // effective impurity e-e repulsion
   // p.epseff cannot be set here, because it depends on ntot (number of electrons in a given sector)
 
   p.EZ_imp = input.getReal("EZ_imp", 0.);
@@ -108,6 +108,27 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
     p.numPart.push_back(nref-i);
   }
   
+  bool magnetic_field = ((p.EZ_imp!=0 || p.EZ_bulk!=0) ? true : false); // true if there is magnetic field 
+  // Sz values for n are in Szs[n]
+  for (size_t i=0; i<p.numPart.size(); i++){
+    int ntot = p.numPart[i];
+    if (ntot%2==0) {
+      if (p.calcspin1) p.Szs[ntot].push_back(1);
+      else p.Szs[ntot].push_back(0);
+    }
+    else {
+      if (p.calcspin1){
+        p.Szs[ntot].push_back(1.5);
+        if (magnetic_field) p.Szs[ntot].push_back(-1.5);
+      }
+      else{
+        p.Szs[ntot].push_back(0.5);
+        if (magnetic_field) p.Szs[ntot].push_back(-0.5);
+      }
+    } 
+  } 
+
+  // parameters used in the phase transition point iteration
   p.gamma0 = input.getReal("gamma0", 0.5);
   p.gamma1 = input.getReal("gamma1", 1.5);
   p.precision = input.getReal("precision", 1e-5);
@@ -142,51 +163,55 @@ void FindGS(InputGroup &input, store &s, params &p){
   #pragma omp parallel for if(p.parallel)
   for (size_t i=0; i<p.numPart.size(); i++){
     int ntot = p.numPart[i];
-    std::cout << "\nSweeping in the sector with " << ntot << " particles.\n";
 
-    std::vector<double> eps;        // vector containing on-site energies of the bath !one-indexed!
-    std::vector<double> V;          // vector containing hopping amplitudes to the bath !one-indexed!
+    for (double Sz:p.Szs[ntot]){
+      std::cout << "\nSweeping in the sector with " << ntot << " particles, Sz = " << Sz << ".\n";
 
-    //Read the bath parameters (fills in the vectors eps and V).
-    GetBathParams(eps, V, p);
+      std::vector<double> eps;        // vector containing on-site energies of the bath !one-indexed!
+      std::vector<double> V;          // vector containing hopping amplitudes to the bath !one-indexed!
 
-    //initialize H and psi
-    auto [H, Eshift] = initH(eps, V, ntot, p);
-    auto psi = initPsi(ntot, p);
+      //Read the bath parameters (fills in the vectors eps and V).
+      GetBathParams(eps, V, p);
 
-    Args args; //args is used to store and transport parameters between various functions
+      //initialize H and psi
+      auto [H, Eshift] = initH(eps, V, ntot, p);
+      auto psi = initPsi(ntot, Sz, p);
 
-    //Apply the MPO a couple of times to get DMRG started, otherwise it might not converge.
-    for(auto i : range1(p.nrH)){
-      psi = applyMPO(H,psi,args);
-      psi.noPrime().normalize();
+      Args args; //args is used to store and transport parameters between various functions
+
+      //Apply the MPO a couple of times to get DMRG started, otherwise it might not converge.
+      for(auto i : range1(p.nrH)){
+        psi = applyMPO(H,psi,args);
+        psi.noPrime().normalize();
+        }
+
+      auto [GS0, GS] = dmrg(H,psi,sweeps,{"Silent",p.parallel, "Quiet",!p.printDimensions, "EnergyErrgoal",p.EnergyErrgoal}); // call itensor dmrg 
+
+      double GSenergy = GS0+Eshift;
+
+      s.psiStore[std::make_pair(ntot, Sz)] = GS;
+      s.GSEstore[std::make_pair(ntot, Sz)] = GSenergy; 
+
+      //values that need H are calculated here and stored, in order to avoid storing the entire hamiltonian
+      double GS0bis = inner(GS, H, GS);
+      double deltaE = sqrt(inner(H, GS, H, GS) - pow(inner(GS, H, GS),2));
+      double residuum = inner(GS,H,GS) - GS0*inner(GS,GS);
+
+      s.GS0bisStore[std::make_pair(ntot, Sz)] = GS0bis; 
+      s.deltaEStore[std::make_pair(ntot, Sz)] = deltaE;
+      s.residuumStore[std::make_pair(ntot, Sz)] = residuum;
+
+      if (p.excited_state) {
+        auto wfs = std::vector<MPS>(1);
+        wfs.at(0) = GS;
+        auto [ESenergy, ES] = dmrg(H,wfs,psi,sweeps,{"Silent",p.parallel,"Quiet",true,"Weight",11.0});
+        ESenergy += Eshift;
+        s.ESEstore[std::make_pair(ntot, Sz)]=ESenergy;
+        s.ESpsiStore[std::make_pair(ntot, Sz)]=ES;
       }
 
-    auto [GS0, GS] = dmrg(H,psi,sweeps,{"Silent",p.parallel, "Quiet",!p.printDimensions, "EnergyErrgoal",p.EnergyErrgoal}); // call itensor dmrg 
-
-    double GSenergy = GS0+Eshift;
-
-    s.psiStore[ntot] = GS;
-    s.GSEstore[ntot] = GSenergy; 
-
-    //values that need H are calculated here and stored, in order to avoid storing the entire hamiltonian
-    double GS0bis = inner(GS, H, GS);
-    double deltaE = sqrt(inner(H, GS, H, GS) - pow(inner(GS, H, GS),2));
-    double residuum = inner(GS,H,GS) - GS0*inner(GS,GS);
-
-    s.GS0bisStore[ntot] = GS0bis; 
-    s.deltaEStore[ntot] = deltaE;
-    s.residuumStore[ntot] = residuum;
-
-    if (p.excited_state) {
-      auto wfs = std::vector<MPS>(1);
-      wfs.at(0) = GS;
-      auto [ESenergy, ES] = dmrg(H,wfs,psi,sweeps,{"Silent",p.parallel,"Quiet",true,"Weight",11.0});
-      ESenergy += Eshift;
-      s.ESEstore[ntot]=ESenergy;
-      s.ESpsiStore[ntot]=ES;
-    }
-  }//end for loop
+    }//end Sz for loop
+  }//end n for loop
 }//end FindGS
 
 //initialize the Hamiltonian
@@ -219,102 +244,73 @@ std::tuple<MPO, double> initH(std::vector<double> eps, std::vector<double> V, in
 }
 
 //initialize the MPS in a product state with the correct particle number
-MPS initPsi(int ntot, params &p){
+MPS initPsi(int ntot, float Sz, params &p){
   auto state = InitState(p.sites);
 
   const int nsc = ntot-1;  // number of electrons in the SC in Gamma->0 limit
   const int npair = nsc/2; // number of pairs in the SC
   int tot = 0; // for assertion test
+  int Sztot = 0.;
 
-  if (p.EZ_imp <= 0) { 
-    //Up electron at the impurity site and npair UpDn pairs. 
+  //Up electron at the impurity site and npair UpDn pairs. 
+  if (Sz < 0.) {
+    state.set(p.impindex, "Dn");
+    Sztot += -0.5; 
+  }
+  else {
     state.set(p.impindex, "Up"); 
-    tot++;
+    Sztot += 0.5;
+  }
+  tot++;
 
-    int j=0;
-    int i=1;
-    for(; j < npair; i++){ //In order to avoid adding a pair to the impurity site   
-      if (i!=p.impindex){             //i counts sites, j counts added pairs.
-        j++;
-        if (p.calcspin1 && j==npair){ //split the last pair into two levels, creating a S=3/2 state
+  int j=0;
+  int i=1;
+  for(; j < npair; i++){   
+    if (i!=p.impindex){             //In order to avoid adding a pair to the impurity site 
+      j++;                          //i counts sites, j counts added pairs.
+      if (p.calcspin1 && j==npair){ //split the last pair into two levels, creating a S=3/2 state
+        if (Sz<0){
+          state.set(i, "Dn");
+          if (i+1!=p.impindex) state.set(i+1, "Dn");
+          else state.set(i+2, "Dn");
+          Sztot += -1;
+        }    
+        else{
           state.set(i, "Up");
           if (i+1!=p.impindex) state.set(i+1, "Up");
           else state.set(i+2, "Up");
-        }
-        else state.set(i, "UpDn");
-        
-        tot += 2;
-      }
-    }
-
-    if (nsc%2 == 1) { //If ncs is odd, add another electron according to EZ_bulk preference, but not to the impurity site.
-      
-      if (p.calcspin1){ //to calculate the energies in the S=1 or S=3/2 sector, set the additional electron to Up
-        if (i+1!=p.impindex){
-          state.set(i,"UpDn"); 
-          tot++;
-        }
-        else{
-          state.set(i+1,"UpDn"); 
-          tot++;
+          Sztot += 1;
         }
       }
-
-      else{
-        if (i!=p.impindex){
-          state.set(i,"Dn"); 
-          tot++;
-        }
-        else{
-          state.set(i+1,"Dn"); 
-          tot++;
-        }
-      }
-    }
-  }
-  
-  else { //If the magnetic field prefers spin down on the impurity
-
-    //Down electron at the impurity site and npair UpDn pairs. 
-    state.set(p.impindex, "Dn"); 
-    tot++;
-
-    int j=0;
-    int i=1;
-    for(; j < npair; i++){ //In order to avoid adding a pair to the impurity site   
-      if (i!=p.impindex){             //i counts sites, j counts added pairs.
-        j++;
-        state.set(i, "UpDn");
-        tot += 2;
-      }
-    }
-
-    //If ncs is odd, add another Up electron, but not to the impurity site.
-    if (nsc%2 == 1) {
-      if (p.calcspin1){
-        if (i!=p.impindex){
-          state.set(i, "Dn");
-          tot++;
-        }
-        else{
-          state.set(i+1, "Dn");
-          tot++;
-        }
-      }
-      else{
-        if (i!=p.impindex){
-          state.set(i, "Up");
-          tot++;
-        }
-        else{
-          state.set(i+1, "Up");
-          tot++;
-        }
-
-      }
+      else state.set(i, "UpDn");
+      tot += 2;
     }
   }
 
+  if (nsc%2 == 1) { //If ncs is odd, add another electron according to EZ_bulk preference, but not to the impurity site.
+    
+    if (p.calcspin1){ //to calculate the energies in the S=1 or S=3/2 sector, set the additional electron to Up
+      if (i+1!=p.impindex){
+        state.set(i,"UpDn"); 
+        tot++;
+      }
+      else{
+        state.set(i+1,"UpDn"); 
+        tot++;
+      }
+    }
+
+    else{
+      if (i!=p.impindex){
+        state.set(i,"Dn"); 
+        tot++;
+      }
+      else{
+        state.set(i+1,"Dn"); 
+        tot++;
+      }
+    }
+  }
 
   assert(tot == n);
   MPS psi(state);
@@ -326,98 +322,114 @@ MPS initPsi(int ntot, params &p){
 void calculateAndPrint(InputGroup &input, store &s, params &p){
   //print data for each sector
   for(auto ntot: p.numPart) {
-    printfln("\n");
-    printfln("RESULTS FOR THE SECTOR WITH %i PARTICLES:", ntot);
+    for (double Sz:p.Szs[ntot]){
+      auto nSz = std::make_pair(ntot, Sz);
+      
+      printfln("\n");
+      printfln("RESULTS FOR THE SECTOR WITH %i PARTICLES, Sz %i:", ntot, Sz);
 
-    printfln("Ground state energy = %.17g",s.GSEstore[ntot]);
+      printfln("Ground state energy = %.17g",s.GSEstore[nSz]);
 
-    MPS & GS = s.psiStore[ntot];
-    
-    //norm
-    double normGS = inner(GS, GS);
-    printfln("norm = %.17g", normGS);
-    //occupancy; site pairing; v and u amplitudes 
-    MeasureOcc(GS, p);
-    MeasurePairing(GS, p);
-    MeasureAmplitudes(GS, p);
+      MPS & GS = s.psiStore[nSz];
+      
+      //norm
+      double normGS = inner(GS, GS);
+      printfln("norm = %.17g", normGS);
+      //occupancy; site pairing; v and u amplitudes 
+      MeasureOcc(GS, p);
+      MeasurePairing(GS, p);
+      MeasureAmplitudes(GS, p);
 
-    if (p.computeEntropy) PrintEntropy(GS, p);
+      if (p.computeEntropy) PrintEntropy(GS, p);
 
-    if (p.impNupNdn) ImpurityUpDn(GS, p);
+      if (p.impNupNdn) ImpurityUpDn(GS, p);
 
-    if (p.chargeCorrelation) ChargeCorrelation(GS, p);
-    if (p.spinCorrelation) SpinCorrelation(GS, p);
-    if (p.pairCorrelation) PairCorrelation(GS, p);
-    if (p.hoppingExpectation) expectedHopping(GS, p);
-    if (p.printTotSpinZ) TotalSpinz(GS, p);
+      if (p.chargeCorrelation) ChargeCorrelation(GS, p);
+      if (p.spinCorrelation) SpinCorrelation(GS, p);
+      if (p.pairCorrelation) PairCorrelation(GS, p);
+      if (p.hoppingExpectation) expectedHopping(GS, p);
+      if (p.printTotSpinZ) TotalSpinz(GS, p);
 
-    double & GS0 = s.GSEstore[ntot];
-    double & GS0bis = s.GS0bisStore[ntot];
-    double & deltaE = s.deltaEStore[ntot];
-    double & residuum = s.residuumStore[ntot];
-    //various measures of convergence (energy deviation, residual value)
-    printfln("Eigenvalue(bis): <GS|H|GS> = %.17g",GS0bis);
-    printfln("diff: E_GS - <GS|H|GS> = %.17g", GS0-GS0bis);
-    printfln("deltaE: sqrt(<GS|H^2|GS> - <GS|H|GS>^2) = %.17g", deltaE);
-    printfln("residuum: <GS|H|GS> - E_GS*<GS|GS> = %.17g", residuum);
+      double & GS0 = s.GSEstore[nSz];
+      double & GS0bis = s.GS0bisStore[nSz];
+      double & deltaE = s.deltaEStore[nSz];
+      double & residuum = s.residuumStore[nSz];
+      //various measures of convergence (energy deviation, residual value)
+      printfln("Eigenvalue(bis): <GS|H|GS> = %.17g",GS0bis);
+      printfln("diff: E_GS - <GS|H|GS> = %.17g", GS0-GS0bis);
+      printfln("deltaE: sqrt(<GS|H^2|GS> - <GS|H|GS>^2) = %.17g", deltaE);
+      printfln("residuum: <GS|H|GS> - E_GS*<GS|GS> = %.17g", residuum);
 
-    if (p.excited_state){
-      MPS & ES = s.ESpsiStore[ntot];
-      double & ESenergy = s.ESEstore[ntot];
-      MeasureOcc(ES, p);
-      printfln("Excited state energy = %.17g",ESenergy);
-     }
-  } //end of n-for loop
+      if (p.excited_state){
+        MPS & ES = s.ESpsiStore[nSz];
+        double & ESenergy = s.ESEstore[nSz];
+        MeasureOcc(ES, p);
+        printfln("Excited state energy = %.17g",ESenergy);
+       }
+    } //end of Sz for loop 
+  } //end of ntot for loop
 
   printfln("");
   //Print out energies again:
   for(auto ntot: p.numPart){
-    printfln("n = %.17g  E = %.17g", ntot, s.GSEstore[ntot]);
+    for(auto Sz: p.Szs[ntot]){
+      printfln("n = %.17g  Sz = %.17g  E = %.17g", ntot, Sz, s.GSEstore[std::make_pair(ntot, Sz)]);
+  
+    }
   }
 
   //Find the sector with the global GS:
   int N_GS;
+  double Sz_GS;
   double EGS = std::numeric_limits<double>::infinity();
   for(auto ntot: p.numPart){
-    if (s.GSEstore[ntot] < EGS) {
-      EGS = s.GSEstore[ntot];
-      N_GS = ntot;
+    for(auto Sz: p.Szs[ntot]){
+      if (s.GSEstore[std::make_pair(ntot, Sz)] < EGS) {
+        EGS = s.GSEstore[std::make_pair(ntot, Sz)];
+        N_GS = ntot;
+        Sz_GS = Sz;
+      }
     }
   }
   printfln("N_GS = %i",N_GS);
+  printfln("Sz_GS = %i",Sz_GS);
 
   //Calculate the spectral weights:
   if (p.calcweights) {
-    MPS & psiGS = s.psiStore[N_GS];
+    MPS & psiGS = s.psiStore[std::make_pair(N_GS, Sz_GS)];
 
     printfln(""); 
     printfln("Spectral weights:");
     printfln("(Spectral weight is the square of the absolute value of the number.)");
 
-    if ( s.GSEstore.find(N_GS+1) != s.GSEstore.end() ){ //if the N_GS+1 state was computed, print the <N+1|c^dag|N> terms
 
-      MPS & psiNp = s.psiStore[N_GS+1];
-
+    if ( s.GSEstore.find(std::make_pair(N_GS+1, Sz_GS+0.5)) != s.GSEstore.end() ){ //if the N_GS+1 state was computed, print the <N+1|c^dag|N> terms
+      MPS & psiNp = s.psiStore[std::make_pair(N_GS+1, Sz_GS+0.5)];
       ExpectationValueAddEl(psiNp, psiGS, "up", p);
+    }  
+    else printfln("ERROR: we don't have info about the N_GS+1, Sz_GS+0.5 occupancy sector.");
+
+    if ( s.GSEstore.find(std::make_pair(N_GS+1, Sz_GS-0.5)) != s.GSEstore.end() ){ //if the N_GS+1 state was computed, print the <N+1|c^dag|N> terms
+      MPS & psiNp = s.psiStore[std::make_pair(N_GS+1, Sz_GS-0.5)];
       ExpectationValueAddEl(psiNp, psiGS, "dn", p);
-    }
+    }  
+    else printfln("ERROR: we don't have info about the N_GS+1, Sz_GS-0.5 occupancy sector.");
 
-    else {
-      printfln("ERROR: we don't have info about the N_GS+1 occupancy sector.");
-    }
 
-    if ( s.GSEstore.find(N_GS-1) != s.GSEstore.end() ){ //if the N_GS-1 state was computed, print the <N-1|c|N> terms
-
-      MPS & psiNm = s.psiStore[N_GS-1];   
-
+    if ( s.GSEstore.find(std::make_pair(N_GS-1, Sz_GS+0.5)) != s.GSEstore.end() ){ //if the N_GS-1 state was computed, print the <N-1|c|N> terms
+      MPS & psiNm = s.psiStore[std::make_pair(N_GS-1, Sz_GS+0.5)];   
       ExpectationValueTakeEl(psiNm, psiGS, "up", p);
+    }
+    else printfln("ERROR: we don't have info about the N_GS+1, Sz_GS-0.5 occupancy sector.");
+
+    if ( s.GSEstore.find(std::make_pair(N_GS-1, Sz_GS-0.5)) != s.GSEstore.end() ){ //if the N_GS-1 state was computed, print the <N-1|c|N> terms
+      MPS & psiNm = s.psiStore[std::make_pair(N_GS-1, Sz_GS-0.5)];   
       ExpectationValueTakeEl(psiNm, psiGS, "dn", p);
     }
+    else printfln("ERROR: we don't have info about the N_GS+1, Sz_GS-0.5 occupancy sector.");
 
-    else {
-      printfln("ERROR: we don't have info about the N_GS-1 occupancy sector.");
-    }
-  } //end of if (calcweights)  
+  } //end of if (calcweights)
+
 } //end of calculateAndPrint()
 
 //calculates <psi1|c_dag|psi2>, according to http://itensor.org/docs.cgi?vers=cppv3&page=formulas/mps_onesite_op
