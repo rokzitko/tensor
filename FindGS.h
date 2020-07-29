@@ -60,7 +60,7 @@ struct params {
 
   std::vector<int> numPart; // range of total occupancies of interest
   std::map<int, std::vector<double>> Szs; // Szs for each n in numPart
-
+  std::vector<std::pair<int, double>> iterateOver; // a zipped vector of off (n, Sz) combinations
 
   //parameters for the phase transition point iteration
   double gamma0;        // initial guess

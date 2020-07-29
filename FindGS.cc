@@ -128,6 +128,13 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
     } 
   } 
 
+  p.iterateOver={};
+  for (size_t i=0; i<p.numPart.size(); i++){
+    for (size_t j=0; j<p.Szs[p.numPart[i]].size(); j++){
+      p.iterateOver.push_back(std::make_pair(p.numPart[i], p.Szs[p.numPart[i]][j]));
+    }
+  }
+
   // parameters used in the phase transition point iteration
   p.gamma0 = input.getReal("gamma0", 0.5);
   p.gamma1 = input.getReal("gamma1", 1.5);
@@ -160,11 +167,23 @@ void FindGS(InputGroup &input, store &s, params &p){
   int nrsweeps = input.getInt("nrsweeps", 15);
   auto sweeps = Sweeps(nrsweeps,sw_table);
 
-  #pragma omp parallel for if(p.parallel)
-  for (size_t i=0; i<p.numPart.size(); i++){
-    int ntot = p.numPart[i];
 
-    for (double Sz:p.Szs[ntot]){
+
+/*
+  #pragma omp parallel for if(p.parallel) collapse(2)
+  for (size_t i=0; i<p.numPart.size(); i++){
+    for (size_t j=0; j<p.Szs[p.numPart[i]].size(); j++){
+    //for (double Sz:p.Szs[p.numPart[i]]){
+      int ntot = p.numPart[i];
+      double Sz = p.Szs[p.numPart[i]][j];
+*/
+
+  #pragma omp parallel for if(p.parallel) 
+  for (size_t i=0; i<p.iterateOver.size(); i++){
+
+      int ntot = std::get<0>(p.iterateOver[i]);
+      double Sz = std::get<1>(p.iterateOver[i]);
+
       std::cout << "\nSweeping in the sector with " << ntot << " particles, Sz = " << Sz << ".\n";
 
       std::vector<double> eps;        // vector containing on-site energies of the bath !one-indexed!
@@ -210,8 +229,8 @@ void FindGS(InputGroup &input, store &s, params &p){
         s.ESpsiStore[std::make_pair(ntot, Sz)]=ES;
       }
 
-    }//end Sz for loop
-  }//end n for loop
+    //}//end Sz for loop
+  }//end ntot for loop
 }//end FindGS
 
 //initialize the Hamiltonian
