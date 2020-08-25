@@ -33,28 +33,43 @@ double DeltaE(InputGroup &input, store &s, params &p) {
 
   //Find the sector with the global GS:
   int N_GS;
+  double Sz_GS;
   double EGS = std::numeric_limits<double>::infinity();
   for(auto ntot: p.numPart){
-    if (s.GSEstore[ntot] < EGS) {
-      EGS = s.GSEstore[ntot];
-      N_GS = ntot;
+    for(auto Sz: p.Szs[ntot]){
+      if (s.GSEstore[std::make_pair(ntot, Sz)] < EGS) {
+        EGS = s.GSEstore[std::make_pair(ntot, Sz)];
+        N_GS = ntot;
+        Sz_GS = Sz;
+      }
     }
   }
   
   auto prefactor = pow(-1, N_GS%2);
 
-  double Delta;
-	if (s.GSEstore.find(N_GS+1) == s.GSEstore.end()) {
-	// N_GS+1 key not found
-		Delta = s.GSEstore[N_GS-1] - EGS;
+  //set Ep at infinity. If state Ngs+1, SzGS+0.5 is computed, take that as Ep. If the state with SzGS-0.5 is also computed, take the minimum of these two values as Ep.
+  //In the case where the nGS+1 (or -1) state is not computed, Ep (Em) will remain at infinity. The last line takes Delta as the smallest between Ep and Em.  
+  double Ep = std::numeric_limits<double>::infinity();	
+  double Em = std::numeric_limits<double>::infinity();	
+
+  if (s.GSEstore.find(std::make_pair(N_GS+1, Sz_GS+0.5)) != s.GSEstore.end()) {
+  	Ep = s.GSEstore[std::make_pair(N_GS+1, Sz_GS+0.5)];
   }
-  else if (s.GSEstore.find(N_GS-1) == s.GSEstore.end()) {
-	// N_GS-1 key not found
-		Delta = s.GSEstore[N_GS+1] - EGS;
+  else if (s.GSEstore.find(std::make_pair(N_GS+1, Sz_GS-0.5)) != s.GSEstore.end()) {
+	Ep = std::min( s.GSEstore[std::make_pair(N_GS+1, Sz_GS-0.5)], Ep);
   }
-  else {
-  	Delta = std::min(s.GSEstore[N_GS+1] - EGS, s.GSEstore[N_GS-1] - EGS); 
+
+  //do the same for the nGS-1 case, save to Em.
+  //THIS REPEATS BASICALLY THE SAME CODE, EASY WAY TO AVOID THIS? (IT IS MORE READABLE LIKE THIS TOUGH)
+  if (s.GSEstore.find(std::make_pair(N_GS-1, Sz_GS+0.5)) != s.GSEstore.end()) {
+  	Em = s.GSEstore[std::make_pair(N_GS-1, Sz_GS+0.5)];
   }
+  else if (s.GSEstore.find(std::make_pair(N_GS-1, Sz_GS-0.5)) != s.GSEstore.end()) {
+	Em = std::min( s.GSEstore[std::make_pair(N_GS-1, Sz_GS-0.5)], Em);
+  }
+
+  double Delta = std::min(Ep, Em);
+
   return prefactor * Delta;
 
 }
