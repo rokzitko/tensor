@@ -439,13 +439,13 @@ void calculateAndPrint(InputGroup &input, store &s, params &p){
       MPS & psiNm = s.psiStore[std::make_pair(N_GS-1, Sz_GS+0.5)];   
       ExpectationValueTakeEl(psiNm, psiGS, "up", p);
     }
-    else printfln("ERROR: we don't have info about the N_GS+1, Sz_GS-0.5 occupancy sector.");
+    else printfln("ERROR: we don't have info about the N_GS-1, Sz_GS+0.5 occupancy sector.");
 
     if ( s.GSEstore.find(std::make_pair(N_GS-1, Sz_GS-0.5)) != s.GSEstore.end() ){ //if the N_GS-1 state was computed, print the <N-1|c|N> terms
       MPS & psiNm = s.psiStore[std::make_pair(N_GS-1, Sz_GS-0.5)];   
       ExpectationValueTakeEl(psiNm, psiGS, "dn", p);
     }
-    else printfln("ERROR: we don't have info about the N_GS+1, Sz_GS-0.5 occupancy sector.");
+    else printfln("ERROR: we don't have info about the N_GS-1, Sz_GS-0.5 occupancy sector.");
 
   } //end of if (calcweights)
 
