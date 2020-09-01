@@ -108,7 +108,7 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
     p.numPart.push_back(nref-i);
   }
   
-  bool magnetic_field = ((p.EZ_imp!=0 || p.EZ_bulk!=0) ? true : false); // true if there is magnetic field 
+  bool magnetic_field = ((p.EZ_imp!=0 || p.EZ_bulk!=0) ? true : false); // true if there is magnetic field, implying that Sz=0.5 states are NOT degenerate
   // Sz values for n are in Szs[n]
   for (size_t i=0; i<p.numPart.size(); i++){
     int ntot = p.numPart[i];
@@ -435,14 +435,14 @@ void calculateAndPrint(InputGroup &input, store &s, params &p){
     else printfln("ERROR: we don't have info about the N_GS+1, Sz_GS-0.5 occupancy sector.");
 
 
-    if ( s.GSEstore.find(std::make_pair(N_GS-1, Sz_GS+0.5)) != s.GSEstore.end() ){ //if the N_GS-1 state was computed, print the <N-1|c|N> terms
-      MPS & psiNm = s.psiStore[std::make_pair(N_GS-1, Sz_GS+0.5)];   
+    if ( s.GSEstore.find(std::make_pair(N_GS-1, Sz_GS-0.5)) != s.GSEstore.end() ){ //if the N_GS-1 state was computed, print the <N-1|c|N> terms
+      MPS & psiNm = s.psiStore[std::make_pair(N_GS-1, Sz_GS-0.5)];   
       ExpectationValueTakeEl(psiNm, psiGS, "up", p);
     }
     else printfln("ERROR: we don't have info about the N_GS-1, Sz_GS+0.5 occupancy sector.");
 
-    if ( s.GSEstore.find(std::make_pair(N_GS-1, Sz_GS-0.5)) != s.GSEstore.end() ){ //if the N_GS-1 state was computed, print the <N-1|c|N> terms
-      MPS & psiNm = s.psiStore[std::make_pair(N_GS-1, Sz_GS-0.5)];   
+    if ( s.GSEstore.find(std::make_pair(N_GS-1, Sz_GS+0.5)) != s.GSEstore.end() ){ //if the N_GS-1 state was computed, print the <N-1|c|N> terms
+      MPS & psiNm = s.psiStore[std::make_pair(N_GS-1, Sz_GS+0.5)];   
       ExpectationValueTakeEl(psiNm, psiGS, "dn", p);
     }
     else printfln("ERROR: we don't have info about the N_GS-1, Sz_GS-0.5 occupancy sector.");
