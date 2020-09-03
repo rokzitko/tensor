@@ -167,17 +167,6 @@ void FindGS(InputGroup &input, store &s, params &p){
   int nrsweeps = input.getInt("nrsweeps", 15);
   auto sweeps = Sweeps(nrsweeps,sw_table);
 
-
-
-/*
-  #pragma omp parallel for if(p.parallel) collapse(2)
-  for (size_t i=0; i<p.numPart.size(); i++){
-    for (size_t j=0; j<p.Szs[p.numPart[i]].size(); j++){
-    //for (double Sz:p.Szs[p.numPart[i]]){
-      int ntot = p.numPart[i];
-      double Sz = p.Szs[p.numPart[i]][j];
-*/
-
   #pragma omp parallel for if(p.parallel) 
   for (size_t i=0; i<p.iterateOver.size(); i++){
 
