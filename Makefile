@@ -33,7 +33,7 @@ calcPT: calcPT.o FindGS.o $(ITENSOR_LIBS) $(TENSOR_HEADERS)
 
 buildPT: calcPT
 buildGS: calcGS
-build: calcGS calcPT
+build: calcGS
 
 clean:
 	rm -v *.o calcGS calcPT
