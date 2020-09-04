@@ -315,27 +315,23 @@ void calculateAndPrint(InputGroup &input, store &s, params &p){
     for(auto Sz: p.Szs[ntot])
       printfln("n = %.17g  Sz = %.17g  E = %.17g", ntot, Sz, s.eigen0[subspace(ntot,Sz)].E());
 
-  // TODO: generic code
-  //Find the sector with the global GS:
-  int N_GS;
-  double Sz_GS;
+  // Find the sector with the global GS
+  subspace subGS;
   double EGS = std::numeric_limits<double>::infinity();
-  for(auto ntot: p.numPart){
-    for(auto Sz: p.Szs[ntot]){
-      auto E0 = s.eigen0[subspace(ntot, Sz)].E();
-      if (E0 < EGS) {
-        EGS = E0;
-        N_GS = ntot;
-        Sz_GS = Sz;
-      }
+  for(const auto & [sub, eig] : s.eigen0) {
+    auto E0 = eig.E();
+    if (E0 < EGS) {
+      EGS = E0;
+      subGS = sub;
     }
   }
+  auto [N_GS, Sz_GS] = subGS;
   printfln("N_GS = %i",N_GS);
   printfln("Sz_GS = %i",Sz_GS);
 
   //Calculate the spectral weights:
   if (p.calcweights) {
-    MPS & psiGS = s.eigen0[subspace(N_GS, Sz_GS)].psi();
+    MPS & psiGS = s.eigen0[subGS].psi();
 
     printfln(""); 
     printfln("Spectral weights:");
