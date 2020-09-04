@@ -225,7 +225,7 @@ struct params {
 struct store
 {
   std::map<subspace, MPS> psiStore;      // ground states
-  std::map<subspace, double> GSEstore;   // ground state energies
+//  std::map<subspace, double> GSEstore;   // ground state energies
   std::map<subspace, MPS> ESpsiStore;    // excited states
   std::map<subspace, double> ESEstore;   // excited state energies
 

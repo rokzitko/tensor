@@ -195,7 +195,7 @@ void FindGS(InputGroup &input, store &s, params &p){
     s.stats0[sub] = psi_stats(E, psi, H);
     
     s.psiStore[sub] = psi;
-    s.GSEstore[sub] = GSenergy;
+//    s.GSEstore[sub] = GSenergy;
         
     if (p.excited_state) {
       auto wfs = std::vector<MPS>(1);
@@ -305,17 +305,13 @@ void calculateAndPrint(InputGroup &input, store &s, params &p){
   for(auto ntot: p.numPart) {
     for (double Sz:p.Szs[ntot]){
       auto sub = subspace(ntot, Sz);
-      
-      printfln("\n");
-      printfln("RESULTS FOR THE SECTOR WITH %i PARTICLES, Sz %i:", ntot, Sz);
-
-      printfln("Ground state energy = %.17g",s.GSEstore[sub]);
+      printfln("\n\nRESULTS FOR THE SECTOR WITH %i PARTICLES, Sz %i:", ntot, Sz);
+      auto E = s.eigen0[sub].E();
+      printfln("Ground state energy = %.17g", E);
 
       MPS & GS = s.psiStore[sub];
       
-      //norm
-      double normGS = inner(GS, GS);
-      printfln("norm = %.17g", normGS);
+      printfln("norm = %.17g", s.stats0[sub].norm());
       //occupancy; site pairing; v and u amplitudes 
       MeasureOcc(GS, p);
       MeasurePairing(GS, p);
@@ -331,7 +327,7 @@ void calculateAndPrint(InputGroup &input, store &s, params &p){
       if (p.hoppingExpectation) expectedHopping(GS, p);
       if (p.printTotSpinZ) TotalSpinz(GS, p);
 
-      double GS0 = s.GSEstore[sub];
+      double GS0 = E;
       double GS0bis = s.stats0[sub].Ebis();
       //various measures of convergence (energy deviation, residual value)
       printfln("Eigenvalue(bis): <GS|H|GS> = %.17g",GS0bis);
@@ -350,21 +346,20 @@ void calculateAndPrint(InputGroup &input, store &s, params &p){
 
   printfln("");
   //Print out energies again:
-  for(auto ntot: p.numPart){
-    for(auto Sz: p.Szs[ntot]){
-      printfln("n = %.17g  Sz = %.17g  E = %.17g", ntot, Sz, s.GSEstore[std::make_pair(ntot, Sz)]);
-  
-    }
-  }
+  for(auto ntot: p.numPart)
+    for(auto Sz: p.Szs[ntot])
+      printfln("n = %.17g  Sz = %.17g  E = %.17g", ntot, Sz, s.eigen0[subspace(ntot,Sz)].E());
 
+  // TODO: generic code
   //Find the sector with the global GS:
   int N_GS;
   double Sz_GS;
   double EGS = std::numeric_limits<double>::infinity();
   for(auto ntot: p.numPart){
     for(auto Sz: p.Szs[ntot]){
-      if (s.GSEstore[std::make_pair(ntot, Sz)] < EGS) {
-        EGS = s.GSEstore[std::make_pair(ntot, Sz)];
+      auto E0 = s.eigen0[subspace(ntot, Sz)].E();
+      if (E0 < EGS) {
+        EGS = E0;
         N_GS = ntot;
         Sz_GS = Sz;
       }
@@ -381,28 +376,30 @@ void calculateAndPrint(InputGroup &input, store &s, params &p){
     printfln("Spectral weights:");
     printfln("(Spectral weight is the square of the absolute value of the number.)");
 
-
-    if ( s.GSEstore.find(std::make_pair(N_GS+1, Sz_GS+0.5)) != s.GSEstore.end() ){ //if the N_GS+1 state was computed, print the <N+1|c^dag|N> terms
-      MPS & psiNp = s.psiStore[std::make_pair(N_GS+1, Sz_GS+0.5)];
+    auto cp = subspace(N_GS+1, Sz_GS+0.5);
+    if ( s.eigen0.find(cp) != s.eigen0.end() ){ //if the N_GS+1 state was computed, print the <N+1|c^dag|N> terms
+      MPS & psiNp = s.psiStore[cp];
       ExpectationValueAddEl(psiNp, psiGS, "up", p);
     }  
     else printfln("ERROR: we don't have info about the N_GS+1, Sz_GS+0.5 occupancy sector.");
 
-    if ( s.GSEstore.find(std::make_pair(N_GS+1, Sz_GS-0.5)) != s.GSEstore.end() ){ //if the N_GS+1 state was computed, print the <N+1|c^dag|N> terms
-      MPS & psiNp = s.psiStore[std::make_pair(N_GS+1, Sz_GS-0.5)];
+    auto cm = subspace(N_GS+1, Sz_GS-0.5);
+    if ( s.eigen0.find(cm) != s.eigen0.end() ){ //if the N_GS+1 state was computed, print the <N+1|c^dag|N> terms
+      MPS & psiNp = s.psiStore[cm];
       ExpectationValueAddEl(psiNp, psiGS, "dn", p);
     }  
     else printfln("ERROR: we don't have info about the N_GS+1, Sz_GS-0.5 occupancy sector.");
 
-
-    if ( s.GSEstore.find(std::make_pair(N_GS-1, Sz_GS-0.5)) != s.GSEstore.end() ){ //if the N_GS-1 state was computed, print the <N-1|c|N> terms
-      MPS & psiNm = s.psiStore[std::make_pair(N_GS-1, Sz_GS-0.5)];   
+    auto am = subspace(N_GS-1, Sz_GS-0.5);
+    if ( s.eigen0.find(am) != s.eigen0.end() ){ //if the N_GS-1 state was computed, print the <N-1|c|N> terms
+      MPS & psiNm = s.psiStore[am];   
       ExpectationValueTakeEl(psiNm, psiGS, "up", p);
     }
     else printfln("ERROR: we don't have info about the N_GS-1, Sz_GS+0.5 occupancy sector.");
 
-    if ( s.GSEstore.find(std::make_pair(N_GS-1, Sz_GS+0.5)) != s.GSEstore.end() ){ //if the N_GS-1 state was computed, print the <N-1|c|N> terms
-      MPS & psiNm = s.psiStore[std::make_pair(N_GS-1, Sz_GS+0.5)];   
+    auto ap = subspace(N_GS-1, Sz_GS+0.5);
+    if ( s.eigen0.find(ap) != s.eigen0.end() ){ //if the N_GS-1 state was computed, print the <N-1|c|N> terms
+      MPS & psiNm = s.psiStore[ap];   
       ExpectationValueTakeEl(psiNm, psiGS, "dn", p);
     }
     else printfln("ERROR: we don't have info about the N_GS-1, Sz_GS-0.5 occupancy sector.");
