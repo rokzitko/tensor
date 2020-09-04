@@ -12,7 +12,7 @@ MPOFILES = $(wildcard SC_BathMPO*.h)
 
 #Rules ------------------
 
-%.o: %.cc $(ITENSOR_LIBS) $(TENSOR_HEADERS)
+%.o: %.cc $(ITENSOR_LIBS) $(TENSOR_HEADERS) FindGS.h
 	$(CCCOM) -c $(CCFLAGS) -o $@ $<
 
 FindGS.o: FindGS.cc FindGS.h $(ITENSOR_LIBS) $(TENSOR_HEADERS) $(MPOFILES)
