@@ -190,7 +190,7 @@ std::tuple<MPO, double> initH(int ntot, params &p){
     std::cout << "V=" << V << std::endl;
   }
 
-  double Eshift;  // constant term in the Hamiltonian
+  double Eshift = 0;  // constant term in the Hamiltonian
   MPO H(p.sites); // MPO is the hamiltonian in "MPS-form" after this line it is still a trivial operator
   if (p.MPO == "std") {
     assert(p.V12 != 0.0);
@@ -214,11 +214,8 @@ std::tuple<MPO, double> initH(int ntot, params &p){
   } else if (p.MPO == "middle_2channel") {
     Eshift = p.Ec1*pow(p.n01, 2) + p.Ec2*pow(p.n02, 2);
     Fill_SCBath_MPO_MiddleImp_TwoChannel(H, eps, V, p);
-  } else {
-    std::cout << MPO << std::endl;
-    throw std::runtime_error("Unknown MPO type");
-  }
-  
+  } else
+    throw std::runtime_error("Unknown MPO type " + p.MPO);
   Eshift += p.qd->U()/2.; // RZ, for convenience
   return std::make_tuple(H, Eshift);
 }
@@ -635,28 +632,25 @@ void TotalSpinz(MPS& psi, const params &p){
   }
 
   std::cout << std::setprecision(17) << "Total spin z: " << " Nup = " << totNup << " Ndn = " << totNdn << " Sztot = " << 0.5*(totNup-totNdn) <<  "\n";
-
 }
 
-//prints the occupation number of an MPS psi
-//instructive to learn how to calculate local observables
-void MeasureOcc(MPS& psi, const params &p){
-  
-  
-  std::cout << "site occupancies = ";
-  double tot = 0;
-  for(auto i : range1(length(psi)) ){
-    //position call very important! otherwise one would need to 
-    //contract the whole tensor network of <psi|O|psi>
-    //this way, only the local operator at site i is needed
+// occupation numbers of all levels in the problem
+auto calcOcc(MPS &psi, const params &p) {
+  std::vector<double> r;
+  for(auto i : range1(length(psi)) ) {
+    // position call very important! otherwise one would need to contract the whole tensor network of <psi|O|psi> this way, only the local operator at site i is needed
     psi.position(i);
     auto val = psi.A(i) * p.sites.op("Ntot",i)* dag(prime(psi.A(i),"Site"));
-    std::cout << std::setprecision(17) << std::real(val.cplx()) << " ";
-    tot += std::real(val.cplx());
+    r.push_back(std::real(val.cplx()));
   }
-  std::cout << std::endl;
-  Print(tot);
+  return r;
+}
 
+void MeasureOcc(MPS& psi, const params &p) {
+  auto r = calcOcc(psi, p);
+  std::cout << "site occupancies = " << std::setprecision(17) << r << std::endl;
+  auto tot = std::accumulate(r.begin(), r.end(), 0.0);
+  Print(tot);
 }
 
 // The sum (tot) corresponds to \bar{\Delta}', Eq. (4) in Braun, von Delft, PRB 50, 9527 (1999), first proposed by Dan Ralph.
