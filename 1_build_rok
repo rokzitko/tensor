@@ -1,7 +1,7 @@
 #!/bin/bash
 # RZ, Dec 2019
-module purge
-module load gimkl/2018b
+#ml purge
+#ml gimkl/2018b
+g++ --version
 export ITENSOR=~/repos/itensor
-#make
 make build
