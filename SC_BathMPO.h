@@ -44,8 +44,8 @@ void Fill_SCBath_MPO(MPO& H, const std::vector<double>& eps_,
         W += p.sites.op("Id",i) * setElt(right(1));
 
         W += p.sites.op("Ntot",i)  * setElt(right(2)) * epseff;
-        W += p.sites.op("Nup",i)  * setElt(right(2)) * p.EZ_imp;
-        W += p.sites.op("Ndn",i)  * setElt(right(2)) * (-1) * p.EZ_imp;
+        W += p.sites.op("Nup",i)  * setElt(right(2)) * p.qd->EZ();
+        W += p.sites.op("Ndn",i)  * setElt(right(2)) * (-1) * p.qd->EZ();
         W += p.sites.op("Nupdn",i) * setElt(right(2)) * p.Ueff;
 
         W += p.sites.op("Cup*F",i) * setElt(right(3))    * (-1);

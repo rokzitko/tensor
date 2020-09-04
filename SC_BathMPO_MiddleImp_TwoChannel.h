@@ -140,10 +140,10 @@ void Fill_SCBath_MPO_MiddleImp_TwoChannel(MPO& H, const std::vector<double>& eps
 
         W += p.sites.op("Id",i) * setElt(left(1), right(1));
 
-        W += p.sites.op("Ntot",i)  * setElt(left(1), right(2)) * p.epsimp; //CHECK THIS
-        W += p.sites.op("Nup",i)  * setElt(left(1), right(2)) * p.EZ_imp;
-        W += p.sites.op("Ndn",i)  * setElt(left(1), right(2)) * (-1) * p.EZ_imp;
-        W += p.sites.op("Nupdn",i) * setElt(left(1), right(2)) * p.U;
+        W += p.sites.op("Ntot",i)  * setElt(left(1), right(2)) * p.qd->eps(); //CHECK THIS
+        W += p.sites.op("Nup",i)  * setElt(left(1), right(2)) * p.qd->EZ();
+        W += p.sites.op("Ndn",i)  * setElt(left(1), right(2)) * (-1) * p.qd->EZ();
+        W += p.sites.op("Nupdn",i) * setElt(left(1), right(2)) * p.qd->U();
 
         // hybridizations
         W += p.sites.op("Cup*F",    i)*setElt(left(1),right(3)) * (-1);

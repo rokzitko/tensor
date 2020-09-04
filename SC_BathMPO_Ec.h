@@ -44,17 +44,15 @@ void Fill_SCBath_MPO_Ec(MPO& H, const std::vector<double>& eps_,
         W = ITensor(right, p.sites.si(i), p.sites.siP(i) );
         W += p.sites.op("Id",i) * setElt(right(1));
 
-        W += p.sites.op("Ntot",i)  * setElt(right(2)) * p.epsimp; // not eps_[i-1]!
-        W += p.sites.op("Nup",i)  * setElt(right(2)) * p.EZ_imp; // impurity Zeeman energy
-        W += p.sites.op("Ndn",i)  * setElt(right(2)) * (-1) * p.EZ_imp; // impurity Zeeman energy
-        W += p.sites.op("Nupdn",i) * setElt(right(2)) * p.U; // not Ueff!
+        W += p.sites.op("Ntot",i)  * setElt(right(2)) * p.qd->eps(); // not eps_[i-1]!
+        W += p.sites.op("Nup",i)  * setElt(right(2)) * p.qd->EZ(); // impurity Zeeman energy
+        W += p.sites.op("Ndn",i)  * setElt(right(2)) * (-1) * p.qd->EZ(); // impurity Zeeman energy
+        W += p.sites.op("Nupdn",i) * setElt(right(2)) * p.qd->U(); // not Ueff!
 
         W += p.sites.op("Cup*F",i) * setElt(right(3))    * (-1);
         W += p.sites.op("Cdn*F",i) * setElt(right(4))    * (-1);
         W += p.sites.op("Cdagup*F",i) * setElt(right(5)) * (+1);
         W += p.sites.op("Cdagdn*F",i) * setElt(right(6)) * (+1);
-
-        if (p.verbose) std::cout << "using p.epsimp and p.U for impurity" <<std::endl;
     }
 
     // sites 2 ... N-1 are matrices

@@ -31,7 +31,7 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   auto input = InputGroup{p.inputfn, "params"}; //get input parameters using InputGroup from itensor
 
   p.MPO = input.getString("MPO", "std");
-  
+
   p.NImp = 1;
   p.N = input.getInt("N", 0);
   if (p.N != 0) {
@@ -83,18 +83,23 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
 
   p.calcspin1 = input.getYesNo("calcspin1", false);
 
+  {
+    double U = input.getReal("U", 0);
+    p.qd = std::make_unique<imp>(U, input.getReal("epsimp", -U/2.), input.getReal("EZ_imp", 0.));
+  }
+//  p.U = p.qd->U();
+//  p.epsimp = p.qd->eps();
+//  p.EZ_imp = input.getReal("EZ_imp", 0.);
+  p.nu = p.qd->nu();
+
   p.n0 = input.getReal("n0", p.N-1);
   p.alpha = input.getReal("alpha", 0);
   p.d = 2./p.NBath;
   p.g = p.alpha * p.d;
-  p.U = input.getReal("U", 0);
   p.gamma = input.getReal("gamma", 0);
   p.Ec = input.getReal("Ec", 0);
-  p.epsimp = input.getReal("epsimp", -p.U/2.);
-  p.nu = (p.U != 0.0 ? 0.5-p.epsimp/p.U : std::numeric_limits<double>::quiet_NaN()); // ill-defined for the non-interacting case
   p.V12 = input.getReal("V", 0);
 
-  p.EZ_imp = input.getReal("EZ_imp", 0.);
   p.EZ_bulk = input.getReal("EZ_bulk", 0.);
 
   //TWO CHANNEL PARAMETERS
@@ -112,19 +117,19 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   p.SCSCinteraction = input.getReal("SCSCinteraction", 0);
 
   // for Ec_trick mapping
-  p.Ueff = p.U + 2.*p.Ec;                            // effective impurity e-e repulsion
+  p.Ueff = p.qd->U() + 2.*p.Ec;                            // effective impurity e-e repulsion
   // p.epseff cannot be set here, because it depends on ntot (number of electrons in a given sector)
-  
+
   p.numPart={};
   const int nhalf = p.N; // total nr of electrons at half-filling
-  const int nref = (p.refisn0 ? ( round(p.n0 + 0.5 - (p.epsimp/p.U)) ) : nhalf); //calculation of the energies is centered around this n
+  const int nref = (p.refisn0 ? ( round(p.n0 + 0.5 - (p.qd->eps()/p.qd->U())) ) : nhalf); //calculation of the energies is centered around this n
   p.numPart.push_back(nref);
   for (int i = 1; i <= p.nrange; i++) {
     p.numPart.push_back(nref+i);
     p.numPart.push_back(nref-i);
   }
-  
-  bool magnetic_field = ((p.EZ_imp!=0 || p.EZ_bulk!=0) ? true : false); // true if there is magnetic field, implying that Sz=0.5 states are NOT degenerate
+
+  bool magnetic_field = ((p.qd->EZ()!=0 || p.EZ_bulk!=0) ? true : false); // true if there is magnetic field, implying that Sz=0.5 states are NOT degenerate
   // Sz values for n are in Szs[n]
   for (size_t i=0; i<p.numPart.size(); i++){
     int ntot = p.numPart[i];
@@ -141,8 +146,8 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
         p.Szs[ntot].push_back(0.5);
         if (magnetic_field) p.Szs[ntot].push_back(-0.5);
       }
-    } 
-  } 
+    }
+  }
 
   p.iterateOver={};
   for (size_t i=0; i<p.numPart.size(); i++){
@@ -150,6 +155,7 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
       p.iterateOver.push_back(std::make_pair(p.numPart[i], p.Szs[p.numPart[i]][j]));
     }
   }
+
 
   // parameters used in the phase transition point iteration
   p.PTgamma0 = input.getReal("PTgamma0", 0.5);
@@ -245,12 +251,12 @@ std::tuple<MPO, double> initH(std::vector<double> eps, std::vector<double> V, in
   if (p.MPO == "std") {
     assert(p.V12 != 0.0);
     Eshift = p.Ec*pow(ntot-p.n0,2); // occupancy dependent effective energy shift
-    double epseff = p.epsimp - 2.*p.Ec*(ntot-p.n0) + p.Ec;
+    double epseff = p.qd->eps() - 2.*p.Ec*(ntot-p.n0) + p.Ec;
     Fill_SCBath_MPO(H, eps, V, epseff, p); // defined in SC_BathMPO.h, fills the MPO with the necessary entries
   } else if (p.MPO == "middle") {
     assert(p.V12 != 0.0);
     Eshift = p.Ec*pow(ntot-p.n0,2); // occupancy dependent effective energy shift
-    double epseff = p.epsimp - 2.*p.Ec*(ntot-p.n0) + p.Ec;
+    double epseff = p.qd->eps() - 2.*p.Ec*(ntot-p.n0) + p.Ec;
     Fill_SCBath_MPO_MiddleImp(H, eps, V, epseff, p);
   } else if (p.MPO == "Ec") {
     assert(p.V12 != 0.0);
@@ -258,7 +264,7 @@ std::tuple<MPO, double> initH(std::vector<double> eps, std::vector<double> V, in
     Fill_SCBath_MPO_Ec(H, eps, V, p);
   } else if (p.MPO == "Ec_V") {
     Eshift = p.Ec*pow(p.n0, 2) + p.V12 * p.n0 * p.nu;
-    double epseff = p.epsimp - p.V12 * p.n0;
+    double epseff = p.qd->eps() - p.V12 * p.n0;
     double epsishift = -p.V12 * p.nu;
     Fill_SCBath_MPO_Ec_V(H, eps, V, epseff, epsishift, p);
   } else if (p.MPO == "middle_2C") {
@@ -267,7 +273,7 @@ std::tuple<MPO, double> initH(std::vector<double> eps, std::vector<double> V, in
   } else
     throw std::runtime_error("Unknown MPO type");
   
-  Eshift += p.U/2.; // RZ, for convenience
+  Eshift += p.qd->U()/2.; // RZ, for convenience
   return std::make_tuple(H, Eshift);
 }
 

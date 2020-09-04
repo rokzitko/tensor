@@ -3,6 +3,19 @@
 
 using namespace itensor;
 
+class imp {
+ private:
+   double _U;
+   double _eps;
+   double _EZ;
+ public:
+   imp(double U, double eps, double EZ) : _U(U), _eps(eps), _EZ(EZ) {};
+   auto U() const { return _U; }
+   auto eps() const { return _eps; }
+   auto EZ() const { return _EZ; }
+   auto nu() const { return _U != 0.0 ? 0.5-_eps/_U : std::numeric_limits<double>::quiet_NaN(); }
+};
+
 // parameters from the input file 
 struct params {
   string inputfn;       // filename of the input file
@@ -47,12 +60,14 @@ struct params {
   double d;             // d=2D/NBath, level spacing
   double g;             // strength of the SC coupling
 
-  double U;             // e-e on impurity site
+//  double U;             // e-e on impurity site
+  double epsimp;        // impurity level
+  double nu;            // nu=1/2-epsimp/U, computed after epsimp parsed
+  std::unique_ptr<imp> qd; // replaces {U, epsimp, nu}
+
   double gamma;         // hybridisation
   double Ec;            // charging energy
   double V12;           // QD-SC capacitive coupling
-  double epsimp;        // impurity level
-  double nu;            // nu=1/2-epsimp/U, computed after epsimp parsed
   double Ueff;          // effective e-e on impurity site (after Ec_trick mapping)
 
   double EZ_imp;        // impurity Zeeman energy

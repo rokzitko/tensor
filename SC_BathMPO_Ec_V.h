@@ -45,9 +45,9 @@ void Fill_SCBath_MPO_Ec_V(MPO& H, const std::vector<double>& eps_,
         W += p.sites.op("Id",i) * setElt(right(1));
 
         W += p.sites.op("Ntot",i)  * setElt(right(2)) * epseff; // not eps_[i-1], neither p.epsimp!!
-        W += p.sites.op("Nup",i)  * setElt(right(2)) * p.EZ_imp; // impurity Zeeman energy
-        W += p.sites.op("Ndn",i)  * setElt(right(2)) * (-1) * p.EZ_imp; // impurity Zeeman energy
-        W += p.sites.op("Nupdn",i) * setElt(right(2)) * p.U; // not Ueff!
+        W += p.sites.op("Nup",i)  * setElt(right(2)) * p.qd->EZ(); // impurity Zeeman energy
+        W += p.sites.op("Ndn",i)  * setElt(right(2)) * (-1) * p.qd->EZ(); // impurity Zeeman energy
+        W += p.sites.op("Nupdn",i) * setElt(right(2)) * p.qd->U(); // not Ueff!
 
         W += p.sites.op("Cup*F",i) * setElt(right(3))    * (-1);
         W += p.sites.op("Cdn*F",i) * setElt(right(4))    * (-1);
@@ -56,8 +56,6 @@ void Fill_SCBath_MPO_Ec_V(MPO& H, const std::vector<double>& eps_,
 
         if (p.V12 != 0.0)
           W += p.sites.op("Ntot",i) * setElt(right(9)) * p.V12;
-
-        if (p.verbose) std::cout << "using epseff and p.U for impurity" <<std::endl;
     }
 
     // sites 2 ... N-1 are matrices
