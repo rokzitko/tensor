@@ -6,8 +6,10 @@
 #include <iomanip>
 #include <vector>
 #include <map>
+#include <unordered_map>
 #include <stdexcept>
 #include <limits> // quiet_NaN
+#include <tuple>
 
 #include <omp.h>
 
@@ -137,7 +139,7 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
     }
     p.Szs[ntot] = sz_list;
     for (auto sz : sz_list) 
-      p.iterateOver.push_back(std::make_pair(ntot, sz));
+      p.iterateOver.push_back(subspace(ntot, sz));
   }
 
   // parameters used in the phase transition point iteration
@@ -168,51 +170,42 @@ void FindGS(InputGroup &input, store &s, params &p){
   auto sw_table = InputGroup(inputsw,"sweeps");
   int nrsweeps = input.getInt("nrsweeps", 15);
   auto sweeps = Sweeps(nrsweeps,sw_table);
-
-  #pragma omp parallel for if(p.parallel) 
+  
+#pragma omp parallel for if(p.parallel) 
   for (size_t i=0; i<p.iterateOver.size(); i++){
+    auto sub = p.iterateOver[i];
+    auto [ntot, Sz] = sub;
+    std::cout << "\nSweeping in the sector with " << ntot << " particles, Sz = " << Sz << ".\n";
 
-      int ntot = std::get<0>(p.iterateOver[i]);
-      double Sz = std::get<1>(p.iterateOver[i]);
+    //initialize H and psi
+    auto [H, Eshift] = initH(ntot, p);
+    auto psi_init = initPsi(ntot, Sz, p);
+    
+    Args args; //args is used to store and transport parameters between various functions
 
-      std::cout << "\nSweeping in the sector with " << ntot << " particles, Sz = " << Sz << ".\n";
-
-      //initialize H and psi
-      auto [H, Eshift] = initH(ntot, p);
-      auto psi = initPsi(ntot, Sz, p);
-
-      Args args; //args is used to store and transport parameters between various functions
-
-      //Apply the MPO a couple of times to get DMRG started, otherwise it might not converge.
-      for(auto i : range1(p.nrH)){
-        psi = applyMPO(H,psi,args);
-        psi.noPrime().normalize();
-        }
-
-      auto [GS0, GS] = dmrg(H,psi,sweeps,{"Silent",p.parallel, "Quiet",!p.printDimensions, "EnergyErrgoal",p.EnergyErrgoal}); // call itensor dmrg 
-
-      double GSenergy = GS0+Eshift;
-
-      s.psiStore[std::make_pair(ntot, Sz)] = GS;
-      s.GSEstore[std::make_pair(ntot, Sz)] = GSenergy; 
-
-      //values that need H are calculated here and stored, in order to avoid storing the entire hamiltonian
-      double GS0bis = inner(GS, H, GS);
-      double deltaE = sqrt(inner(H, GS, H, GS) - pow(inner(GS, H, GS),2));
-      double residuum = inner(GS,H,GS) - GS0*inner(GS,GS);
-
-      s.GS0bisStore[std::make_pair(ntot, Sz)] = GS0bis; 
-      s.deltaEStore[std::make_pair(ntot, Sz)] = deltaE;
-      s.residuumStore[std::make_pair(ntot, Sz)] = residuum;
-
-      if (p.excited_state) {
-        auto wfs = std::vector<MPS>(1);
-        wfs.at(0) = GS;
-        auto [ESenergy, ES] = dmrg(H,wfs,psi,sweeps,{"Silent",p.parallel,"Quiet",true,"Weight",11.0});
-        ESenergy += Eshift;
-        s.ESEstore[std::make_pair(ntot, Sz)]=ESenergy;
-        s.ESpsiStore[std::make_pair(ntot, Sz)]=ES;
-      }
+    //Apply the MPO a couple of times to get DMRG started, otherwise it might not converge.
+    for(auto i : range1(p.nrH)){
+      psi_init = applyMPO(H,psi_init,args);
+      psi_init.noPrime().normalize();
+    }
+    
+    auto [E, psi] = dmrg(H,psi_init,sweeps,{"Silent",p.parallel, "Quiet",!p.printDimensions, "EnergyErrgoal",p.EnergyErrgoal}); // call itensor dmrg
+    double GSenergy = E+Eshift;
+    s.eigen0[sub] = eigenpair(GSenergy, psi);
+    s.stats0[sub] = psi_stats(E, psi, H);
+    
+    s.psiStore[sub] = psi;
+    s.GSEstore[sub] = GSenergy;
+        
+    if (p.excited_state) {
+      auto wfs = std::vector<MPS>(1);
+      wfs.at(0) = psi;
+      auto [E1, psi1] = dmrg(H,wfs,psi,sweeps,{"Silent",p.parallel,"Quiet",true,"Weight",11.0});
+      double ESenergy = E1+Eshift;
+      s.eigen1[sub] = eigenpair(ESenergy, psi1);
+      s.ESEstore[sub]=ESenergy;
+      s.ESpsiStore[sub]=psi1;
+    }
 
   }
 }//end FindGS
@@ -311,14 +304,14 @@ void calculateAndPrint(InputGroup &input, store &s, params &p){
   //print data for each sector
   for(auto ntot: p.numPart) {
     for (double Sz:p.Szs[ntot]){
-      auto nSz = std::make_pair(ntot, Sz);
+      auto sub = subspace(ntot, Sz);
       
       printfln("\n");
       printfln("RESULTS FOR THE SECTOR WITH %i PARTICLES, Sz %i:", ntot, Sz);
 
-      printfln("Ground state energy = %.17g",s.GSEstore[nSz]);
+      printfln("Ground state energy = %.17g",s.GSEstore[sub]);
 
-      MPS & GS = s.psiStore[nSz];
+      MPS & GS = s.psiStore[sub];
       
       //norm
       double normGS = inner(GS, GS);
@@ -338,19 +331,17 @@ void calculateAndPrint(InputGroup &input, store &s, params &p){
       if (p.hoppingExpectation) expectedHopping(GS, p);
       if (p.printTotSpinZ) TotalSpinz(GS, p);
 
-      double & GS0 = s.GSEstore[nSz];
-      double & GS0bis = s.GS0bisStore[nSz];
-      double & deltaE = s.deltaEStore[nSz];
-      double & residuum = s.residuumStore[nSz];
+      double GS0 = s.GSEstore[sub];
+      double GS0bis = s.stats0[sub].Ebis();
       //various measures of convergence (energy deviation, residual value)
       printfln("Eigenvalue(bis): <GS|H|GS> = %.17g",GS0bis);
       printfln("diff: E_GS - <GS|H|GS> = %.17g", GS0-GS0bis);
-      printfln("deltaE: sqrt(<GS|H^2|GS> - <GS|H|GS>^2) = %.17g", deltaE);
-      printfln("residuum: <GS|H|GS> - E_GS*<GS|GS> = %.17g", residuum);
+      printfln("deltaE: sqrt(<GS|H^2|GS> - <GS|H|GS>^2) = %.17g", s.stats0[sub].deltaE());
+      printfln("residuum: <GS|H|GS> - E_GS*<GS|GS> = %.17g", s.stats0[sub].residuum());
 
       if (p.excited_state){
-        MPS & ES = s.ESpsiStore[nSz];
-        double & ESenergy = s.ESEstore[nSz];
+        MPS & ES = s.ESpsiStore[sub];
+        double & ESenergy = s.ESEstore[sub];
         MeasureOcc(ES, p);
         printfln("Excited state energy = %.17g",ESenergy);
        }

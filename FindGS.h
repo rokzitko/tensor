@@ -1,6 +1,8 @@
 #ifndef _calcGS_h_
 #define _calcGS_h_
 
+//#include "hash_for_tuples.h"
+
 using namespace itensor;
 
 inline bool even(int i) { return i%2 == 0; }
@@ -88,6 +90,7 @@ constexpr auto spin0 = spin(0);
 constexpr auto spinp = spin(0.5);
 constexpr auto spinm = spin(-0.5);
 
+#ifdef OLD
 // Quantum numbers for an invariant subspace
 class subspace {
  private:
@@ -98,6 +101,50 @@ class subspace {
    auto n() const { return _n; }
    auto sz() const { return _sz; }
    auto get() const { return std::make_tuple(n(), sz()); }
+};
+
+// Quantum numbers for a state (i=0 is GS, i=1 is 1st excited state, etc.)
+class state : public subspace {
+ private:
+   int _i;
+ public:
+   state(int n, spin sz, int i) : subspace(n,sz), _i(i) {}
+   auto i() const { return _i; }
+};
+#endif
+
+using subspace = std::pair<int, spin>;
+using state = std::pair<subspace, int>;
+
+class eigenpair {
+ private:
+   Real _E = 0;
+   MPS _psi;
+ public:
+   eigenpair() {}
+   eigenpair(Real E, MPS psi) : _E(E), _psi(psi) {}
+   auto E() const { return _E; }
+   MPS & psi() { return _psi; } // not const !
+};
+
+class psi_stats {
+ private:
+   double _norm = 0;
+   double _Ebis = 0;
+   double _deltaE = 0;
+   double _residuum = 0;
+ public:
+   psi_stats() {}
+   psi_stats(double E, MPS &psi, MPO &H) {
+     _norm = inner(psi, psi);
+     _Ebis = inner(psi, H, psi);
+     _deltaE = sqrt( inner(H, psi, H, psi) - pow(_Ebis,2) );
+     _residuum = _Ebis-E*_norm;
+   }
+   auto norm() const { return _norm; }
+   auto Ebis() const { return _Ebis; }
+   auto deltaE() const { return _deltaE; }
+   auto residuum() const { return _residuum; }
 };
 
 // parameters from the input file
@@ -164,7 +211,7 @@ struct params {
 
   std::vector<int> numPart; // range of total occupancies of interest
   std::map<int, std::vector<double>> Szs; // Szs for each n in numPart
-  std::vector<std::pair<int, double>> iterateOver; // a zipped vector of off (n, Sz) combinations
+  std::vector<subspace> iterateOver; // a zipped vector of off (n, Sz) combinations
 
   //parameters for the phase transition point iteration
   double PTgamma0;        // initial guess
@@ -177,15 +224,18 @@ struct params {
 // lists of quantities calculated in FindGS 
 struct store
 {
-  std::map<std::pair<int, double>, MPS> psiStore;      // ground states
-  std::map<std::pair<int, double>, double> GSEstore;   // ground state energies
-  std::map<std::pair<int, double>, MPS> ESpsiStore;    // excited states
-  std::map<std::pair<int, double>, double> ESEstore;   // excited state energies
+  std::map<subspace, MPS> psiStore;      // ground states
+  std::map<subspace, double> GSEstore;   // ground state energies
+  std::map<subspace, MPS> ESpsiStore;    // excited states
+  std::map<subspace, double> ESEstore;   // excited state energies
 
   //These quantities require the knowledge of H, so they are calculated in FindGS and saved here.
-  std::map<std::pair<int, double>, double> GS0bisStore; // <GS|H|GS>
-  std::map<std::pair<int, double>, double> deltaEStore; // sqrt(<GS|H^2|GS> - <GS|H|GS>^2)
-  std::map<std::pair<int, double>, double> residuumStore; // <GS|H|GS> - GSE*<GS|GS>
+//  std::map<std::pair<int, double>, double> GS0bisStore; // <GS|H|GS>
+//  std::map<std::pair<int, double>, double> deltaEStore; // sqrt(<GS|H^2|GS> - <GS|H|GS>^2)
+//  std::map<std::pair<int, double>, double> residuumStore; // <GS|H|GS> - GSE*<GS|GS>
+
+  std::map<subspace, eigenpair> eigen0, eigen1; // 0=GS, 1=1st ES, etc.
+  std::map<subspace, psi_stats> stats0;
 };
 
 
