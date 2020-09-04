@@ -44,7 +44,7 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
 
   p.NImp = 1; // TODO: class problem, which contains all relevant objects (imp,bath,hyb) ?
   {
-    double U = input.getReal("U", 0);
+    double U = input.getReal("U", 0); // need to parse it this way, because it enters the default value for epsimp below
     p.qd = std::make_unique<imp>(U, input.getReal("epsimp", -U/2.), input.getReal("EZ_imp", 0.));
   }
   
@@ -66,7 +66,9 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
     throw std::runtime_error("Unknown MPO type");
   std::cout << "N=" << p.N << " NBath=" << p.NBath << " impindex=" << p.impindex << std::endl;
   
-  p.sc = std::make_unique<SCbath>(p.NBath, input.getReal("alpha", 0), input.getReal("Ec", 0), input.getReal("n0", p.N-1));
+  p.sc = std::make_unique<SCbath>(p.NBath, input.getReal("alpha", 0), input.getReal("Ec", 0), input.getReal("n0", p.N-1), input.getReal("EZ_bulk", 0.));
+  p.Gamma = std::make_unique<hyb>(input.getReal("gamma", 0));
+  p.V12 = input.getReal("V", 0); // handled in a special way
   
   // sites is an ITensor thing. it defines the local hilbert space and
   // operators living on each site of the lattice
@@ -95,11 +97,6 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   p.nrH = input.getInt("nrH", 5);
   p.nrange = input.getInt("nrange", 1);
 
-  p.Gamma = std::make_unique<hyb>(input.getReal("gamma", 0));
-  p.V12 = input.getReal("V", 0);
-
-  p.EZ_bulk = input.getReal("EZ_bulk", 0.);
-
   // TWO CHANNEL PARAMETERS
   p.alpha1 = input.getReal("alpha1", 0);
   p.alpha2 = input.getReal("alpha2", 0);
@@ -114,15 +111,11 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
 
   p.SCSCinteraction = input.getReal("SCSCinteraction", 0);
 
-  // for Ec_trick mapping
-  p.Ueff = p.qd->U() + 2.*p.sc->Ec();                            // effective impurity e-e repulsion
-  // p.epseff cannot be set here, because it depends on ntot (number of electrons in a given sector)
-
   const int nhalf = p.N; // total nr of electrons at half-filling
   const int nref = (p.refisn0 ? ( round(p.sc->n0() + 0.5 - (p.qd->eps()/p.qd->U())) ) : nhalf); //calculation of the energies is centered around this n
   p.numPart = n_list(nref, p.nrange);
   
-  bool magnetic_field = ((p.qd->EZ()!=0 || p.EZ_bulk!=0) ? true : false); // true if there is magnetic field, implying that Sz=0.5 states are NOT degenerate
+  bool magnetic_field = ((p.qd->EZ()!=0 || p.sc->EZ()!=0) ? true : false); // true if there is magnetic field, implying that Sz=0.5 states are NOT degenerate
   // Sz values for n are in Szs[n]
   for (auto ntot : p.numPart) {
     std::vector<spin> sz_list;
@@ -196,12 +189,14 @@ std::tuple<MPO, double> initH(int ntot, params &p){
     assert(p.V12 != 0.0);
     Eshift = p.sc->Ec()*pow(ntot-p.sc->n0(),2); // occupancy dependent effective energy shift
     double epseff = p.qd->eps() - 2.*p.sc->Ec()*(ntot-p.sc->n0()) + p.sc->Ec();
-    Fill_SCBath_MPO(H, eps, V, epseff, p); // defined in SC_BathMPO.h, fills the MPO with the necessary entries
+    double Ueff = p.qd->U() + 2.*p.sc->Ec();
+    Fill_SCBath_MPO(H, eps, V, epseff, Ueff, p); // defined in SC_BathMPO.h, fills the MPO with the necessary entries
   } else if (p.MPO == "middle") {
     assert(p.V12 != 0.0);
     Eshift = p.sc->Ec()*pow(ntot-p.sc->n0(),2); // occupancy dependent effective energy shift
     double epseff = p.qd->eps() - 2.*p.sc->Ec()*(ntot-p.sc->n0()) + p.sc->Ec();
-    Fill_SCBath_MPO_MiddleImp(H, eps, V, epseff, p);
+    double Ueff = p.qd->U() + 2.*p.sc->Ec();
+    Fill_SCBath_MPO_MiddleImp(H, eps, V, epseff, Ueff, p);
   } else if (p.MPO == "Ec") {
     assert(p.V12 != 0.0);
     Eshift = p.sc->Ec()*pow(p.sc->n0(), 2);

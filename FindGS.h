@@ -53,12 +53,14 @@ class SCbath : public bath { // superconducting island bath
    double _alpha; // pairing strength
    double _Ec; // charging energy
    double _n0; // offset
+   double _EZ;
  public:
-   SCbath(int Nbath, double alpha, double Ec, double n0) :
-     bath(Nbath), _alpha(alpha), _Ec(Ec), _n0(n0) {};
+   SCbath(int Nbath, double alpha, double Ec, double n0, double EZ) :
+     bath(Nbath), _alpha(alpha), _Ec(Ec), _n0(n0), _EZ(EZ) {};
    auto alpha() const { return _alpha; }
    auto Ec() const { return _Ec; }
    auto n0() const { return _n0; }
+   auto EZ() const { return _EZ; }
    auto g() const { return _alpha*d(); }
    auto eps(bool band_level_shift = true) const {
      auto eps = bath::eps();
@@ -187,17 +189,10 @@ struct params {
   bool calcspin1;
 
   std::unique_ptr<imp> qd; // replaces {U, epsimp, nu}
-  double Ueff;          // effective e-e on impurity site (after Ec_trick mapping)
-  
   std::unique_ptr<SCbath> sc;
-
   std::unique_ptr<hyb> Gamma;
-  double gamma;         // hybridisation
   double V12;           // QD-SC capacitive coupling
-
-  double EZ_imp;        // impurity Zeeman energy
   double EZ_bulk;        // bulk Zeeman energy
-
 
   // TWO CHANNEL PARAMETERS
   double alpha1, alpha2;
