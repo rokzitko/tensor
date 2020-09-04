@@ -212,28 +212,11 @@ struct params {
   std::vector<int> numPart; // range of total occupancies of interest
   std::map<int, std::vector<double>> Szs; // Szs for each n in numPart
   std::vector<subspace> iterateOver; // a zipped vector of off (n, Sz) combinations
-
-  //parameters for the phase transition point iteration
-  double PTgamma0;        // initial guess
-  double PTgamma1;        // initial guess
-  double PTprecision;     // required precision
-  int PTmaxIter;          // maximal number of iterations of the secant method
-
 };
 
 // lists of quantities calculated in FindGS 
 struct store
 {
-  std::map<subspace, MPS> psiStore;      // ground states
-//  std::map<subspace, double> GSEstore;   // ground state energies
-  std::map<subspace, MPS> ESpsiStore;    // excited states
-  std::map<subspace, double> ESEstore;   // excited state energies
-
-  //These quantities require the knowledge of H, so they are calculated in FindGS and saved here.
-//  std::map<std::pair<int, double>, double> GS0bisStore; // <GS|H|GS>
-//  std::map<std::pair<int, double>, double> deltaEStore; // sqrt(<GS|H^2|GS> - <GS|H|GS>^2)
-//  std::map<std::pair<int, double>, double> residuumStore; // <GS|H|GS> - GSE*<GS|GS>
-
   std::map<subspace, eigenpair> eigen0, eigen1; // 0=GS, 1=1st ES, etc.
   std::map<subspace, psi_stats> stats0;
 };

@@ -24,20 +24,18 @@
 // Make an array centered at nref
 auto n_list(int nref, int nrange) {
   std::vector<int> n;
-    n.push_back(nref);
+  n.push_back(nref);
   for (auto i : range1(nrange)) {
-        n.push_back(nref+i);
-        n.push_back(nref-i);
+    n.push_back(nref+i);
+    n.push_back(nref-i);
   }
-    return n;
+  return n;
 }
 
 InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
-  if(argc!=2){
-    std::cout<<"Please provide input file. Usage ./executable inputfile.txt" << std::endl;
-    exit(1);
-  }
-
+  if (argc != 2)
+    throw std::runtime_error("Please provide input file. Usage: ./executable inputfile.txt");
+  
   //read parameters from the input file
   p.inputfn = {argv[1]};
   auto input = InputGroup{p.inputfn, "params"}; //get input parameters using InputGroup from itensor
@@ -51,26 +49,23 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   }
   
   p.N = input.getInt("N", 0);
-  if (p.N != 0) {
+  if (p.N != 0)
     p.NBath = p.N-p.NImp;
-  }
   else { // N not specified, try NBath
     p.NBath = input.getInt("NBath", 0);
-    if (p.NBath == 0) {
-      std::cout << "specify either N or NBath!" << std::endl;
-      exit(1);
-    }
+    if (p.NBath == 0) 
+      throw std::runtime_error("specify either N or NBath!");
     p.N = p.NBath+p.NImp;
   } 
   if (p.MPO == "middle") {
-    assert(p.NBath%2 == 0);   // NBath must be even
+    assert(even(p.NBath));
     p.impindex = 1+p.NBath/2;
   } else if (p.MPO == "std" || p.MPO == "Ec" || p.MPO == "Ec_V") {
     p.impindex = 1;
   } else
     throw std::runtime_error("Unknown MPO type");
   std::cout << "N=" << p.N << " NBath=" << p.NBath << " impindex=" << p.impindex << std::endl;
-
+  
   p.sc = std::make_unique<SCbath>(p.NBath, input.getReal("alpha", 0), input.getReal("Ec", 0), input.getReal("n0", p.N-1));
   
   // sites is an ITensor thing. it defines the local hilbert space and
@@ -105,7 +100,7 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
 
   p.EZ_bulk = input.getReal("EZ_bulk", 0.);
 
-  //TWO CHANNEL PARAMETERS
+  // TWO CHANNEL PARAMETERS
   p.alpha1 = input.getReal("alpha1", 0);
   p.alpha2 = input.getReal("alpha2", 0);
   p.n01 = input.getReal("n01", (p.N-1)/2);
@@ -142,30 +137,11 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
       p.iterateOver.push_back(subspace(ntot, sz));
   }
 
-  // parameters used in the phase transition point iteration
-  p.PTgamma0 = input.getReal("PTgamma0", 0.5);
-  p.PTgamma1 = input.getReal("PTgamma1", 1.5);
-  p.PTprecision = input.getReal("PTprecision", 1e-5);
-  p.PTmaxIter = input.getInt("PTmaxIter", 30);
-
   return input;
 }
 
 //calculates the groundstates and the energies of the relevant particle number sectors
 void FindGS(InputGroup &input, store &s, params &p){
-
-  //The sweeps object defines the accuracy used for each update cycle in DMRG.
-  //The used parameters are read from the input file with the following meaning:
-  // maxdim:  maximal bond dimension -> start low approach ground state roughly, then increase
-  // mindim:  minimal bond dimension used, can be helpfull to improve DMRG convergence
-  // cutoff:  truncated weight i.e.: sum of all discared squared Schmidt values 
-  // niter:   uring DMRG, one has to solve an eigenvalue problem usually using a krylov 
-  //          method. niter is the number of krylov vectors used. Since DMRG is variational
-  //          it does not matter if we use only very few krylov vectors. We only want to 
-  //          move in the direction of the ground state - it seems that in late sweeps it is 
-  //          a good idea to have niter at least 5 or 7.
-  // noise:   if non-zero, a so-called noise term is added to DMRG which improves the convergence.
-  //          This term must be zero towards the end, as the ground state is otherwise incorrect.
   auto inputsw = InputGroup(p.inputfn,"sweeps");
   auto sw_table = InputGroup(inputsw,"sweeps");
   int nrsweeps = input.getInt("nrsweeps", 15);
@@ -194,19 +170,13 @@ void FindGS(InputGroup &input, store &s, params &p){
     s.eigen0[sub] = eigenpair(GSenergy, psi);
     s.stats0[sub] = psi_stats(E, psi, H);
     
-    s.psiStore[sub] = psi;
-//    s.GSEstore[sub] = GSenergy;
-        
     if (p.excited_state) {
       auto wfs = std::vector<MPS>(1);
       wfs.at(0) = psi;
       auto [E1, psi1] = dmrg(H,wfs,psi,sweeps,{"Silent",p.parallel,"Quiet",true,"Weight",11.0});
       double ESenergy = E1+Eshift;
       s.eigen1[sub] = eigenpair(ESenergy, psi1);
-      s.ESEstore[sub]=ESenergy;
-      s.ESpsiStore[sub]=psi1;
     }
-
   }
 }//end FindGS
 
@@ -273,21 +243,18 @@ MPS initPsi(int ntot, float Sz, params &p){
 
   int j=0;
   int i=1;
-  for(; j < npair; i++){   
+  for(; j < npair; i++)
     if (i!=p.impindex){             //In order to avoid adding a pair to the impurity site 
       j++;                          //i counts sites, j counts added pairs.
       state.set(i, "UpDn");
       tot += 2;
     }
-  }
 
-  if (nsc%2 == 1) { //If ncs is odd, add another electron according to EZ_bulk preference, but not to the impurity site.
-    
+  if (odd(nsc)) { //If ncs is odd, add another electron according to EZ_bulk preference, but not to the impurity site.
     if (i!=p.impindex){
       state.set(i,"Dn"); 
       tot++;
-    }
-    else{
+    } else {
       state.set(i+1,"Dn"); 
       tot++;
     }
@@ -309,7 +276,7 @@ void calculateAndPrint(InputGroup &input, store &s, params &p){
       auto E = s.eigen0[sub].E();
       printfln("Ground state energy = %.17g", E);
 
-      MPS & GS = s.psiStore[sub];
+      MPS & GS = s.eigen0[sub].psi();
       
       printfln("norm = %.17g", s.stats0[sub].norm());
       //occupancy; site pairing; v and u amplitudes 
@@ -336,10 +303,9 @@ void calculateAndPrint(InputGroup &input, store &s, params &p){
       printfln("residuum: <GS|H|GS> - E_GS*<GS|GS> = %.17g", s.stats0[sub].residuum());
 
       if (p.excited_state){
-        MPS & ES = s.ESpsiStore[sub];
-        double & ESenergy = s.ESEstore[sub];
+        MPS & ES = s.eigen1[sub].psi();
         MeasureOcc(ES, p);
-        printfln("Excited state energy = %.17g",ESenergy);
+        printfln("Excited state energy = %.17g", s.eigen1[sub].E());
        }
     } //end of Sz for loop 
   } //end of ntot for loop
@@ -370,7 +336,7 @@ void calculateAndPrint(InputGroup &input, store &s, params &p){
 
   //Calculate the spectral weights:
   if (p.calcweights) {
-    MPS & psiGS = s.psiStore[std::make_pair(N_GS, Sz_GS)];
+    MPS & psiGS = s.eigen0[subspace(N_GS, Sz_GS)].psi();
 
     printfln(""); 
     printfln("Spectral weights:");
@@ -378,28 +344,28 @@ void calculateAndPrint(InputGroup &input, store &s, params &p){
 
     auto cp = subspace(N_GS+1, Sz_GS+0.5);
     if ( s.eigen0.find(cp) != s.eigen0.end() ){ //if the N_GS+1 state was computed, print the <N+1|c^dag|N> terms
-      MPS & psiNp = s.psiStore[cp];
+      MPS & psiNp = s.eigen0[cp].psi();
       ExpectationValueAddEl(psiNp, psiGS, "up", p);
     }  
     else printfln("ERROR: we don't have info about the N_GS+1, Sz_GS+0.5 occupancy sector.");
 
     auto cm = subspace(N_GS+1, Sz_GS-0.5);
     if ( s.eigen0.find(cm) != s.eigen0.end() ){ //if the N_GS+1 state was computed, print the <N+1|c^dag|N> terms
-      MPS & psiNp = s.psiStore[cm];
+      MPS & psiNp = s.eigen0[cm].psi();
       ExpectationValueAddEl(psiNp, psiGS, "dn", p);
     }  
     else printfln("ERROR: we don't have info about the N_GS+1, Sz_GS-0.5 occupancy sector.");
 
     auto am = subspace(N_GS-1, Sz_GS-0.5);
     if ( s.eigen0.find(am) != s.eigen0.end() ){ //if the N_GS-1 state was computed, print the <N-1|c|N> terms
-      MPS & psiNm = s.psiStore[am];   
+      MPS & psiNm = s.eigen0[am].psi();
       ExpectationValueTakeEl(psiNm, psiGS, "up", p);
     }
     else printfln("ERROR: we don't have info about the N_GS-1, Sz_GS+0.5 occupancy sector.");
 
     auto ap = subspace(N_GS-1, Sz_GS+0.5);
     if ( s.eigen0.find(ap) != s.eigen0.end() ){ //if the N_GS-1 state was computed, print the <N-1|c|N> terms
-      MPS & psiNm = s.psiStore[ap];   
+      MPS & psiNm = s.eigen0[ap].psi();
       ExpectationValueTakeEl(psiNm, psiGS, "dn", p);
     }
     else printfln("ERROR: we don't have info about the N_GS-1, Sz_GS-0.5 occupancy sector.");
