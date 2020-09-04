@@ -177,34 +177,45 @@ std::tuple<MPO, double> initH(int ntot, params &p){
 
 // Initialize the MPS in a product state with ntot electrons.
 // Sz is the spin of the electron on the impurity site.
-MPS initPsi(int ntot, float Sz, params &p, int impindex, bool randomMPSb) {
-  int tot = 0;  // electron counter, for assertion test
-  auto state = InitState(p.sites);
-  // ** Add electron on the impurity site
-  if (Sz < 0)
-    state.set(impindex, "Dn");
-  else
-    state.set(impindex, "Up"); 
-  tot++;
-  // ** Add electrons to the bath
-  const int nsc = ntot-1;  // number of electrons in the bath
-  const int npair = nsc/2; // number of pairs in the bath
-  int j = 0;               // counts added pairs
-  int i = 1;               // site index (1 based)
-  for(; j < npair; i++)
-    if (i != impindex) { // skip impurity site
-      j++;
-      state.set(i, "UpDn");
-      tot += 2;
+MPS initPsi(int ntot, float Sz, const auto &sites, int impindex, bool randomMPSb) {
+  assert(ntot >= 0);
+  assert(Sz == -0.5 || Sz == 0 || Sz == +0.5);
+  int tot = 0;   // electron counter, for assertion test
+  int SZtot = 0; // SZ counter, for assertion test
+  auto state = InitState(sites);
+  // ** Add electron to the impurity site
+  if (ntot > 0) {
+    if (Sz < 0) {
+      state.set(impindex, "Dn");
+      SZtot -= 0.5;
+    } else {
+      state.set(impindex, "Up");
+      SZtot += 0.5;
     }
-  if (odd(nsc)) {          // if ncs is odd, add another electron according to EZ_bulk preference
-    if (i != impindex)
-      state.set(i,"Dn"); 
-    else 
-      state.set(i+1,"Dn"); 
     tot++;
   }
+  // ** Add electrons to the bath
+  const int nsc = ntot-1;    // number of electrons in the bath
+  if (nsc > 0) {
+    const int npair = nsc/2; // number of pairs in the bath
+    int j = 0;               // counts added pairs
+    int i = 1;               // site index (1 based)
+    for(; j < npair; i++)
+      if (i != impindex) {   // skip impurity site
+        j++;
+        state.set(i, "UpDn");
+        tot += 2;            // SZtot does not change!
+      }
+    if (odd(nsc)) {          // if ncs is odd, add another electron according to EZ_bulk preference
+      if (i == impindex) 
+        i++;
+      state.set(i,"Dn");
+      SZtot -= 0.5;
+      tot++;
+    }
+  }
   assert(tot == n);
+  assert(SZtot == Sz);
   MPS psi(state);
   if (randomMPSb) 
     psi = randomMPS(state);
@@ -486,7 +497,7 @@ void FindGS(InputGroup &input, store &s, params &p){
 
     //initialize H and psi
     auto [H, Eshift] = initH(ntot, p);
-    auto psi_init = initPsi(ntot, Sz, p, p.impindex, input.getYesNo("randomMPS", false)); 
+    auto psi_init = initPsi(ntot, Sz, p.sites, p.impindex, input.getYesNo("randomMPS", false)); 
   
     Args args; //args is used to store and transport parameters between various functions
 
