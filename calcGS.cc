@@ -7,11 +7,9 @@
 #include <vector>
 #include <map>
 
-#include <omp.h>
-
 #include "FindGS.h"
 
-int main(int argc, char* argv[]){
+int main(int argc, char* argv[]) {
   params p;
   store s;
   InputGroup input = parse_cmd_line(argc, argv, p);
@@ -20,6 +18,4 @@ int main(int argc, char* argv[]){
   FindGS(input, s, p);
   // calculates observables and prints them
   calculateAndPrint(input, s, p);
-
-  return 0;
 }
