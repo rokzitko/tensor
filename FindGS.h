@@ -3,6 +3,9 @@
 
 using namespace itensor;
 
+inline bool even(int i) { return i%2 == 0; }
+inline bool odd(int i) { return i%2 != 0; }
+
 template <typename T>
   std::ostream& operator<< (std::ostream& out, const std::vector<T>& v) {
     std::copy(v.begin(), v.end(), std::ostream_iterator<T>(out, " "));
@@ -77,6 +80,24 @@ class hyb {
        V.push_back( std::sqrt( 2.0*_Gamma/(M_PI*Nbath) ) );
      return V;
    }
+};
+
+using spin = double;
+
+constexpr auto spin0 = spin(0);
+constexpr auto spinp = spin(0.5);
+constexpr auto spinm = spin(-0.5);
+
+// Quantum numbers for an invariant subspace
+class subspace {
+ private:
+   int _n;
+   spin _sz;
+ public:
+   subspace(int n, spin sz) : _n(n), _sz(sz) {}
+   auto n() const { return _n; }
+   auto sz() const { return _sz; }
+   auto get() const { return std::make_tuple(n(), sz()); }
 };
 
 // parameters from the input file

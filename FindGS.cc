@@ -19,6 +19,16 @@
 #include "SC_BathMPO_Ec_V.h"
 #include "SC_BathMPO_MiddleImp_TwoChannel.h"
 
+// Make an array centered at nref
+auto n_list(int nref, int nrange) {
+  std::vector<int> n;
+    n.push_back(nref);
+  for (auto i : range1(nrange)) {
+        n.push_back(nref+i);
+        n.push_back(nref-i);
+  }
+    return n;
+}
 
 InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   if(argc!=2){
@@ -88,8 +98,6 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   p.nrH = input.getInt("nrH", 5);
   p.nrange = input.getInt("nrange", 1);
 
-  p.calcspin1 = input.getYesNo("calcspin1", false);
-
   p.Gamma = std::make_unique<hyb>(input.getReal("gamma", 0));
   p.V12 = input.getReal("V", 0);
 
@@ -113,32 +121,20 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   p.Ueff = p.qd->U() + 2.*p.sc->Ec();                            // effective impurity e-e repulsion
   // p.epseff cannot be set here, because it depends on ntot (number of electrons in a given sector)
 
-  p.numPart={};
   const int nhalf = p.N; // total nr of electrons at half-filling
   const int nref = (p.refisn0 ? ( round(p.sc->n0() + 0.5 - (p.qd->eps()/p.qd->U())) ) : nhalf); //calculation of the energies is centered around this n
-  p.numPart.push_back(nref);
-  for (int i = 1; i <= p.nrange; i++) {
-    p.numPart.push_back(nref+i);
-    p.numPart.push_back(nref-i);
-  }
-
+  p.numPart = n_list(nref, p.nrange);
+  
   bool magnetic_field = ((p.qd->EZ()!=0 || p.EZ_bulk!=0) ? true : false); // true if there is magnetic field, implying that Sz=0.5 states are NOT degenerate
   // Sz values for n are in Szs[n]
   for (size_t i=0; i<p.numPart.size(); i++){
     int ntot = p.numPart[i];
     if (ntot%2==0) {
-      if (p.calcspin1) p.Szs[ntot].push_back(1);
-      else p.Szs[ntot].push_back(0);
+      p.Szs[ntot].push_back(0);
     }
     else {
-      if (p.calcspin1){
-        p.Szs[ntot].push_back(1.5);
-        if (magnetic_field) p.Szs[ntot].push_back(-1.5);
-      }
-      else{
-        p.Szs[ntot].push_back(0.5);
-        if (magnetic_field) p.Szs[ntot].push_back(-0.5);
-      }
+      p.Szs[ntot].push_back(0.5);
+      if (magnetic_field) p.Szs[ntot].push_back(-0.5);
     }
   }
 
@@ -293,47 +289,20 @@ MPS initPsi(int ntot, float Sz, params &p){
   for(; j < npair; i++){   
     if (i!=p.impindex){             //In order to avoid adding a pair to the impurity site 
       j++;                          //i counts sites, j counts added pairs.
-      if (p.calcspin1 && j==npair){ //split the last pair into two levels, creating a S=3/2 state
-        if (Sz<0){
-          state.set(i, "Dn");
-          if (i+1!=p.impindex) state.set(i+1, "Dn");
-          else state.set(i+2, "Dn");
-          Sztot += -1;
-        }    
-        else{
-          state.set(i, "Up");
-          if (i+1!=p.impindex) state.set(i+1, "Up");
-          else state.set(i+2, "Up");
-          Sztot += 1;
-        }
-      }
-      else state.set(i, "UpDn");
+      state.set(i, "UpDn");
       tot += 2;
     }
   }
 
   if (nsc%2 == 1) { //If ncs is odd, add another electron according to EZ_bulk preference, but not to the impurity site.
     
-    if (p.calcspin1){ //to calculate the energies in the S=1 or S=3/2 sector, set the additional electron to Up
-      if (i+1!=p.impindex){
-        state.set(i,"UpDn"); 
-        tot++;
-      }
-      else{
-        state.set(i+1,"UpDn"); 
-        tot++;
-      }
+    if (i!=p.impindex){
+      state.set(i,"Dn"); 
+      tot++;
     }
-
     else{
-      if (i!=p.impindex){
-        state.set(i,"Dn"); 
-        tot++;
-      }
-      else{
-        state.set(i+1,"Dn"); 
-        tot++;
-      }
+      state.set(i+1,"Dn"); 
+      tot++;
     }
   }
 
