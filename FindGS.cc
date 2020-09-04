@@ -135,47 +135,6 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   return input;
 }
 
-//calculates the groundstates and the energies of the relevant particle number sectors
-void FindGS(InputGroup &input, store &s, params &p){
-  auto inputsw = InputGroup(p.inputfn,"sweeps");
-  auto sw_table = InputGroup(inputsw,"sweeps");
-  int nrsweeps = input.getInt("nrsweeps", 15);
-  auto sweeps = Sweeps(nrsweeps,sw_table);
-  
-#pragma omp parallel for if(p.parallel) 
-  for (size_t i=0; i<p.iterateOver.size(); i++){
-    auto sub = p.iterateOver[i];
-    auto [ntot, Sz] = sub;
-    std::cout << "\nSweeping in the sector with " << ntot << " particles, Sz = " << Sz << ".\n";
-
-    //initialize H and psi
-    auto [H, Eshift] = initH(ntot, p);
-    auto psi_init = initPsi(ntot, Sz, p);
-    
-    Args args; //args is used to store and transport parameters between various functions
-
-    //Apply the MPO a couple of times to get DMRG started, otherwise it might not converge.
-    for(auto i : range1(p.nrH)){
-      psi_init = applyMPO(H,psi_init,args);
-      psi_init.noPrime().normalize();
-    }
-    
-    auto [E, psi] = dmrg(H,psi_init,sweeps,{"Silent",p.parallel, "Quiet",!p.printDimensions, "EnergyErrgoal",p.EnergyErrgoal}); // call itensor dmrg
-    double GSenergy = E+Eshift;
-    s.eigen0[sub] = eigenpair(GSenergy, psi);
-    s.stats0[sub] = psi_stats(E, psi, H);
-    
-    if (p.excited_state) {
-      auto wfs = std::vector<MPS>(1);
-      wfs.at(0) = psi;
-      auto [E1, psi1] = dmrg(H,wfs,psi,sweeps,{"Silent",p.parallel,"Quiet",true,"Weight",11.0});
-      double ESenergy = E1+Eshift;
-      s.eigen1[sub] = eigenpair(ESenergy, psi1);
-    }
-  }
-}//end FindGS
-
-
 //initialize the Hamiltonian
 std::tuple<MPO, double> initH(int ntot, params &p){
   auto eps = p.sc->eps(p.band_level_shift);
@@ -261,6 +220,312 @@ MPS initPsi(int ntot, float Sz, params &p){
   return psi;
 }
 
+//calculates <psi1|c_dag|psi2>, according to http://itensor.org/docs.cgi?vers=cppv3&page=formulas/mps_onesite_op
+void ExpectationValueAddEl(MPS psi1, MPS psi2, std::string spin, const params &p){
+
+  psi2.position(p.impindex); //set orthogonality center
+  auto newTensor = noPrime(op(p.sites,"Cdag"+spin, p.impindex)*psi2(p.impindex)); //apply the local operator
+  psi2.set(p.impindex,newTensor); //plug in the new tensor, with the operator applied
+
+  auto res = inner(psi1, psi2);
+
+  std::cout << "weight w+ " << spin << ": " << res << "\n";
+}
+
+//calculates <psi1|c|psi2>
+void ExpectationValueTakeEl(MPS psi1, MPS psi2, std::string spin, const params &p){
+
+  psi2.position(p.impindex);
+  auto newTensor = noPrime(op(p.sites,"C"+spin, p.impindex)*psi2(p.impindex));
+  psi2.set(p.impindex,newTensor);
+
+  auto res = inner(psi1, psi2);
+
+  std::cout << "weight w- " << spin << ": " << res << "\n";
+}
+
+//computes the correlation between operator impOp on impurity and operator opj on j
+double ImpurityCorrelator(MPS& psi, auto impOp, int j, auto opj, const params &p){
+  psi.position(p.impindex);
+  MPS psidag = dag(psi);
+  psidag.prime("Link");
+  auto li_1 = leftLinkIndex(psi,p.impindex);
+  auto C = prime(psi(p.impindex),li_1)*impOp;
+  C *= prime(psidag(p.impindex),"Site");
+  for (int k = p.impindex+1; k < j; ++k){
+    C *= psi(k);
+    C *= psidag(k);
+  }
+  auto lj = rightLinkIndex(psi,j);
+  C *= prime(psi(j),lj)*opj;
+  C *= prime(psidag(j),"Site");
+  return elt(C);
+}
+
+//CORRELATION FUNCTIONS BETWEEN THE IMPURITY AND ALL SC LEVELS:
+//according to: http://www.itensor.org/docs.cgi?vers=cppv3&page=formulas/correlator_mps
+
+// <n_imp n_i>
+void ChargeCorrelation(MPS& psi, const params &p){
+  std::cout << "charge correlation = ";
+  auto impOp = op(p.sites, "Ntot", p.impindex);
+  double tot=0;
+  for(auto j: range1(2, length(psi))) {
+    auto scOp = op(p.sites, "Ntot", j);
+    double result = ImpurityCorrelator(psi, impOp, j, scOp, p);
+    std::cout << std::setprecision(17) << result << " ";
+    tot+=result;
+  }
+  std::cout << std::endl;
+  std::cout << "charge correlation tot = " << tot << "\n"; 
+}
+
+// <S_imp S_i> = <Sz_imp Sz_i> + 1/2 ( <S+_imp S-_i> + <S-_imp S+_i> )
+void SpinCorrelation(MPS& psi, const params &p){
+  std::cout << "spin correlations:\n";
+  //impurity spin operators
+  auto impSz = 0.5*( op(p.sites, "Nup", p.impindex) - op(p.sites, "Ndn", p.impindex) );
+  auto impSp = op(p.sites, "Cdagup*Cdn", p.impindex);
+  auto impSm = op(p.sites, "Cdagdn*Cup", p.impindex);
+  auto SzSz = 0.25 * ( op(p.sites, "Nup*Nup", p.impindex) - op(p.sites, "Nup*Ndn", p.impindex) - op(p.sites, "Ndn*Nup", p.impindex) + op(p.sites, "Ndn*Ndn", p.impindex));
+  //squares of the impurity operators; for on-site terms
+  double tot = 0;
+  //SzSz term
+  std::cout << "SzSz correlations: ";
+  psi.position(p.impindex);
+  //on site term
+  auto onSiteSzSz = elt(psi(p.impindex) * SzSz *  dag(prime(psi(p.impindex),"Site")));
+  std::cout << std::setprecision(17) << onSiteSzSz << " ";
+  tot+=onSiteSzSz;
+  for(auto j: range1(2, length(psi))) {
+    auto scSz = 0.5*( op(p.sites, "Nup", j) - op(p.sites, "Ndn", j) );
+    double result = ImpurityCorrelator(psi, impSz, j, scSz, p);
+    std::cout << std::setprecision(17) << result << " ";
+    tot += result;
+  }
+  std::cout << std::endl;
+  //S+S- term
+  std::cout << "S+S- correlations: ";
+  psi.position(p.impindex);
+  //on site term
+  auto onSiteSpSm = elt(psi(p.impindex) * op(p.sites, "Cdagup*Cdn*Cdagdn*Cup", p.impindex) *  dag(prime(psi(p.impindex),"Site")));
+  std::cout << std::setprecision(17) << onSiteSpSm << " ";
+  tot += 0.5*onSiteSpSm; 
+  for(auto j: range1(2, length(psi))) {
+    auto scSm = op(p.sites, "Cdagdn*Cup", j);
+    double result = ImpurityCorrelator(psi, impSp, j, scSm, p);
+    std::cout << std::setprecision(17) << result << " ";
+    tot += 0.5*result;
+  }
+  std::cout << std::endl;
+  //S- S+ term
+  std::cout << "S-S+ correlations: ";
+  psi.position(p.impindex);
+  //on site term
+  auto onSiteSmSp = elt(psi(p.impindex) * op(p.sites, "Cdagdn*Cup*Cdagup*Cdn", p.impindex) *  dag(prime(psi(p.impindex),"Site")));
+  std::cout << std::setprecision(17) << onSiteSmSp << " ";
+  tot += 0.5*onSiteSmSp; 
+  for(auto j: range1(2, length(psi))) {
+    auto scSp = op(p.sites, "Cdagup*Cdn", j);
+    double result = ImpurityCorrelator(psi, impSm, j, scSp, p);
+    std::cout << std::setprecision(17) << result << " ";
+    tot += 0.5*result;
+  }
+  std::cout << std::endl;
+  std::cout << "spin correlation tot = " << tot << "\n";
+}
+
+void PairCorrelation(MPS& psi, const params &p){
+  std::cout << "pair correlation = ";
+  auto impOp = op(p.sites, "Cup*Cdn", p.impindex);
+  double tot = 0;
+  for(auto j: range1(2, length(psi))) {
+    auto scOp = op(p.sites, "Cdagdn*Cdagup", j);
+    double result = ImpurityCorrelator(psi, impOp, j, scOp, p);
+    std::cout << std::setprecision(17) << result << " ";
+    tot+=result;
+  }
+  std::cout << std::endl;
+  std::cout << "pair correlation tot = " << tot << "\n";
+}
+
+//Prints <d^dag c_i + c_i^dag d> for each i. the sum of this expected value, weighted by 1/sqrt(N)
+//gives <d^dag f_0 + f_0^dag d>, where f_0 = 1/sqrt(N) sum_i c_i. This is the expected value of hopping.
+void expectedHopping(MPS& psi, const params &p){
+  auto impOpUp = op(p.sites, "Cup", p.impindex);
+  auto impOpDagUp = op(p.sites, "Cdagup", p.impindex);
+  auto impOpDn = op(p.sites, "Cdn", p.impindex);
+  auto impOpDagDn = op(p.sites, "Cdagdn", p.impindex);
+  double totup = 0;
+  double totdn = 0;
+  // hopping expectation values for spin up
+  std::cout << "hopping spin up = ";
+  for (auto j : range1(2, length(psi))){
+    auto scDagOp = op(p.sites, "Cdagup", j);
+    auto scOp = op(p.sites, "Cup", j);
+    double result = ImpurityCorrelator(psi, impOpUp, j, scDagOp, p);    // <d c_i^dag>
+    double resultdag = ImpurityCorrelator(psi, impOpDagUp, j, scOp, p); // <d^dag c_i>
+    std::cout << std::setprecision(17) << result << " " << resultdag << " ";
+    std::cout << std::setprecision(17) << result+resultdag << " ";
+    totup += result+resultdag;
+  }
+  std::cout << std::endl;
+  std::cout << "hopping correlation up tot = " << totup << "\n";
+  // hopping expectation values for spin up
+  std::cout << "hopping spin down = ";
+  for (auto j : range1(2, length(psi))){
+    auto scDagOp = op(p.sites, "Cdagdn", j);
+    auto scOp = op(p.sites, "Cdn", j);
+    double result = ImpurityCorrelator(psi, impOpDn, j, scDagOp, p);    // <d c_i^dag>
+    double resultdag =  ImpurityCorrelator(psi, impOpDagDn, j, scOp, p); // <d^dag c_i>
+    std::cout << std::setprecision(17) << result << " " << resultdag << " ";
+    //std::cout << std::setprecision(17) << result+resultdag << " ";
+    totdn+=result+resultdag;
+  }
+  std::cout << std::endl;
+  std::cout << "hopping correlation down tot = " << totdn << "\n";
+  std::cout << "total hopping correlation = " << totup + totdn << "\n";
+}
+
+//prints the occupation number Nup and Ndn at the impurity
+void ImpurityUpDn(MPS& psi, const params &p){
+  std::cout << "impurity nup ndn = ";
+  psi.position(p.impindex);
+  auto valnup = psi.A(p.impindex) * p.sites.op("Nup",p.impindex)* dag(prime(psi.A(p.impindex),"Site"));
+  auto valndn = psi.A(p.impindex) * p.sites.op("Ndn",p.impindex)* dag(prime(psi.A(p.impindex),"Site"));
+  std::cout << std::setprecision(17) << std::real(valnup.cplx()) << " " << std::real(valndn.cplx()) << "\n";
+}
+
+//prints total Sz of the state
+void TotalSpinz(MPS& psi, const params &p){
+  double totNup = 0.;
+  double totNdn = 0.;
+  for(auto j: range1(length(psi))) {
+    psi.position(j);
+    auto Nupi = psi.A(j) * p.sites.op("Nup",j)* dag(prime(psi.A(j),"Site"));
+    auto Ndni = psi.A(j) * p.sites.op("Ndn",j)* dag(prime(psi.A(j),"Site"));
+    totNup += std::real(Nupi.cplx());
+    totNdn += std::real(Ndni.cplx());
+  }
+  std::cout << std::setprecision(17) << "Total spin z: " << " Nup = " << totNup << " Ndn = " << totNdn << " Sztot = " << 0.5*(totNup-totNdn) <<  "\n";
+}
+
+// occupation numbers of all levels in the problem
+auto calcOcc(MPS &psi, const params &p) {
+  std::vector<double> r;
+  for(auto i : range1(length(psi)) ) {
+    // position call very important! otherwise one would need to contract the whole tensor network of <psi|O|psi> this way, only the local operator at site i is needed
+    psi.position(i);
+    auto val = psi.A(i) * p.sites.op("Ntot",i)* dag(prime(psi.A(i),"Site"));
+    r.push_back(std::real(val.cplx()));
+  }
+  return r;
+}
+
+void MeasureOcc(MPS& psi, const params &p) {
+  auto r = calcOcc(psi, p);
+  std::cout << "site occupancies = " << std::setprecision(17) << r << std::endl;
+  auto tot = std::accumulate(r.begin(), r.end(), 0.0);
+  Print(tot);
+}
+
+// The sum (tot) corresponds to \bar{\Delta}', Eq. (4) in Braun, von Delft, PRB 50, 9527 (1999), first proposed by Dan Ralph.
+// It reduces to Delta_BCS in the thermodynamic limit (if the impurity is decoupled, Gamma=0).
+// For Gamma>0, there is no guarantee that all values 'sq' are real, because the expr <C+CC+C>-<C+C><C+C> may be negative.
+void MeasurePairing(MPS& psi, const params &p){
+  std::cout << "site pairing = ";
+  std::complex<double> tot = 0;
+  for(auto i : range1(length(psi))){
+    psi.position(i);
+    auto val2  = psi.A(i) * p.sites.op("Cdagup*Cup*Cdagdn*Cdn", i) * dag(prime(psi.A(i),"Site"));
+    auto val1u = psi.A(i) * p.sites.op("Cdagup*Cup", i) * dag(prime(psi.A(i),"Site"));
+    auto val1d = psi.A(i) * p.sites.op("Cdagdn*Cdn", i) * dag(prime(psi.A(i),"Site"));
+    auto sq = p.sc->g() * sqrt( val2.cplx() - val1u.cplx() * val1d.cplx() );
+    std::cout << std::setprecision(17) << sq << " ";
+    if (i != p.impindex) tot += sq; // exclude the impurity site in the sum
+  }
+  std::cout << std::endl;
+  Print(tot);
+}
+
+// See von Delft, Zaikin, Golubev, Tichy, PRL 77, 3189 (1996)
+void MeasureAmplitudes(MPS& psi, const params &p){
+  std::cout << "amplitudes vu = ";
+  std::complex<double> tot = 0;
+  for(auto i : range1(length(psi)) ){
+    psi.position(i);
+    auto valv = psi.A(i) * p.sites.op("Cdagup*Cdagdn*Cdn*Cup", i) * dag(prime(psi.A(i),"Site"));
+    auto valu = psi.A(i) * p.sites.op("Cdn*Cup*Cdagup*Cdagdn", i) * dag(prime(psi.A(i),"Site"));
+    auto v = sqrt( std::real(valv.cplx()) );
+    auto u = sqrt( std::real(valu.cplx()) );
+    auto pdt = v*u;
+    auto element = p.sc->g() * pdt;
+    std::cout << "[v=" << v << " u=" << u << " pdt=" << pdt << "] ";
+    if (i != p.impindex) tot += element; // exclude the impurity site in the sum
+  }
+  std::cout << std::endl;
+  Print(tot);
+}
+
+// Computed entanglement/von Neumann entropy between the impurity and the system.
+// Copied from https://www.itensor.org/docs.cgi?vers=cppv3&page=formulas/entanglement_mps
+void PrintEntropy(MPS& psi, const params &p){
+  psi.position(p.impindex);
+  //SVD this wavefunction to get the spectrum of density-matrix eigenvalues
+  auto l = leftLinkIndex(psi, p.impindex);
+  auto s = siteIndex(psi, p.impindex);
+  auto [U,S,V] = svd(psi(p.impindex), {l,s});
+  auto u = commonIndex(U,S);
+  //Apply von Neumann formula to the squares of the singular values
+  double SvN = 0.;
+  for(auto n : range1(dim(u))) {
+    auto Sn = elt(S,n,n);
+    auto pp = sqr(Sn);
+    if(pp > 1E-12) SvN += -pp*log(pp);
+  }
+  printfln("Entanglement entropy across impurity bond b=%d, SvN = %.10f", p.impindex, SvN);
+}
+
+//calculates the groundstates and the energies of the relevant particle number sectors
+void FindGS(InputGroup &input, store &s, params &p){
+  auto inputsw = InputGroup(p.inputfn,"sweeps");
+  auto sw_table = InputGroup(inputsw,"sweeps");
+  int nrsweeps = input.getInt("nrsweeps", 15);
+  auto sweeps = Sweeps(nrsweeps,sw_table);
+  
+#pragma omp parallel for if(p.parallel) 
+  for (size_t i=0; i<p.iterateOver.size(); i++){
+    auto sub = p.iterateOver[i];
+    auto [ntot, Sz] = sub;
+    std::cout << "\nSweeping in the sector with " << ntot << " particles, Sz = " << Sz << ".\n";
+
+    //initialize H and psi
+    auto [H, Eshift] = initH(ntot, p);
+    auto psi_init = initPsi(ntot, Sz, p);
+    
+    Args args; //args is used to store and transport parameters between various functions
+
+    //Apply the MPO a couple of times to get DMRG started, otherwise it might not converge.
+    for(auto i : range1(p.nrH)){
+      psi_init = applyMPO(H,psi_init,args);
+      psi_init.noPrime().normalize();
+    }
+    
+    auto [E, psi] = dmrg(H,psi_init,sweeps,{"Silent",p.parallel, "Quiet",!p.printDimensions, "EnergyErrgoal",p.EnergyErrgoal}); // call itensor dmrg
+    double GSenergy = E+Eshift;
+    s.eigen0[sub] = eigenpair(GSenergy, psi);
+    s.stats0[sub] = psi_stats(E, psi, H);
+    
+    if (p.excited_state) {
+      auto wfs = std::vector<MPS>(1);
+      wfs.at(0) = psi;
+      auto [E1, psi1] = dmrg(H,wfs,psi,sweeps,{"Silent",p.parallel,"Quiet",true,"Weight",11.0});
+      double ESenergy = E1+Eshift;
+      s.eigen1[sub] = eigenpair(ESenergy, psi1);
+    }
+  }
+}//end FindGS
+
 //Loops over all particle sectors and prints relevant quantities.
 void calculateAndPrint(InputGroup &input, store &s, params &p){
   //print data for each sector
@@ -280,9 +545,7 @@ void calculateAndPrint(InputGroup &input, store &s, params &p){
       MeasureAmplitudes(GS, p);
 
       if (p.computeEntropy) PrintEntropy(GS, p);
-
       if (p.impNupNdn) ImpurityUpDn(GS, p);
-
       if (p.chargeCorrelation) ChargeCorrelation(GS, p);
       if (p.spinCorrelation) SpinCorrelation(GS, p);
       if (p.pairCorrelation) PairCorrelation(GS, p);
@@ -359,351 +622,5 @@ void calculateAndPrint(InputGroup &input, store &s, params &p){
       ExpectationValueTakeEl(psiNm, psiGS, "dn", p);
     }
     else printfln("ERROR: we don't have info about the N_GS-1, Sz_GS-0.5 occupancy sector.");
-
   } //end of if (calcweights)
-
 } //end of calculateAndPrint()
-
-//calculates <psi1|c_dag|psi2>, according to http://itensor.org/docs.cgi?vers=cppv3&page=formulas/mps_onesite_op
-void ExpectationValueAddEl(MPS psi1, MPS psi2, std::string spin, const params &p){
-
-  psi2.position(p.impindex); //set orthogonality center
-  auto newTensor = noPrime(op(p.sites,"Cdag"+spin, p.impindex)*psi2(p.impindex)); //apply the local operator
-  psi2.set(p.impindex,newTensor); //plug in the new tensor, with the operator applied
-
-  auto res = inner(psi1, psi2);
-
-  std::cout << "weight w+ " << spin << ": " << res << "\n";
-}
-
-//calculates <psi1|c|psi2>
-void ExpectationValueTakeEl(MPS psi1, MPS psi2, std::string spin, const params &p){
-
-  psi2.position(p.impindex);
-  auto newTensor = noPrime(op(p.sites,"C"+spin, p.impindex)*psi2(p.impindex));
-  psi2.set(p.impindex,newTensor);
-
-  auto res = inner(psi1, psi2);
-
-  std::cout << "weight w- " << spin << ": " << res << "\n";
-}
-
-//CORRELATION FUNCTIONS BETWEEN THE IMPURITY AND ALL SC LEVELS:
-//according to: http://www.itensor.org/docs.cgi?vers=cppv3&page=formulas/correlator_mps
-
-// <n_imp n_i>
-void ChargeCorrelation(MPS& psi, const params &p){
-  std::cout << "charge correlation = ";
-
-  auto impOp = op(p.sites, "Ntot", p.impindex);
-
-  double tot=0;
-  for(auto j: range1(2, length(psi))) {
-
-    auto scOp = op(p.sites, "Ntot", j);
-
-    double result = ImpurityCorrelator(psi, impOp, j, scOp, p);
-
-    std::cout << std::setprecision(17) << result << " ";
-    tot+=result;
-  }
-
-  std::cout << std::endl;
-  std::cout << "charge correlation tot = " << tot << "\n"; 
-}
-
-// <S_imp S_i> = <Sz_imp Sz_i> + 1/2 ( <S+_imp S-_i> + <S-_imp S+_i> )
-void SpinCorrelation(MPS& psi, const params &p){
-  std::cout << "spin correlations:\n";
-
-  //impurity spin operators
-  auto impSz = 0.5*( op(p.sites, "Nup", p.impindex) - op(p.sites, "Ndn", p.impindex) );
-  auto impSp = op(p.sites, "Cdagup*Cdn", p.impindex);
-  auto impSm = op(p.sites, "Cdagdn*Cup", p.impindex);
-
-  auto SzSz = 0.25 * ( op(p.sites, "Nup*Nup", p.impindex) - op(p.sites, "Nup*Ndn", p.impindex) - op(p.sites, "Ndn*Nup", p.impindex) + op(p.sites, "Ndn*Ndn", p.impindex));
-
-  //squares of the impurity operators; for on-site terms
-  double tot = 0;
-
-
-  //SzSz term
-  std::cout << "SzSz correlations: ";
-  
-  psi.position(p.impindex);
-
-  //on site term
-  auto onSiteSzSz = elt(psi(p.impindex) * SzSz *  dag(prime(psi(p.impindex),"Site")));
-  
-  std::cout << std::setprecision(17) << onSiteSzSz << " ";
-  tot+=onSiteSzSz;
-
-  for(auto j: range1(2, length(psi))) {
-
-    auto scSz = 0.5*( op(p.sites, "Nup", j) - op(p.sites, "Ndn", j) );
-    
-    double result = ImpurityCorrelator(psi, impSz, j, scSz, p);
-
-    std::cout << std::setprecision(17) << result << " ";
-    tot+=result;
-  }
-  std::cout << std::endl;
-
-  //S+S- term
-  std::cout << "S+S- correlations: ";
-
-  psi.position(p.impindex);
-
-  //on site term
-  auto onSiteSpSm = elt(psi(p.impindex) * op(p.sites, "Cdagup*Cdn*Cdagdn*Cup", p.impindex) *  dag(prime(psi(p.impindex),"Site")));
-
-  std::cout << std::setprecision(17) << onSiteSpSm << " ";
-  tot+=0.5*onSiteSpSm; 
-
-  for(auto j: range1(2, length(psi))) {
-
-    auto scSm = op(p.sites, "Cdagdn*Cup", j);
-    
-    double result = ImpurityCorrelator(psi, impSp, j, scSm, p);
-
-    std::cout << std::setprecision(17) << result << " ";
-    tot+=0.5*result;
-  }
-  std::cout << std::endl;
-
-
-  //S- S+ term
-  std::cout << "S-S+ correlations: ";
-
-  psi.position(p.impindex);
-
-  //on site term
-  auto onSiteSmSp = elt(psi(p.impindex) * op(p.sites, "Cdagdn*Cup*Cdagup*Cdn", p.impindex) *  dag(prime(psi(p.impindex),"Site")));
-
-  std::cout << std::setprecision(17) << onSiteSmSp << " ";
-  tot+=0.5*onSiteSmSp; 
-
-  for(auto j: range1(2, length(psi))) {
-
-    auto scSp = op(p.sites, "Cdagup*Cdn", j);
-    
-    double result = ImpurityCorrelator(psi, impSm, j, scSp, p);
-
-    std::cout << std::setprecision(17) << result << " ";
-    tot+=0.5*result;
-  }
-  std::cout << std::endl;
-
-  std::cout << "spin correlation tot = " << tot << "\n";
-}
-
-void PairCorrelation(MPS& psi, const params &p){
-  std::cout << "pair correlation = ";
-
-  auto impOp = op(p.sites, "Cup*Cdn", p.impindex);
-
-  double tot=0;
-  for(auto j: range1(2, length(psi))) {
-
-    auto scOp = op(p.sites, "Cdagdn*Cdagup", j);
-
-    double result = ImpurityCorrelator(psi, impOp, j, scOp, p);
-
-    std::cout << std::setprecision(17) << result << " ";
-    tot+=result;
-  }
-
-  std::cout << std::endl;
-  std::cout << "pair correlation tot = " << tot << "\n";
-}
-
-//Prints <d^dag c_i + c_i^dag d> for each i. the sum of this expected value, weighted by 1/sqrt(N)
-//gives <d^dag f_0 + f_0^dag d>, where f_0 = 1/sqrt(N) sum_i c_i. This is the expected value of hopping.
-void expectedHopping(MPS& psi, const params &p){
-
-  auto impOpUp = op(p.sites, "Cup", p.impindex);
-  auto impOpDagUp = op(p.sites, "Cdagup", p.impindex);
-
-  auto impOpDn = op(p.sites, "Cdn", p.impindex);
-  auto impOpDagDn = op(p.sites, "Cdagdn", p.impindex);
-
-  double totup=0;
-  double totdn=0;
-
-  // hopping expectation values for spin up
-  std::cout << "hopping spin up = ";
-  for (auto j : range1(2, length(psi))){
-
-    auto scDagOp = op(p.sites, "Cdagup", j);
-    auto scOp = op(p.sites, "Cup", j);
-
-    double result = ImpurityCorrelator(psi, impOpUp, j, scDagOp, p);    // <d c_i^dag>
-    double resultdag = ImpurityCorrelator(psi, impOpDagUp, j, scOp, p); // <d^dag c_i>
-
-    std::cout << std::setprecision(17) << result << " " << resultdag << " ";
-    std::cout << std::setprecision(17) << result+resultdag << " ";
-    totup+=result+resultdag;
-  }
-
-  std::cout << std::endl;
-  std::cout << "hopping correlation up tot = " << totup << "\n";
-
-  // hopping expectation values for spin up
-  std::cout << "hopping spin down = ";
-  for (auto j : range1(2, length(psi))){
-
-    auto scDagOp = op(p.sites, "Cdagdn", j);
-    auto scOp = op(p.sites, "Cdn", j);
-
-    double result = ImpurityCorrelator(psi, impOpDn, j, scDagOp, p);    // <d c_i^dag>
-    double resultdag =  ImpurityCorrelator(psi, impOpDagDn, j, scOp, p); // <d^dag c_i>
-
-    std::cout << std::setprecision(17) << result << " " << resultdag << " ";
-    //std::cout << std::setprecision(17) << result+resultdag << " ";
-    totdn+=result+resultdag;
-  }
-  
-  std::cout << std::endl;
-  std::cout << "hopping correlation down tot = " << totdn << "\n";
-  
-  std::cout << "total hopping correlation = " << totup + totdn << "\n";
-}
-
-//computes the correlation between operator impOp on impurity and operator opj on j
-double ImpurityCorrelator(MPS& psi, auto impOp, int j, auto opj, const params &p){
-
-  psi.position(p.impindex);
-  
-  MPS psidag = dag(psi);
-  psidag.prime("Link");
-
-  auto li_1 = leftLinkIndex(psi,p.impindex);
-
-  auto C = prime(psi(p.impindex),li_1)*impOp;
-  C *= prime(psidag(p.impindex),"Site");
-  for (int k=p.impindex+1; k<j; ++k){
-    C*=psi(k);
-    C*=psidag(k);
-  }
-
-  auto lj=rightLinkIndex(psi,j);
-  
-  C *= prime(psi(j),lj)*opj;
-  C *= prime(psidag(j),"Site");
-  
-  return elt(C);
-}
-
-//prints the occupation number Nup and Ndn at the impurity
-void ImpurityUpDn(MPS& psi, const params &p){
-  
-  std::cout << "impurity nup ndn = ";
-  psi.position(p.impindex);
-  auto valnup = psi.A(p.impindex) * p.sites.op("Nup",p.impindex)* dag(prime(psi.A(p.impindex),"Site"));
-  auto valndn = psi.A(p.impindex) * p.sites.op("Ndn",p.impindex)* dag(prime(psi.A(p.impindex),"Site"));
-
-  std::cout << std::setprecision(17) << std::real(valnup.cplx()) << " " << std::real(valndn.cplx()) << "\n";
-}
-
-//prints total Sz of the state
-void TotalSpinz(MPS& psi, const params &p){
-
-  double totNup=0.;
-  double totNdn=0.;
-
-  for(auto j: range1(length(psi))) {
-    psi.position(j);
-
-    auto Nupi = psi.A(j) * p.sites.op("Nup",j)* dag(prime(psi.A(j),"Site"));
-    auto Ndni = psi.A(j) * p.sites.op("Ndn",j)* dag(prime(psi.A(j),"Site"));
-
-    totNup += std::real(Nupi.cplx());
-    totNdn += std::real(Ndni.cplx());
-
-  }
-
-  std::cout << std::setprecision(17) << "Total spin z: " << " Nup = " << totNup << " Ndn = " << totNdn << " Sztot = " << 0.5*(totNup-totNdn) <<  "\n";
-}
-
-// occupation numbers of all levels in the problem
-auto calcOcc(MPS &psi, const params &p) {
-  std::vector<double> r;
-  for(auto i : range1(length(psi)) ) {
-    // position call very important! otherwise one would need to contract the whole tensor network of <psi|O|psi> this way, only the local operator at site i is needed
-    psi.position(i);
-    auto val = psi.A(i) * p.sites.op("Ntot",i)* dag(prime(psi.A(i),"Site"));
-    r.push_back(std::real(val.cplx()));
-  }
-  return r;
-}
-
-void MeasureOcc(MPS& psi, const params &p) {
-  auto r = calcOcc(psi, p);
-  std::cout << "site occupancies = " << std::setprecision(17) << r << std::endl;
-  auto tot = std::accumulate(r.begin(), r.end(), 0.0);
-  Print(tot);
-}
-
-// The sum (tot) corresponds to \bar{\Delta}', Eq. (4) in Braun, von Delft, PRB 50, 9527 (1999), first proposed by Dan Ralph.
-// It reduces to Delta_BCS in the thermodynamic limit (if the impurity is decoupled, Gamma=0).
-// For Gamma>0, there is no guarantee that all values 'sq' are real, because the expr <C+CC+C>-<C+C><C+C> may be negative.
-void MeasurePairing(MPS& psi, const params &p){
-  std::cout << "site pairing = ";
-  std::complex<double> tot = 0;
-  for(auto i : range1(length(psi))){
-    psi.position(i);
-    auto val2  = psi.A(i) * p.sites.op("Cdagup*Cup*Cdagdn*Cdn", i) * dag(prime(psi.A(i),"Site"));
-    auto val1u = psi.A(i) * p.sites.op("Cdagup*Cup", i) * dag(prime(psi.A(i),"Site"));
-    auto val1d = psi.A(i) * p.sites.op("Cdagdn*Cdn", i) * dag(prime(psi.A(i),"Site"));
-    auto sq = p.sc->g() * sqrt( val2.cplx() - val1u.cplx() * val1d.cplx() );
-    std::cout << std::setprecision(17) << sq << " ";
-    if (i != p.impindex) tot += sq; // exclude the impurity site in the sum
-  }
-  std::cout << std::endl;
-  Print(tot);
-}
-
-// See von Delft, Zaikin, Golubev, Tichy, PRL 77, 3189 (1996)
-void MeasureAmplitudes(MPS& psi, const params &p){
-  std::cout << "amplitudes vu = ";
-  std::complex<double> tot = 0;
-  for(auto i : range1(length(psi)) ){
-    psi.position(i);
-    auto valv = psi.A(i) * p.sites.op("Cdagup*Cdagdn*Cdn*Cup", i) * dag(prime(psi.A(i),"Site"));
-    auto valu = psi.A(i) * p.sites.op("Cdn*Cup*Cdagup*Cdagdn", i) * dag(prime(psi.A(i),"Site"));
-    auto v = sqrt( std::real(valv.cplx()) );
-    auto u = sqrt( std::real(valu.cplx()) );
-    auto pdt = v*u;
-    auto element = p.sc->g() * pdt;
-    std::cout << "[v=" << v << " u=" << u << " pdt=" << pdt << "] ";
-    if (i != p.impindex) tot += element; // exclude the impurity site in the sum
-  }
-  std::cout << std::endl;
-  Print(tot);
-}
-
-
-// Computed entanglement/von Neumann entropy between the impurity and the system.
-// Copied from https://www.itensor.org/docs.cgi?vers=cppv3&page=formulas/entanglement_mps
-void PrintEntropy(MPS& psi, const params &p){
-
-  psi.position(p.impindex);
-
-  //SVD this wavefunction to get the spectrum of density-matrix eigenvalues
-  auto l = leftLinkIndex(psi, p.impindex);
-  auto s = siteIndex(psi, p.impindex);
-  auto [U,S,V] = svd(psi(p.impindex), {l,s});
-  auto u = commonIndex(U,S);
-
-  //Apply von Neumann formula to the squares of the singular values
-  double SvN = 0.;
-  for(auto n : range1(dim(u)))
-      {
-      auto Sn = elt(S,n,n);
-      auto pp = sqr(Sn);
-      if(pp > 1E-12) SvN += -pp*log(pp);
-      }
-
-  printfln("Entanglement entropy across impurity bond b=%d, SvN = %.10f",p.impindex,SvN);
-
-}

@@ -1,8 +1,6 @@
 #ifndef _calcGS_h_
 #define _calcGS_h_
 
-//#include "hash_for_tuples.h"
-
 using namespace itensor;
 
 inline bool even(int i) { return i%2 == 0; }
@@ -92,29 +90,6 @@ constexpr auto spin0 = spin(0);
 constexpr auto spinp = spin(0.5);
 constexpr auto spinm = spin(-0.5);
 
-#ifdef OLD
-// Quantum numbers for an invariant subspace
-class subspace {
- private:
-   int _n;
-   spin _sz;
- public:
-   subspace(int n, spin sz) : _n(n), _sz(sz) {}
-   auto n() const { return _n; }
-   auto sz() const { return _sz; }
-   auto get() const { return std::make_tuple(n(), sz()); }
-};
-
-// Quantum numbers for a state (i=0 is GS, i=1 is 1st excited state, etc.)
-class state : public subspace {
- private:
-   int _i;
- public:
-   state(int n, spin sz, int i) : subspace(n,sz), _i(i) {}
-   auto i() const { return _i; }
-};
-#endif
-
 using subspace = std::pair<int, spin>;
 using state = std::pair<subspace, int>;
 
@@ -186,11 +161,9 @@ struct params {
   int nrH;              // number of times to apply H to psi before comencing the sweep - akin to a power method; default = 5
   int nrange;           // the number of energies computed is 2*nrange + 1
 
-  bool calcspin1;
-
-  std::unique_ptr<imp> qd; // replaces {U, epsimp, nu}
+  std::unique_ptr<imp>    qd;
   std::unique_ptr<SCbath> sc;
-  std::unique_ptr<hyb> Gamma;
+  std::unique_ptr<hyb>    Gamma;
   double V12;           // QD-SC capacitive coupling
 
   // TWO CHANNEL PARAMETERS
@@ -215,26 +188,8 @@ struct store
   std::map<subspace, psi_stats> stats0;
 };
 
-
+InputGroup parse_cmd_line(int, char * [], params &p);
 void FindGS(InputGroup &input, store &s, params &p);
 void calculateAndPrint(InputGroup &input, store &s, params &p);
-std::tuple<MPO, double> initH(int ntot, params &p);
-MPS initPsi(int ntot, float Sz, params &p);
-void ExpectationValueAddEl(MPS psi1, MPS psi2, std::string spin, const params &p);
-void ExpectationValueTakeEl(MPS psi1, MPS psi2, std::string spin, const params &p);
-void ChargeCorrelation(MPS& psi, const params &p);
-void SpinCorrelation(MPS& psi, const params &p);
-void PairCorrelation(MPS& psi, const params &p);
-void expectedHopping(MPS& psi, const params &p);
-double ImpurityCorrelator(MPS& psi, auto impOp, int j, auto opj, const params &p);
-void MyDMRG(MPS& psi, MPO& H, double& energy, Args args);
-void ImpurityUpDn(MPS& psi, const params &p);
-void TotalSpinz(MPS& psi, const params &p);
-void MeasureOcc(MPS& psi, const params &);
-void MeasurePairing(MPS& psi, const params &);
-void MeasureAmplitudes(MPS& psi, const params &);
-InputGroup parse_cmd_line(int, char * [], params &p);
-void PrintEntropy(MPS& psi, const params &p);
-
 
 #endif
