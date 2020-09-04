@@ -3,6 +3,7 @@
 
 using namespace itensor;
 
+// Class containing impurity parameters
 class imp {
  private:
    double _U;
@@ -16,6 +17,46 @@ class imp {
    auto nu() const { return _U != 0.0 ? 0.5-_eps/_U : std::numeric_limits<double>::quiet_NaN(); }
 };
 
+// Class containing bath parameters
+class bath { // normal-state bath
+ private:
+   int _Nbath; // number of levels
+   double _D; // half-bandwidth
+ public:
+   bath(int Nbath, double D = 1.0) : _Nbath(Nbath), _D(D) {};
+   auto Nbath() const { return _Nbath; }
+   auto d() const { // inter-level spacing
+     return 2.0*_D/_Nbath;
+   }
+   auto eps() const {
+     std::vector<double> eps; // note: zero-based indexing here!
+     for (auto k: range1(_Nbath))
+       eps.push_back( -_D + (k-0.5)*d() );
+     return eps;
+   }
+};
+
+class SCbath : public bath { // superconducting island bath
+ private:
+   double _alpha; // pairing strength
+   double _Ec; // charging energy
+   double _n0; // offset
+ public:
+   SCbath(int Nbath, double alpha, double Ec, double n0) :
+     bath(Nbath), _alpha(alpha), _Ec(Ec), _n0(n0) {};
+   auto alpha() const { return _alpha; }
+   auto Ec() const { return _Ec; }
+   auto n0() const { return _n0; }
+   auto g() const { return _alpha*d(); }
+   auto eps(bool band_level_shift = true) const {
+     auto eps = bath::eps();
+     if (band_level_shift)
+       for (auto x: eps)
+         x += -g()/2.0;
+     return eps;
+   };
+};
+
 // parameters from the input file 
 struct params {
   string inputfn;       // filename of the input file
@@ -25,7 +66,6 @@ struct params {
 
   int N;                // number of sites
   int NImp;             // number of impurity orbitals
-  int NBath;            // number of bath sites
   int impindex;         // impurity position in the chain (1 based)
 
   Hubbard sites;        // itensor object
@@ -55,20 +95,23 @@ struct params {
 
   bool calcspin1;       
 
-  double alpha;         // e-e coupling
-  double n0;            // charge offset
-  double d;             // d=2D/NBath, level spacing
-  double g;             // strength of the SC coupling
 
 //  double U;             // e-e on impurity site
-  double epsimp;        // impurity level
-  double nu;            // nu=1/2-epsimp/U, computed after epsimp parsed
+//  double epsimp;        // impurity level
+//  double nu;            // nu=1/2-epsimp/U, computed after epsimp parsed
   std::unique_ptr<imp> qd; // replaces {U, epsimp, nu}
+  double Ueff;          // effective e-e on impurity site (after Ec_trick mapping)
+  
+  std::unique_ptr<SCbath> sc;
+  int NBath;            // number of bath sites
+  double d;             // d=2D/NBath, level spacing
+  double g;             // strength of the SC coupling
+  double n0;            // charge offset
+  double alpha;         // e-e coupling
+  double Ec;            // charging energy
 
   double gamma;         // hybridisation
-  double Ec;            // charging energy
   double V12;           // QD-SC capacitive coupling
-  double Ueff;          // effective e-e on impurity site (after Ec_trick mapping)
 
   double EZ_imp;        // impurity Zeeman energy
   double EZ_bulk;        // bulk Zeeman energy
@@ -113,8 +156,7 @@ struct store
 
 void FindGS(InputGroup &input, store &s, params &p);
 void calculateAndPrint(InputGroup &input, store &s, params &p);
-void GetBathParams(std::vector<double>& eps, std::vector<double>& V, params &p);
-std::tuple<MPO, double> initH(std::vector<double> eps, std::vector<double> V, int ntot, params &p);
+std::tuple<MPO, double> initH(int ntot, params &p);
 MPS initPsi(int ntot, float Sz, params &p);
 void ExpectationValueAddEl(MPS psi1, MPS psi2, std::string spin, const params &p);
 void ExpectationValueTakeEl(MPS psi1, MPS psi2, std::string spin, const params &p);
