@@ -95,7 +95,6 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   p.sites = Hubbard(p.N);
 
   p.excited_state = input.getYesNo("excited_state", false);
-  p.randomMPSb = input.getYesNo("randomMPS", false);
   p.printDimensions = input.getYesNo("printDimensions", false);
   p.calcweights = input.getYesNo("calcweights", false);
   p.refisn0 = input.getYesNo("refisn0", false);
@@ -176,71 +175,57 @@ std::tuple<MPO, double> initH(int ntot, params &p){
   return std::make_tuple(H, Eshift);
 }
 
-//initialize the MPS in a product state with the correct particle number
-MPS initPsi(int ntot, float Sz, params &p){
+// Initialize the MPS in a product state with ntot electrons.
+// Sz is the spin of the electron on the impurity site.
+MPS initPsi(int ntot, float Sz, params &p, int impindex, bool randomMPSb) {
+  int tot = 0;  // electron counter, for assertion test
   auto state = InitState(p.sites);
-
-  const int nsc = ntot-1;  // number of electrons in the SC in Gamma->0 limit
-  const int npair = nsc/2; // number of pairs in the SC
-  int tot = 0; // for assertion test
-  int Sztot = 0.;
-
-  //Up electron at the impurity site and npair UpDn pairs. 
-  if (Sz < 0.) {
-    state.set(p.impindex, "Dn");
-    Sztot += -0.5; 
-  } else {
-    state.set(p.impindex, "Up"); 
-    Sztot += 0.5;
-  }
+  // ** Add electron on the impurity site
+  if (Sz < 0)
+    state.set(impindex, "Dn");
+  else
+    state.set(impindex, "Up"); 
   tot++;
-
-  int j=0;
-  int i=1;
+  // ** Add electrons to the bath
+  const int nsc = ntot-1;  // number of electrons in the bath
+  const int npair = nsc/2; // number of pairs in the bath
+  int j = 0;               // counts added pairs
+  int i = 1;               // site index (1 based)
   for(; j < npair; i++)
-    if (i!=p.impindex){             //In order to avoid adding a pair to the impurity site 
-      j++;                          //i counts sites, j counts added pairs.
+    if (i != impindex) { // skip impurity site
+      j++;
       state.set(i, "UpDn");
       tot += 2;
     }
-
-  if (odd(nsc)) { //If ncs is odd, add another electron according to EZ_bulk preference, but not to the impurity site.
-    if (i!=p.impindex){
+  if (odd(nsc)) {          // if ncs is odd, add another electron according to EZ_bulk preference
+    if (i != impindex)
       state.set(i,"Dn"); 
-      tot++;
-    } else {
+    else 
       state.set(i+1,"Dn"); 
-      tot++;
-    }
+    tot++;
   }
-
   assert(tot == n);
   MPS psi(state);
-  if (p.randomMPSb) psi = randomMPS(state);
+  if (randomMPSb) 
+    psi = randomMPS(state);
   return psi;
 }
 
 //calculates <psi1|c_dag|psi2>, according to http://itensor.org/docs.cgi?vers=cppv3&page=formulas/mps_onesite_op
 void ExpectationValueAddEl(MPS psi1, MPS psi2, std::string spin, const params &p){
-
   psi2.position(p.impindex); //set orthogonality center
   auto newTensor = noPrime(op(p.sites,"Cdag"+spin, p.impindex)*psi2(p.impindex)); //apply the local operator
   psi2.set(p.impindex,newTensor); //plug in the new tensor, with the operator applied
-
   auto res = inner(psi1, psi2);
-
   std::cout << "weight w+ " << spin << ": " << res << "\n";
 }
 
 //calculates <psi1|c|psi2>
 void ExpectationValueTakeEl(MPS psi1, MPS psi2, std::string spin, const params &p){
-
   psi2.position(p.impindex);
   auto newTensor = noPrime(op(p.sites,"C"+spin, p.impindex)*psi2(p.impindex));
   psi2.set(p.impindex,newTensor);
-
   auto res = inner(psi1, psi2);
-
   std::cout << "weight w- " << spin << ": " << res << "\n";
 }
 
@@ -269,12 +254,12 @@ double ImpurityCorrelator(MPS& psi, auto impOp, int j, auto opj, const params &p
 void ChargeCorrelation(MPS& psi, const params &p){
   std::cout << "charge correlation = ";
   auto impOp = op(p.sites, "Ntot", p.impindex);
-  double tot=0;
+  double tot = 0;
   for(auto j: range1(2, length(psi))) {
     auto scOp = op(p.sites, "Ntot", j);
     double result = ImpurityCorrelator(psi, impOp, j, scOp, p);
     std::cout << std::setprecision(17) << result << " ";
-    tot+=result;
+    tot += result;
   }
   std::cout << std::endl;
   std::cout << "charge correlation tot = " << tot << "\n"; 
@@ -501,8 +486,8 @@ void FindGS(InputGroup &input, store &s, params &p){
 
     //initialize H and psi
     auto [H, Eshift] = initH(ntot, p);
-    auto psi_init = initPsi(ntot, Sz, p);
-    
+    auto psi_init = initPsi(ntot, Sz, p, p.impindex, input.getYesNo("randomMPS", false)); 
+  
     Args args; //args is used to store and transport parameters between various functions
 
     //Apply the MPO a couple of times to get DMRG started, otherwise it might not converge.
@@ -587,7 +572,7 @@ void calculateAndPrint(InputGroup &input, store &s, params &p){
   printfln("N_GS = %i",N_GS);
   printfln("Sz_GS = %i",Sz_GS);
 
-  //Calculate the spectral weights:
+  //Calculate the spectral weights: // TODO -> separate!
   if (p.calcweights) {
     MPS & psiGS = s.eigen0[subGS].psi();
 

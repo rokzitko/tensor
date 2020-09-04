@@ -140,7 +140,6 @@ struct params {
 
   // all bools have default value false
   bool excited_state;    // computes the first excited state
-  bool randomMPSb;       // sets the initial state to random
   bool printDimensions;  // prints dmrg() prints info during the sweep
   bool calcweights;      // calculates the spectral weights of the two closes spectroscopically availabe excitations
   bool refisn0;          // the energies will be computed in the sectors centered around the one with n = round(n0) + 1
