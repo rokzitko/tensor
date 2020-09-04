@@ -185,10 +185,11 @@ MPS initPsi(int ntot, float Sz, const auto &sites, int impindex, bool randomMPSb
   auto state = InitState(sites);
   // ** Add electron to the impurity site
   if (ntot > 0) {
-    if (Sz < 0) {
+    if (Sz == -0.5) {
       state.set(impindex, "Dn");
       SZtot -= 0.5;
-    } else {
+    }
+    if (Sz == 0 || Sz == +0.5) {
       state.set(impindex, "Up");
       SZtot += 0.5;
     }
@@ -206,7 +207,7 @@ MPS initPsi(int ntot, float Sz, const auto &sites, int impindex, bool randomMPSb
         state.set(i, "UpDn");
         tot += 2;            // SZtot does not change!
       }
-    if (odd(nsc)) {          // if ncs is odd, add another electron according to EZ_bulk preference
+    if (odd(nsc)) {          // if ncs is odd (implies even ntot and sz=0), add spin-down electron
       if (i == impindex) 
         i++;
       state.set(i,"Dn");
@@ -493,7 +494,7 @@ void FindGS(InputGroup &input, store &s, params &p){
   for (size_t i=0; i<p.iterateOver.size(); i++){
     auto sub = p.iterateOver[i];
     auto [ntot, Sz] = sub;
-    std::cout << "\nSweeping in the sector with " << ntot << " particles, Sz = " << Sz << ".\n";
+    std::cout << "\nSweeping in the sector with " << ntot << " particles, Sz = " << Sz << std::endl;
 
     //initialize H and psi
     auto [H, Eshift] = initH(ntot, p);
@@ -522,19 +523,77 @@ void FindGS(InputGroup &input, store &s, params &p){
   }
 }//end FindGS
 
+void calculate_spectral_weights(store &s, subspace subGS, params &p) {
+  MPS & psiGS = s.eigen0[subGS].psi();
+  auto [N_GS, Sz_GS] = subGS;
+
+  printfln(""); 
+  printfln("Spectral weights:");
+  printfln("(Spectral weight is the square of the absolute value of the number.)");
+
+  auto cp = subspace(N_GS+1, Sz_GS+0.5);
+  if (s.eigen0.find(cp) != s.eigen0.end()) { // if the N_GS+1 state was computed, print the <N+1|c^dag|N> terms
+    MPS & psiNp = s.eigen0[cp].psi();
+    ExpectationValueAddEl(psiNp, psiGS, "up", p);
+  }  
+  else printfln("ERROR: we don't have info about the N_GS+1, Sz_GS+0.5 occupancy sector.");
+
+  auto cm = subspace(N_GS+1, Sz_GS-0.5);
+  if (s.eigen0.find(cm) != s.eigen0.end()) { // if the N_GS+1 state was computed, print the <N+1|c^dag|N> terms
+    MPS & psiNp = s.eigen0[cm].psi();
+    ExpectationValueAddEl(psiNp, psiGS, "dn", p);
+  }  
+  else printfln("ERROR: we don't have info about the N_GS+1, Sz_GS-0.5 occupancy sector.");
+
+  auto am = subspace(N_GS-1, Sz_GS-0.5);
+  if (s.eigen0.find(am) != s.eigen0.end()) { // if the N_GS-1 state was computed, print the <N-1|c|N> terms
+    MPS & psiNm = s.eigen0[am].psi();
+    ExpectationValueTakeEl(psiNm, psiGS, "up", p);
+  }
+  else printfln("ERROR: we don't have info about the N_GS-1, Sz_GS+0.5 occupancy sector.");
+  
+  auto ap = subspace(N_GS-1, Sz_GS+0.5);
+  if (s.eigen0.find(ap) != s.eigen0.end()) { // if the N_GS-1 state was computed, print the <N-1|c|N> terms
+    MPS & psiNm = s.eigen0[ap].psi();
+    ExpectationValueTakeEl(psiNm, psiGS, "dn", p);
+  }
+  else printfln("ERROR: we don't have info about the N_GS-1, Sz_GS-0.5 occupancy sector.");
+}
+
+void print_energies(store &s, params &p) {
+  printfln("");
+  for(auto ntot: p.numPart)
+    for(auto Sz: p.Szs[ntot])
+      printfln("n = %.17g  Sz = %.17g  E = %.17g", ntot, Sz, s.eigen0[subspace(ntot,Sz)].E());
+}
+
+auto find_global_GS_subspace(store &s) {
+  subspace subGS;
+  double EGS = std::numeric_limits<double>::infinity();
+  for(const auto & [sub, eig] : s.eigen0) {
+    auto E0 = eig.E();
+    if (E0 < EGS) {
+      EGS = E0;
+      subGS = sub;
+    }
+  }
+  auto [N_GS, Sz_GS] = subGS;
+  printfln("N_GS = %i",N_GS);
+  printfln("Sz_GS = %i",Sz_GS);
+  return subGS;
+}
+
 //Loops over all particle sectors and prints relevant quantities.
 void calculateAndPrint(InputGroup &input, store &s, params &p){
   //print data for each sector
   for(auto ntot: p.numPart) {
     for (double Sz:p.Szs[ntot]){
       auto sub = subspace(ntot, Sz);
-      printfln("\n\nRESULTS FOR THE SECTOR WITH %i PARTICLES, Sz %i:", ntot, Sz);
       auto E = s.eigen0[sub].E();
-      printfln("Ground state energy = %.17g", E);
-
       MPS & GS = s.eigen0[sub].psi();
-      
-      printfln("norm = %.17g", s.stats0[sub].norm());
+      printfln("\n\nRESULTS FOR THE SECTOR WITH %i PARTICLES, Sz %i:", ntot, Sz);
+      printfln("Ground state energy = %.17g", E);
+      printfln("norm = %.17g", s.stats0[sub].norm()); // TODO: move below
       //occupancy; site pairing; v and u amplitudes 
       MeasureOcc(GS, p);
       MeasurePairing(GS, p);
@@ -548,10 +607,9 @@ void calculateAndPrint(InputGroup &input, store &s, params &p){
       if (p.hoppingExpectation) expectedHopping(GS, p);
       if (p.printTotSpinZ) TotalSpinz(GS, p);
 
-      double GS0bis = s.stats0[sub].Ebis();
       //various measures of convergence (energy deviation, residual value)
-      printfln("Eigenvalue(bis): <GS|H|GS> = %.17g",GS0bis);
-      printfln("diff: E_GS - <GS|H|GS> = %.17g", E-GS0bis);
+      printfln("Eigenvalue(bis): <GS|H|GS> = %.17g", s.stats0[sub].Ebis());
+      printfln("diff: E_GS - <GS|H|GS> = %.17g", E-s.stats0[sub].Ebis()); // TODO: remove this
       printfln("deltaE: sqrt(<GS|H^2|GS> - <GS|H|GS>^2) = %.17g", s.stats0[sub].deltaE());
       printfln("residuum: <GS|H|GS> - E_GS*<GS|GS> = %.17g", s.stats0[sub].residuum());
 
@@ -563,60 +621,9 @@ void calculateAndPrint(InputGroup &input, store &s, params &p){
     } //end of Sz for loop 
   } //end of ntot for loop
 
-  printfln("");
-  //Print out energies again:
-  for(auto ntot: p.numPart)
-    for(auto Sz: p.Szs[ntot])
-      printfln("n = %.17g  Sz = %.17g  E = %.17g", ntot, Sz, s.eigen0[subspace(ntot,Sz)].E());
+  print_energies(s, p);
 
-  // Find the sector with the global GS
-  subspace subGS;
-  double EGS = std::numeric_limits<double>::infinity();
-  for(const auto & [sub, eig] : s.eigen0) {
-    auto E0 = eig.E();
-    if (E0 < EGS) {
-      EGS = E0;
-      subGS = sub;
-    }
-  }
-  auto [N_GS, Sz_GS] = subGS;
-  printfln("N_GS = %i",N_GS);
-  printfln("Sz_GS = %i",Sz_GS);
-
-  //Calculate the spectral weights: // TODO -> separate!
-  if (p.calcweights) {
-    MPS & psiGS = s.eigen0[subGS].psi();
-
-    printfln(""); 
-    printfln("Spectral weights:");
-    printfln("(Spectral weight is the square of the absolute value of the number.)");
-
-    auto cp = subspace(N_GS+1, Sz_GS+0.5);
-    if ( s.eigen0.find(cp) != s.eigen0.end() ){ //if the N_GS+1 state was computed, print the <N+1|c^dag|N> terms
-      MPS & psiNp = s.eigen0[cp].psi();
-      ExpectationValueAddEl(psiNp, psiGS, "up", p);
-    }  
-    else printfln("ERROR: we don't have info about the N_GS+1, Sz_GS+0.5 occupancy sector.");
-
-    auto cm = subspace(N_GS+1, Sz_GS-0.5);
-    if ( s.eigen0.find(cm) != s.eigen0.end() ){ //if the N_GS+1 state was computed, print the <N+1|c^dag|N> terms
-      MPS & psiNp = s.eigen0[cm].psi();
-      ExpectationValueAddEl(psiNp, psiGS, "dn", p);
-    }  
-    else printfln("ERROR: we don't have info about the N_GS+1, Sz_GS-0.5 occupancy sector.");
-
-    auto am = subspace(N_GS-1, Sz_GS-0.5);
-    if ( s.eigen0.find(am) != s.eigen0.end() ){ //if the N_GS-1 state was computed, print the <N-1|c|N> terms
-      MPS & psiNm = s.eigen0[am].psi();
-      ExpectationValueTakeEl(psiNm, psiGS, "up", p);
-    }
-    else printfln("ERROR: we don't have info about the N_GS-1, Sz_GS+0.5 occupancy sector.");
-
-    auto ap = subspace(N_GS-1, Sz_GS+0.5);
-    if ( s.eigen0.find(ap) != s.eigen0.end() ){ //if the N_GS-1 state was computed, print the <N-1|c|N> terms
-      MPS & psiNm = s.eigen0[ap].psi();
-      ExpectationValueTakeEl(psiNm, psiGS, "dn", p);
-    }
-    else printfln("ERROR: we don't have info about the N_GS-1, Sz_GS-0.5 occupancy sector.");
-  } //end of if (calcweights)
-} //end of calculateAndPrint()
+  subspace subGS = find_global_GS_subspace(s);
+  if (p.calcweights) 
+    calculate_spectral_weights(s, subGS, p);
+}
