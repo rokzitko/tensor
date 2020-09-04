@@ -169,9 +169,6 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
 //calculates the groundstates and the energies of the relevant particle number sectors
 void FindGS(InputGroup &input, store &s, params &p){
 
-  std::vector<double> GSenergies(0); // result: lowest energy in each occupancy sector
-  std::vector<double> ESenergies(0); // optionally: first excited state in each occupancy sector
-
   //The sweeps object defines the accuracy used for each update cycle in DMRG.
   //The used parameters are read from the input file with the following meaning:
   // maxdim:  maximal bond dimension -> start low approach ground state roughly, then increase
@@ -197,14 +194,8 @@ void FindGS(InputGroup &input, store &s, params &p){
 
       std::cout << "\nSweeping in the sector with " << ntot << " particles, Sz = " << Sz << ".\n";
 
-      std::vector<double> eps;        // vector containing on-site energies of the bath !one-indexed!
-      std::vector<double> V;          // vector containing hopping amplitudes to the bath !one-indexed!
-
-      //Read the bath parameters (fills in the vectors eps and V).
-      GetBathParams(eps, V, p);
-
       //initialize H and psi
-      auto [H, Eshift] = initH(eps, V, ntot, p);
+      auto [H, Eshift] = initH(ntot, p);
       auto psi = initPsi(ntot, Sz, p);
 
       Args args; //args is used to store and transport parameters between various functions
@@ -244,8 +235,36 @@ void FindGS(InputGroup &input, store &s, params &p){
   }//end ntot for loop
 }//end FindGS
 
+
+//fills the vectors eps and V with the correct values for given gamma and number of bath sites
+void GetBathParams(std::vector<double>& eps, std::vector<double>& V, params &p) {
+  double d = 2./p.NBath;
+  double Vval = std::sqrt( 2*p.gamma/(M_PI*p.NBath) ); // pi!
+  if (p.verbose)
+    std::cout << "Vval=" << Vval << std::endl;
+  eps.resize(0);
+  V.resize(0);
+  eps.push_back(999999.); // should not be used!
+  V.push_back(999999.);   // idem
+  // Note: different sign in band_level_shift compared to the paper because of the difference of
+  // sign in the definition of the pairing term.
+  const double band_level_shift = (p.band_level_shift ? -p.g/2.0 : 0.0);
+  for(auto k: range1(p.NBath)){
+    eps.push_back( -1 + (k-0.5)*d + band_level_shift );
+    V.push_back( Vval );
+  }
+}
+
 //initialize the Hamiltonian
-std::tuple<MPO, double> initH(std::vector<double> eps, std::vector<double> V, int ntot, params &p){
+std::tuple<MPO, double> initH(int ntot, params &p){
+
+  std::vector<double> eps;        // vector containing on-site energies of the bath !one-indexed!
+  std::vector<double> V;          // vector containing hopping amplitudes to the bath !one-indexed!
+
+  //Read the bath parameters (fills in the vectors eps and V).
+  GetBathParams(eps, V, p);
+
+
   double Eshift;  // constant term in the Hamiltonian
   MPO H(p.sites); // MPO is the hamiltonian in "MPS-form" after this line it is still a trivial operator
   if (p.MPO == "std") {
@@ -785,25 +804,6 @@ void MeasureAmplitudes(MPS& psi, const params &p){
   }
   std::cout << std::endl;
   Print(tot);
-}
-
-//fills the vectors eps and V with the correct values for given gamma and number of bath sites
-void GetBathParams(std::vector<double>& eps, std::vector<double>& V, params &p) {
-  double d = 2./p.NBath;
-  double Vval = std::sqrt( 2*p.gamma/(M_PI*p.NBath) ); // pi!
-  if (p.verbose)
-    std::cout << "Vval=" << Vval << std::endl;
-  eps.resize(0);
-  V.resize(0);
-  eps.push_back(999999.); // should not be used!
-  V.push_back(999999.);   // idem
-  // Note: different sign in band_level_shift compared to the paper because of the difference of
-  // sign in the definition of the pairing term.
-  const double band_level_shift = (p.band_level_shift ? -p.g/2.0 : 0.0);
-  for(auto k: range1(p.NBath)){
-    eps.push_back( -1 + (k-0.5)*d + band_level_shift );
-    V.push_back( Vval );
-  }
 }
 
 
