@@ -1,7 +1,17 @@
 #!/bin/bash
 # RZ, Dec 2019
-#ml purge
+ml purge
+
 #ml gimkl/2018b
+
+#ml foss/2018b
+#ml imkl/2018.3.222-gompi-2018b
+#ml HDF5/1.10.2-foss-2018b
+
+ml foss/2019a
+ml imkl/2019.1.144-gompi-2019a
+ml HDF5/1.10.5-gompi-2019a
+
 g++ --version
 export ITENSOR=~/repos/itensor
 make build

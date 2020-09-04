@@ -1,18 +1,3 @@
-#include <itensor/all.h>
-#include <itensor/util/args.h>
-
-#include <iostream>
-#include <fstream>
-#include <iomanip>
-#include <vector>
-#include <map>
-#include <unordered_map>
-#include <stdexcept>
-#include <limits> // quiet_NaN
-#include <tuple>
-
-#include <omp.h>
-
 #include "FindGS.h"
 
 #include "SC_BathMPO.h"
@@ -37,7 +22,7 @@ void init_subspace_lists(params &p)
   const int nhalf = p.N; // total nr of electrons at half-filling
   const int nref = (p.refisn0 ? ( round(p.sc->n0() + 0.5 - (p.qd->eps()/p.qd->U())) ) : nhalf); //calculation of the energies is centered around this n
   p.numPart = n_list(nref, p.nrange);
-  
+
   bool magnetic_field = ((p.qd->EZ()!=0 || p.sc->EZ()!=0) ? true : false); // true if there is magnetic field, implying that Sz=0.5 states are NOT degenerate
   // Sz values for n are in Szs[n]
   for (auto ntot : p.numPart) {
@@ -57,7 +42,7 @@ void init_subspace_lists(params &p)
 InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   if (argc != 2)
     throw std::runtime_error("Please provide input file. Usage: ./executable inputfile.txt");
-  
+
   //read parameters from the input file
   p.inputfn = {argv[1]};
   auto input = InputGroup{p.inputfn, "params"}; //get input parameters using InputGroup from itensor
@@ -81,13 +66,13 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   } else
     throw std::runtime_error("Unknown MPO type");
   std::cout << "N=" << p.N << " NBath=" << p.NBath << " impindex=" << p.impindex << std::endl;
-  
+
   double U = input.getReal("U", 0); // need to parse it first because it enters the default value for epsimp just below
   p.qd = std::make_unique<imp>(U, input.getReal("epsimp", -U/2.), input.getReal("EZ_imp", 0.));
   p.sc = std::make_unique<SCbath>(p.NBath, input.getReal("alpha", 0), input.getReal("Ec", 0), input.getReal("n0", p.N-1), input.getReal("EZ_bulk", 0.));
   p.Gamma = std::make_unique<hyb>(input.getReal("gamma", 0));
   p.V12 = input.getReal("V", 0); // handled in a special way
-  
+
   // sites is an ITensor thing. it defines the local hilbert space and
   // operators living on each site of the lattice
   // for example sites.op("N",1) gives the pariticle number operator
@@ -489,7 +474,7 @@ void FindGS(InputGroup &input, store &s, params &p){
   auto sw_table = InputGroup(inputsw,"sweeps");
   int nrsweeps = input.getInt("nrsweeps", 15);
   auto sweeps = Sweeps(nrsweeps,sw_table);
-  
+
 #pragma omp parallel for if(p.parallel) 
   for (size_t i=0; i<p.iterateOver.size(); i++){
     auto sub = p.iterateOver[i];
@@ -499,7 +484,7 @@ void FindGS(InputGroup &input, store &s, params &p){
     //initialize H and psi
     auto [H, Eshift] = initH(ntot, p);
     auto psi_init = initPsi(ntot, Sz, p.sites, p.impindex, input.getYesNo("randomMPS", false)); 
-  
+
     Args args; //args is used to store and transport parameters between various functions
 
     //Apply the MPO a couple of times to get DMRG started, otherwise it might not converge.
@@ -507,12 +492,12 @@ void FindGS(InputGroup &input, store &s, params &p){
       psi_init = applyMPO(H,psi_init,args);
       psi_init.noPrime().normalize();
     }
-    
+
     auto [E, psi] = dmrg(H,psi_init,sweeps,{"Silent",p.parallel, "Quiet",!p.printDimensions, "EnergyErrgoal",p.EnergyErrgoal}); // call itensor dmrg
     double GSenergy = E+Eshift;
     s.eigen0[sub] = eigenpair(GSenergy, psi);
     s.stats0[sub] = psi_stats(E, psi, H);
-    
+
     if (p.excited_state) {
       auto wfs = std::vector<MPS>(1);
       wfs.at(0) = psi;
@@ -584,12 +569,13 @@ auto find_global_GS_subspace(store &s) {
 }
 
 //Loops over all particle sectors and prints relevant quantities.
-void calculateAndPrint(InputGroup &input, store &s, params &p){
-  //print data for each sector
+void calculateAndPrint(InputGroup &input, store &s, params &p) {
+  File file("solution.h5", File::Overwrite);
   for(auto ntot: p.numPart) {
-    for (double Sz:p.Szs[ntot]){
+    for (double Sz:p.Szs[ntot]) {
       auto sub = subspace(ntot, Sz);
       auto E = s.eigen0[sub].E();
+      dump(file, str(sub, "0/E"), E);
       MPS & GS = s.eigen0[sub].psi();
       printfln("\n\nRESULTS FOR THE SECTOR WITH %i PARTICLES, Sz %i:", ntot, Sz);
       printfln("Ground state energy = %.17g", E);
@@ -612,6 +598,7 @@ void calculateAndPrint(InputGroup &input, store &s, params &p){
       printfln("diff: E_GS - <GS|H|GS> = %.17g", E-s.stats0[sub].Ebis()); // TODO: remove this
       printfln("deltaE: sqrt(<GS|H^2|GS> - <GS|H|GS>^2) = %.17g", s.stats0[sub].deltaE());
       printfln("residuum: <GS|H|GS> - E_GS*<GS|GS> = %.17g", s.stats0[sub].residuum());
+      s.stats0[sub].dump(file, str(sub, "0"));
 
       if (p.excited_state){
         MPS & ES = s.eigen1[sub].psi();

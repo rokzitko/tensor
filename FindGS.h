@@ -1,6 +1,25 @@
 #ifndef _calcGS_h_
 #define _calcGS_h_
 
+#include <itensor/all.h>
+#include <itensor/util/args.h>
+
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <iomanip>
+#include <vector>
+#include <map>
+#include <unordered_map>
+#include <stdexcept>
+#include <limits> // quiet_NaN
+#include <tuple>
+
+#include <omp.h>
+
+#include <highfive/H5Easy.hpp>
+using namespace H5Easy;
+
 using namespace itensor;
 
 inline bool even(int i) { return i%2 == 0; }
@@ -93,6 +112,19 @@ constexpr auto spinm = spin(-0.5);
 using subspace = std::pair<int, spin>;
 using state = std::pair<subspace, int>;
 
+inline std::string str(subspace &sub)
+{
+  std::ostringstream ss;
+  auto [n, sz] = sub;
+  ss << "/" << n << "/" << sz;
+  return ss.str();
+}
+
+inline std::string str(subspace &sub, std::string s)
+{
+  return str(sub) + "/" + s;
+}
+
 class eigenpair {
  private:
    Real _E = 0;
@@ -122,6 +154,9 @@ class psi_stats {
    auto Ebis() const { return _Ebis; }
    auto deltaE() const { return _deltaE; }
    auto residuum() const { return _residuum; }
+   void dump(auto &file, std::string path) const {
+     H5Easy::dump(file, path + "/norm", _norm);
+   }
 };
 
 // parameters from the input file
