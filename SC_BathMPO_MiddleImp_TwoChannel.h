@@ -79,8 +79,6 @@ void Fill_SCBath_MPO_MiddleImp_TwoChannel(MPO& H, const std::vector<double>& eps
         W += p.sites.op("Cdagup*Cdagdn",i) * setElt(right(8)) * p.g1;
 
         W += p.sites.op("ntot",i) * 2*p.Ec1;
-
-        if (p.verbose) std::cout << "using " << eps_[i] << " and "<<v_[i]<<std::endl;
     }
 
     // sites 2 ... impSite-1 are matrices
@@ -124,8 +122,6 @@ void Fill_SCBath_MPO_MiddleImp_TwoChannel(MPO& H, const std::vector<double>& eps
         W += p.sites.op("Cdagup*Cdagdn",i)*setElt(left(7),right(2));
         W += p.sites.op("Cdn*Cup",i)      *setElt(left(8),right(2));
         W += p.sites.op("Ntot",i)      *setElt(left(9),right(2));
-
-        if (p.verbose) std::cout << "using " << eps_[i] << " and "<<v_[i]<<std::endl;
     }
 
 
@@ -164,8 +160,6 @@ void Fill_SCBath_MPO_MiddleImp_TwoChannel(MPO& H, const std::vector<double>& eps
         W += p.sites.op("Id",i) *setElt(left(7),right(7)) * p.SCSCinteraction; // THESE THREE TERMS COUPLE THE SC1 AND SC2 LEVELS
         W += p.sites.op("Id",i) *setElt(left(8),right(8)) * p.SCSCinteraction;
         W += p.sites.op("Id",i) *setElt(left(9),right(9)) * p.SCSCinteraction; 
-
-        if (p.verbose) std::cout << "using " << eps_[0] <<std::endl;
     }
 
 
@@ -205,8 +199,6 @@ void Fill_SCBath_MPO_MiddleImp_TwoChannel(MPO& H, const std::vector<double>& eps
         W += p.sites.op("Cdagup*Cdagdn",i)*setElt(left(7),right(2));
         W += p.sites.op("Cdn*Cup",i)      *setElt(left(8),right(2));
         W += p.sites.op("Ntot",i)      *setElt(left(9),right(2));
-
-        if (p.verbose) std::cout << "using " << eps_[i-1] << " and "<<v_[i-1]<<std::endl;
     }
 
     //site N is a vector again - same as before
@@ -231,8 +223,6 @@ void Fill_SCBath_MPO_MiddleImp_TwoChannel(MPO& H, const std::vector<double>& eps
         W += p.sites.op("Cdagup*Cdagdn",i) * setElt(left(7));
         W += p.sites.op("Cdn*Cup",      i) * setElt(left(8));
         W += p.sites.op("Ntot",      i) * setElt(left(9));
-
-        if (p.verbose) std::cout << "using " << eps_[i-1] << " and "<<v_[i-1]<<std::endl;
     }
 
   }

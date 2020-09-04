@@ -77,8 +77,6 @@ void Fill_SCBath_MPO_MiddleImp(MPO& H, const std::vector<double>& eps_,
         //SC pairing
         W += p.sites.op("Cdn*Cup",       i) * setElt(right(7)) * p.sc->g();
         W += p.sites.op("Cdagup*Cdagdn", i) * setElt(right(8)) * p.sc->g();
-
-        if (p.verbose) std::cout << "using " << eps_[i] << " and "<<v_[i]<<std::endl;
     }
 
     // sites 2 ... impSite-1 are matrices
@@ -119,8 +117,6 @@ void Fill_SCBath_MPO_MiddleImp(MPO& H, const std::vector<double>& eps_,
         // add SC pairing terms
         W += p.sites.op("Cdagup*Cdagdn",i)*setElt(left(7),right(2));
         W += p.sites.op("Cdn*Cup",i)      *setElt(left(8),right(2));
-
-        if (p.verbose) std::cout << "using " << eps_[i] << " and "<<v_[i]<<std::endl;
     }
 
 
@@ -158,8 +154,6 @@ void Fill_SCBath_MPO_MiddleImp(MPO& H, const std::vector<double>& eps_,
         //keep SC pairing
         W += p.sites.op("Id",i) *setElt(left(7),right(7)) ;
         W += p.sites.op("Id",i) *setElt(left(8),right(8)) ;
-
-        if (p.verbose) std::cout << "using " << eps_[0] <<std::endl;
     }
 
 
@@ -196,8 +190,6 @@ void Fill_SCBath_MPO_MiddleImp(MPO& H, const std::vector<double>& eps_,
 
         W += p.sites.op("Cdagup*Cdagdn",i)*setElt(left(7),right(2));
         W += p.sites.op("Cdn*Cup",i)      *setElt(left(8),right(2));
-
-        if (p.verbose) std::cout << "using " << eps_[i-1] << " and "<<v_[i-1]<<std::endl;
     }
 
     //site N is a vector again - same as before
@@ -221,8 +213,6 @@ void Fill_SCBath_MPO_MiddleImp(MPO& H, const std::vector<double>& eps_,
 
         W += p.sites.op("Cdagup*Cdagdn",i) * setElt(left(7));
         W += p.sites.op("Cdn*Cup",      i) * setElt(left(8));
-
-        if (p.verbose) std::cout << "using " << eps_[i-1] << " and "<<v_[i-1]<<std::endl;
     }
 
   }

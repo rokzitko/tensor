@@ -52,8 +52,6 @@ void Fill_SCBath_MPO(MPO& H, const std::vector<double>& eps_,
         W += p.sites.op("Cdn*F",i) * setElt(right(4))    * (-1);
         W += p.sites.op("Cdagup*F",i) * setElt(right(5)) * (+1);
         W += p.sites.op("Cdagdn*F",i) * setElt(right(6)) * (+1);
-
-        if (p.verbose) std::cout << "using " << eps_[i-1] <<std::endl;
     }
 
     // sites 2 ... N-1 are matrices
@@ -89,8 +87,6 @@ void Fill_SCBath_MPO(MPO& H, const std::vector<double>& eps_,
 
         W += p.sites.op("Cdagup*Cdagdn",i)*setElt(left(7),right(2));
         W += p.sites.op("Cdn*Cup",i)      *setElt(left(8),right(2));
-
-        if (p.verbose) std::cout << "using " << eps_[i-1] << " and "<<v_[i-1]<<std::endl;
     }
 
     //site N is a vector again
@@ -114,8 +110,6 @@ void Fill_SCBath_MPO(MPO& H, const std::vector<double>& eps_,
 
         W += p.sites.op("Cdagup*Cdagdn",i) * setElt(left(7));
         W += p.sites.op("Cdn*Cup",      i) * setElt(left(8));
-
-        if (p.verbose) std::cout << "using " << eps_[i-1] << " and "<<v_[i-1]<<std::endl;
     }
 
   }

@@ -3,6 +3,12 @@
 
 using namespace itensor;
 
+template <typename T>
+  std::ostream& operator<< (std::ostream& out, const std::vector<T>& v) {
+    std::copy(v.begin(), v.end(), std::ostream_iterator<T>(out, " "));
+    return out;
+  }
+
 // Class containing impurity parameters
 class imp {
  private:
@@ -29,7 +35,8 @@ class bath { // normal-state bath
      return 2.0*_D/_Nbath;
    }
    auto eps() const {
-     std::vector<double> eps; // note: zero-based indexing here!
+     std::vector<double> eps;
+     eps.push_back(std::numeric_limits<double>::quiet_NaN()); // we use 1-based indexing
      for (auto k: range1(_Nbath))
        eps.push_back( -_D + (k-0.5)*d() );
      return eps;
@@ -51,7 +58,7 @@ class SCbath : public bath { // superconducting island bath
    auto eps(bool band_level_shift = true) const {
      auto eps = bath::eps();
      if (band_level_shift)
-       for (auto x: eps)
+       for (auto &x: eps)
          x += -g()/2.0;
      return eps;
    };
@@ -63,11 +70,11 @@ class hyb {
  public:
    hyb(double Gamma) : _Gamma(Gamma) {};
    auto Gamma() const { return _Gamma; }
-   template<typename B>
-   auto V(const B &b) const { // depends on bath
+   auto V(int Nbath) const {
      std::vector<double> V;
-     for (auto k: range1(b.Nbath()))
-       V.push_back( std::sqrt( 2.0*_Gamma/(M_PI*b.Nbath()) ) );
+     V.push_back(std::numeric_limits<double>::quiet_NaN()); // we use 1-based indexing
+     for (auto k: range1(Nbath))
+       V.push_back( std::sqrt( 2.0*_Gamma/(M_PI*Nbath) ) );
      return V;
    }
 };
@@ -109,21 +116,12 @@ struct params {
   int nrH;              // number of times to apply H to psi before comencing the sweep - akin to a power method; default = 5
   int nrange;           // the number of energies computed is 2*nrange + 1
 
-  bool calcspin1;       
+  bool calcspin1;
 
-
-//  double U;             // e-e on impurity site
-//  double epsimp;        // impurity level
-//  double nu;            // nu=1/2-epsimp/U, computed after epsimp parsed
   std::unique_ptr<imp> qd; // replaces {U, epsimp, nu}
   double Ueff;          // effective e-e on impurity site (after Ec_trick mapping)
   
   std::unique_ptr<SCbath> sc;
-//  double d;             // d=2D/NBath, level spacing
-//  double g;             // strength of the SC coupling
-//  double n0;            // charge offset
-//  double alpha;         // e-e coupling
-//  double Ec;            // charging energy
 
   std::unique_ptr<hyb> Gamma;
   double gamma;         // hybridisation

@@ -91,8 +91,6 @@ void Fill_SCBath_MPO_Ec(MPO& H, const std::vector<double>& eps_,
         W += p.sites.op("Cdagup*Cdagdn",i)*setElt(left(7),right(2));
         W += p.sites.op("Cdn*Cup",i)      *setElt(left(8),right(2));
         W += p.sites.op("Ntot",i)         *setElt(left(9),right(2)); // !
-
-        if (p.verbose) std::cout << "using " << eps_[i-1] << " and "<<v_[i-1]<<std::endl;
     }
 
     //site N is a vector again
@@ -117,8 +115,6 @@ void Fill_SCBath_MPO_Ec(MPO& H, const std::vector<double>& eps_,
         W += p.sites.op("Cdagup*Cdagdn",i) * setElt(left(7));
         W += p.sites.op("Cdn*Cup",      i) * setElt(left(8));
         W += p.sites.op("Ntot",         i) * setElt(left(9)); // !
-
-        if (p.verbose) std::cout << "using " << eps_[i-1] << " and "<<v_[i-1]<<std::endl;
     }
 
   }

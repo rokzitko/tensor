@@ -60,11 +60,6 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   std::cout << "N=" << p.N << " NBath=" << p.NBath << " impindex=" << p.impindex << std::endl;
 
   p.sc = std::make_unique<SCbath>(p.NBath, input.getReal("alpha", 0), input.getReal("Ec", 0), input.getReal("n0", p.N-1));
-//  p.alpha = p.sc->alpha();
-//  p.Ec = p.sc->Ec();
-//  p.n0 = p.sc->n0();
-//  p.d = p.sc->d();
-//  p.g = p.sc->g();
   
   // sites is an ITensor thing. it defines the local hilbert space and
   // operators living on each site of the lattice
@@ -96,7 +91,6 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   p.calcspin1 = input.getYesNo("calcspin1", false);
 
   p.Gamma = std::make_unique<hyb>(input.getReal("gamma", 0));
-//  p.gamma = ;
   p.V12 = input.getReal("V", 0);
 
   p.EZ_bulk = input.getReal("EZ_bulk", 0.);
@@ -230,39 +224,18 @@ void FindGS(InputGroup &input, store &s, params &p){
         s.ESpsiStore[std::make_pair(ntot, Sz)]=ES;
       }
 
-    //}//end Sz for loop
-  }//end ntot for loop
+  }
 }//end FindGS
 
 
-//fills the vectors eps and V with the correct values for given gamma and number of bath sites
-void GetBathParams(std::vector<double>& eps, std::vector<double>& V, params &p) {
-  double d = 2./p.NBath;
-  double Vval = std::sqrt( 2*p.Gamma->Gamma()/(M_PI*p.NBath) ); // pi!
-  if (p.verbose)
-    std::cout << "Vval=" << Vval << std::endl;
-  eps.resize(0);
-  V.resize(0);
-  eps.push_back(999999.); // should not be used!
-  V.push_back(999999.);   // idem
-  // Note: different sign in band_level_shift compared to the paper because of the difference of
-  // sign in the definition of the pairing term.
-  const double band_level_shift = (p.band_level_shift ? -p.sc->g()/2.0 : 0.0);
-  for(auto k: range1(p.NBath)){
-    eps.push_back( -1 + (k-0.5)*d + band_level_shift );
-    V.push_back( Vval );
-  }
-}
-
 //initialize the Hamiltonian
 std::tuple<MPO, double> initH(int ntot, params &p){
-
-  std::vector<double> eps;        // vector containing on-site energies of the bath !one-indexed!
-  std::vector<double> V;          // vector containing hopping amplitudes to the bath !one-indexed!
-
-  //Read the bath parameters (fills in the vectors eps and V).
-  GetBathParams(eps, V, p);
-
+  auto eps = p.sc->eps(p.band_level_shift);
+  auto V = p.Gamma->V(p.sc->Nbath());
+  if (p.verbose) {
+    std::cout << "eps=" << eps << std::endl;
+    std::cout << "V=" << V << std::endl;
+  }
 
   double Eshift;  // constant term in the Hamiltonian
   MPO H(p.sites); // MPO is the hamiltonian in "MPS-form" after this line it is still a trivial operator
