@@ -57,7 +57,22 @@ class SCbath : public bath { // superconducting island bath
    };
 };
 
-// parameters from the input file 
+class hyb {
+ private:
+   double _Gamma;
+ public:
+   hyb(double Gamma) : _Gamma(Gamma) {};
+   auto Gamma() const { return _Gamma; }
+   template<typename B>
+   auto V(const B &b) const { // depends on bath
+     std::vector<double> V;
+     for (auto k: range1(b.Nbath()))
+       V.push_back( std::sqrt( 2.0*_Gamma/(M_PI*b.Nbath()) ) );
+     return V;
+   }
+};
+
+// parameters from the input file
 struct params {
   string inputfn;       // filename of the input file
   InputGroup input;     // itensor input parser
@@ -65,6 +80,7 @@ struct params {
   string MPO = "std";   // which MPO representation to use
 
   int N;                // number of sites
+  int NBath;            // number of bath sites
   int NImp;             // number of impurity orbitals
   int impindex;         // impurity position in the chain (1 based)
 
@@ -103,13 +119,13 @@ struct params {
   double Ueff;          // effective e-e on impurity site (after Ec_trick mapping)
   
   std::unique_ptr<SCbath> sc;
-  int NBath;            // number of bath sites
 //  double d;             // d=2D/NBath, level spacing
 //  double g;             // strength of the SC coupling
 //  double n0;            // charge offset
 //  double alpha;         // e-e coupling
 //  double Ec;            // charging energy
 
+  std::unique_ptr<hyb> Gamma;
   double gamma;         // hybridisation
   double V12;           // QD-SC capacitive coupling
 

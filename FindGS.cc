@@ -95,7 +95,8 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
 
   p.calcspin1 = input.getYesNo("calcspin1", false);
 
-  p.gamma = input.getReal("gamma", 0);
+  p.Gamma = std::make_unique<hyb>(input.getReal("gamma", 0));
+//  p.gamma = ;
   p.V12 = input.getReal("V", 0);
 
   p.EZ_bulk = input.getReal("EZ_bulk", 0.);
@@ -237,7 +238,7 @@ void FindGS(InputGroup &input, store &s, params &p){
 //fills the vectors eps and V with the correct values for given gamma and number of bath sites
 void GetBathParams(std::vector<double>& eps, std::vector<double>& V, params &p) {
   double d = 2./p.NBath;
-  double Vval = std::sqrt( 2*p.gamma/(M_PI*p.NBath) ); // pi!
+  double Vval = std::sqrt( 2*p.Gamma->Gamma()/(M_PI*p.NBath) ); // pi!
   if (p.verbose)
     std::cout << "Vval=" << Vval << std::endl;
   eps.resize(0);
