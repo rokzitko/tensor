@@ -58,15 +58,26 @@ struct params {
   double EZ_imp;        // impurity Zeeman energy
   double EZ_bulk;        // bulk Zeeman energy
 
+
+  // TWO CHANNEL PARAMETERS
+  double alpha1, alpha2;
+  double n01, n02;
+  double g1, g2;
+  double gamma1, gamma2;
+  double Ec1, Ec2;
+  double EZ_bulk1, EZ_bulk2;
+
+  int SCSCinteraction; //test parameter for the 2 channel MPO
+
   std::vector<int> numPart; // range of total occupancies of interest
   std::map<int, std::vector<double>> Szs; // Szs for each n in numPart
   std::vector<std::pair<int, double>> iterateOver; // a zipped vector of off (n, Sz) combinations
 
   //parameters for the phase transition point iteration
-  double gamma0;        // initial guess
-  double gamma1;        // initial guess
-  double precision;     // required precision
-  int maxIter;          // maximal number of iterations of the secant method
+  double PTgamma0;        // initial guess
+  double PTgamma1;        // initial guess
+  double PTprecision;     // required precision
+  int PTmaxIter;          // maximal number of iterations of the secant method
 
 };
 

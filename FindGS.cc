@@ -17,6 +17,8 @@
 #include "SC_BathMPO_MiddleImp.h"
 #include "SC_BathMPO_Ec.h"
 #include "SC_BathMPO_Ec_V.h"
+#include "SC_BathMPO_MiddleImp_TwoChannel.h"
+
 
 InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   if(argc!=2){
@@ -82,23 +84,37 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   p.calcspin1 = input.getYesNo("calcspin1", false);
 
   p.n0 = input.getReal("n0", p.N-1);
-  p.alpha = input.getReal("alpha");
+  p.alpha = input.getReal("alpha", 0);
   p.d = 2./p.NBath;
   p.g = p.alpha * p.d;
-  p.U = input.getReal("U");
-  p.gamma = input.getReal("gamma");
+  p.U = input.getReal("U", 0);
+  p.gamma = input.getReal("gamma", 0);
   p.Ec = input.getReal("Ec", 0);
   p.epsimp = input.getReal("epsimp", -p.U/2.);
   p.nu = (p.U != 0.0 ? 0.5-p.epsimp/p.U : std::numeric_limits<double>::quiet_NaN()); // ill-defined for the non-interacting case
   p.V12 = input.getReal("V", 0);
 
-  // for Ec_trick mapping
-  p.Ueff = p.U + 2.*p.Ec;                            // effective impurity e-e repulsion
-  // p.epseff cannot be set here, because it depends on ntot (number of electrons in a given sector)
-
   p.EZ_imp = input.getReal("EZ_imp", 0.);
   p.EZ_bulk = input.getReal("EZ_bulk", 0.);
 
+  //TWO CHANNEL PARAMETERS
+  p.alpha1 = input.getReal("alpha1", 0);
+  p.alpha2 = input.getReal("alpha2", 0);
+  p.n01 = input.getReal("n01", (p.N-1)/2);
+  p.n02 = input.getReal("n02", (p.N-1)/2);
+  p.gamma1 = input.getReal("gamma1", 0);
+  p.gamma2 = input.getReal("gamma2", 0);
+  p.Ec1 = input.getReal("Ec1", 0);
+  p.Ec2 = input.getReal("Ec2", 0);
+  p.EZ_bulk1 = input.getReal("EZ_bulk1", 0);
+  p.EZ_bulk2 = input.getReal("EZ_bulk2", 0);
+
+  p.SCSCinteraction = input.getReal("SCSCinteraction", 0);
+
+  // for Ec_trick mapping
+  p.Ueff = p.U + 2.*p.Ec;                            // effective impurity e-e repulsion
+  // p.epseff cannot be set here, because it depends on ntot (number of electrons in a given sector)
+  
   p.numPart={};
   const int nhalf = p.N; // total nr of electrons at half-filling
   const int nref = (p.refisn0 ? ( round(p.n0 + 0.5 - (p.epsimp/p.U)) ) : nhalf); //calculation of the energies is centered around this n
@@ -136,10 +152,10 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   }
 
   // parameters used in the phase transition point iteration
-  p.gamma0 = input.getReal("gamma0", 0.5);
-  p.gamma1 = input.getReal("gamma1", 1.5);
-  p.precision = input.getReal("precision", 1e-5);
-  p.maxIter = input.getInt("maxIter", 30);
+  p.PTgamma0 = input.getReal("PTgamma0", 0.5);
+  p.PTgamma1 = input.getReal("PTgamma1", 1.5);
+  p.PTprecision = input.getReal("PTprecision", 1e-5);
+  p.PTmaxIter = input.getInt("PTmaxIter", 30);
 
   return input;
 }
@@ -245,8 +261,12 @@ std::tuple<MPO, double> initH(std::vector<double> eps, std::vector<double> V, in
     double epseff = p.epsimp - p.V12 * p.n0;
     double epsishift = -p.V12 * p.nu;
     Fill_SCBath_MPO_Ec_V(H, eps, V, epseff, epsishift, p);
+  } else if (p.MPO == "middle_2C") {
+    Eshift = p.Ec1*pow(p.n01, 2) + p.Ec2*pow(p.n02, 2);
+    Fill_SCBath_MPO_MiddleImp_TwoChannel(H, eps, V, p);
   } else
     throw std::runtime_error("Unknown MPO type");
+  
   Eshift += p.U/2.; // RZ, for convenience
   return std::make_tuple(H, Eshift);
 }

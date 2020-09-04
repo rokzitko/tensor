@@ -82,14 +82,14 @@ double FindPT(InputGroup &input, store &s, params &p)  {
 	std::cout << "\nStarting iteration\n";  
 
 
- 	p.gamma = p.gamma0;	//overwrite gamma and calculate DeltaE with it
- 	double gamma0 = p.gamma0;	//save the first initial guess
+ 	p.gamma = p.PTgamma0;	//overwrite gamma and calculate DeltaE with it
+ 	double gamma0 = p.PTgamma0;	//save the first initial guess
  	double Delta0 = DeltaE(input, s, p);
 
  	std::cout << "Delta0 = " << Delta0 << ", gamma0 = " << gamma0 << "\n";  
 
- 	p.gamma = p.gamma1;	//overwrite gamma and calculate DeltaE with it
- 	double gamma1 = p.gamma1;	//save the second initial guess 
+ 	p.gamma = p.PTgamma1;	//overwrite gamma and calculate DeltaE with it
+ 	double gamma1 = p.PTgamma1;	//save the second initial guess 
 	double Delta1 = DeltaE(input, s, p);
 
  	std::cout << "Delta1 = " << Delta1 << ", gamma1 = " << gamma1 << "\n";  
@@ -105,7 +105,7 @@ double FindPT(InputGroup &input, store &s, params &p)  {
 
 	std::cout << "\nIteration " << iteration << ": gamma = " << gamma2 << ", Delta = " << Delta2 << "\n";  
 
-	while ( abs(Delta2) > p.precision && iteration < p.maxIter ) { //iteration ends if Delta is smalled than precision, if maxIter is hit or if the previous gamma is the same as the new one.
+	while ( abs(Delta2) > p.PTprecision && iteration < p.PTmaxIter ) { //iteration ends if Delta is smalled than precision, if maxIter is hit or if the previous gamma is the same as the new one.
 		iteration++;
 
 		gamma0 = gamma1;
@@ -121,7 +121,7 @@ double FindPT(InputGroup &input, store &s, params &p)  {
 
 		std::cout << "\nIteration " << iteration << ": gamma = " << gamma2 << ", Delta = " << Delta2 << "\n";  
 
-		if (abs(gamma2 - gamma1) < p.precision) break;
+		if (abs(gamma2 - gamma1) < p.PTprecision) break;
 
 	} // end while
 
