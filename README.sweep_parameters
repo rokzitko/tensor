@@ -1,0 +1,13 @@
+  //The sweeps object defines the accuracy used for each update cycle in DMRG.
+  //The used parameters are read from the input file with the following meaning:
+  // maxdim:  maximal bond dimension -> start low approach ground state roughly, then increase
+  // mindim:  minimal bond dimension used, can be helpfull to improve DMRG convergence
+  // cutoff:  truncated weight i.e.: sum of all discared squared Schmidt values
+  // niter:   uring DMRG, one has to solve an eigenvalue problem usually using a krylov
+  //          method. niter is the number of krylov vectors used. Since DMRG is variational
+  //          it does not matter if we use only very few krylov vectors. We only want to
+  //          move in the direction of the ground state - it seems that in late sweeps it is
+  //          a good idea to have niter at least 5 or 7.
+  // noise:   if non-zero, a so-called noise term is added to DMRG which improves the convergence.
+  //          This term must be zero towards the end, as the ground state is otherwise incorrect.
+  
