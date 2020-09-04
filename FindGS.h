@@ -107,8 +107,8 @@ struct params {
   double d;             // d=2D/NBath, level spacing
   double g;             // strength of the SC coupling
   double n0;            // charge offset
-  double alpha;         // e-e coupling
-  double Ec;            // charging energy
+//  double alpha;         // e-e coupling
+//  double Ec;            // charging energy
 
   double gamma;         // hybridisation
   double V12;           // QD-SC capacitive coupling

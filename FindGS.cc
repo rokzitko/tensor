@@ -60,8 +60,8 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   std::cout << "N=" << p.N << " NBath=" << p.NBath << " impindex=" << p.impindex << std::endl;
 
   p.sc = std::make_unique<SCbath>(p.NBath, input.getReal("alpha", 0), input.getReal("Ec", 0), input.getReal("n0", p.N-1));
-  p.alpha = p.sc->alpha();
-  p.Ec = p.sc->Ec();
+//  p.alpha = p.sc->alpha();
+//  p.Ec = p.sc->Ec();
   p.n0 = p.sc->n0();
   p.d = p.sc->d();
   p.g = p.sc->g();
@@ -115,7 +115,7 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   p.SCSCinteraction = input.getReal("SCSCinteraction", 0);
 
   // for Ec_trick mapping
-  p.Ueff = p.qd->U() + 2.*p.Ec;                            // effective impurity e-e repulsion
+  p.Ueff = p.qd->U() + 2.*p.sc->Ec();                            // effective impurity e-e repulsion
   // p.epseff cannot be set here, because it depends on ntot (number of electrons in a given sector)
 
   p.numPart={};
@@ -267,20 +267,20 @@ std::tuple<MPO, double> initH(int ntot, params &p){
   MPO H(p.sites); // MPO is the hamiltonian in "MPS-form" after this line it is still a trivial operator
   if (p.MPO == "std") {
     assert(p.V12 != 0.0);
-    Eshift = p.Ec*pow(ntot-p.n0,2); // occupancy dependent effective energy shift
-    double epseff = p.qd->eps() - 2.*p.Ec*(ntot-p.n0) + p.Ec;
+    Eshift = p.sc->Ec()*pow(ntot-p.n0,2); // occupancy dependent effective energy shift
+    double epseff = p.qd->eps() - 2.*p.sc->Ec()*(ntot-p.n0) + p.sc->Ec();
     Fill_SCBath_MPO(H, eps, V, epseff, p); // defined in SC_BathMPO.h, fills the MPO with the necessary entries
   } else if (p.MPO == "middle") {
     assert(p.V12 != 0.0);
-    Eshift = p.Ec*pow(ntot-p.n0,2); // occupancy dependent effective energy shift
-    double epseff = p.qd->eps() - 2.*p.Ec*(ntot-p.n0) + p.Ec;
+    Eshift = p.sc->Ec()*pow(ntot-p.n0,2); // occupancy dependent effective energy shift
+    double epseff = p.qd->eps() - 2.*p.sc->Ec()*(ntot-p.n0) + p.sc->Ec();
     Fill_SCBath_MPO_MiddleImp(H, eps, V, epseff, p);
   } else if (p.MPO == "Ec") {
     assert(p.V12 != 0.0);
-    Eshift = p.Ec*pow(p.n0, 2);
+    Eshift = p.sc->Ec()*pow(p.n0, 2);
     Fill_SCBath_MPO_Ec(H, eps, V, p);
   } else if (p.MPO == "Ec_V") {
-    Eshift = p.Ec*pow(p.n0, 2) + p.V12 * p.n0 * p.qd->nu();
+    Eshift = p.sc->Ec()*pow(p.n0, 2) + p.V12 * p.n0 * p.qd->nu();
     double epseff = p.qd->eps() - p.V12 * p.n0;
     double epsishift = -p.V12 * p.qd->nu();
     Fill_SCBath_MPO_Ec_V(H, eps, V, epseff, epsishift, p);
