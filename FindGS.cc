@@ -127,24 +127,18 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   
   bool magnetic_field = ((p.qd->EZ()!=0 || p.EZ_bulk!=0) ? true : false); // true if there is magnetic field, implying that Sz=0.5 states are NOT degenerate
   // Sz values for n are in Szs[n]
-  for (size_t i=0; i<p.numPart.size(); i++){
-    int ntot = p.numPart[i];
-    if (ntot%2==0) {
-      p.Szs[ntot].push_back(0);
-    }
+  for (auto ntot : p.numPart) {
+    std::vector<spin> sz_list;
+    if (even(ntot))
+      sz_list.push_back(spin0);
     else {
-      p.Szs[ntot].push_back(0.5);
-      if (magnetic_field) p.Szs[ntot].push_back(-0.5);
+      sz_list.push_back(spinp);
+      if (magnetic_field) sz_list.push_back(spinm);
     }
+    p.Szs[ntot] = sz_list;
+    for (auto sz : sz_list) 
+      p.iterateOver.push_back(std::make_pair(ntot, sz));
   }
-
-  p.iterateOver={};
-  for (size_t i=0; i<p.numPart.size(); i++){
-    for (size_t j=0; j<p.Szs[p.numPart[i]].size(); j++){
-      p.iterateOver.push_back(std::make_pair(p.numPart[i], p.Szs[p.numPart[i]][j]));
-    }
-  }
-
 
   // parameters used in the phase transition point iteration
   p.PTgamma0 = input.getReal("PTgamma0", 0.5);
