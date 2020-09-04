@@ -32,6 +32,28 @@ auto n_list(int nref, int nrange) {
   return n;
 }
 
+void init_subspace_lists(params &p)
+{
+  const int nhalf = p.N; // total nr of electrons at half-filling
+  const int nref = (p.refisn0 ? ( round(p.sc->n0() + 0.5 - (p.qd->eps()/p.qd->U())) ) : nhalf); //calculation of the energies is centered around this n
+  p.numPart = n_list(nref, p.nrange);
+  
+  bool magnetic_field = ((p.qd->EZ()!=0 || p.sc->EZ()!=0) ? true : false); // true if there is magnetic field, implying that Sz=0.5 states are NOT degenerate
+  // Sz values for n are in Szs[n]
+  for (auto ntot : p.numPart) {
+    std::vector<spin> sz_list;
+    if (even(ntot))
+      sz_list.push_back(spin0);
+    else {
+      sz_list.push_back(spinp);
+      if (magnetic_field) sz_list.push_back(spinm);
+    }
+    p.Szs[ntot] = sz_list;
+    for (auto sz : sz_list) 
+      p.iterateOver.push_back(subspace(ntot, sz));
+  }
+}
+
 InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   if (argc != 2)
     throw std::runtime_error("Please provide input file. Usage: ./executable inputfile.txt");
@@ -40,14 +62,8 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   p.inputfn = {argv[1]};
   auto input = InputGroup{p.inputfn, "params"}; //get input parameters using InputGroup from itensor
 
-  p.MPO = input.getString("MPO", "std");
-
-  p.NImp = 1; // TODO: class problem, which contains all relevant objects (imp,bath,hyb) ?
-  {
-    double U = input.getReal("U", 0); // need to parse it this way, because it enters the default value for epsimp below
-    p.qd = std::make_unique<imp>(U, input.getReal("epsimp", -U/2.), input.getReal("EZ_imp", 0.));
-  }
-  
+  p.MPO = input.getString("MPO", "std"); // problem type
+  p.NImp = 1;
   p.N = input.getInt("N", 0);
   if (p.N != 0)
     p.NBath = p.N-p.NImp;
@@ -66,6 +82,8 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
     throw std::runtime_error("Unknown MPO type");
   std::cout << "N=" << p.N << " NBath=" << p.NBath << " impindex=" << p.impindex << std::endl;
   
+  double U = input.getReal("U", 0); // need to parse it first because it enters the default value for epsimp just below
+  p.qd = std::make_unique<imp>(U, input.getReal("epsimp", -U/2.), input.getReal("EZ_imp", 0.));
   p.sc = std::make_unique<SCbath>(p.NBath, input.getReal("alpha", 0), input.getReal("Ec", 0), input.getReal("n0", p.N-1), input.getReal("EZ_bulk", 0.));
   p.Gamma = std::make_unique<hyb>(input.getReal("gamma", 0));
   p.V12 = input.getReal("V", 0); // handled in a special way
@@ -108,28 +126,12 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   p.Ec2 = input.getReal("Ec2", 0);
   p.EZ_bulk1 = input.getReal("EZ_bulk1", 0);
   p.EZ_bulk2 = input.getReal("EZ_bulk2", 0);
-
+  // TO DO
+  // p.sc1 = std::make_unique<SCbath>(p.NBath, input.getReal("alpha1", 0), input.getReal("Ec1", 0), input.getReal("n01", p.N-1), input.getReal("EZ_bulk1", 0));
+  // p.sc2 = std::make_unique<SCbath>(p.NBath, input.getReal("alpha2", 0), input.getReal("Ec2", 0), input.getReal("n02", p.N-1), input.getReal("EZ_bulk2", 0));
   p.SCSCinteraction = input.getReal("SCSCinteraction", 0);
 
-  const int nhalf = p.N; // total nr of electrons at half-filling
-  const int nref = (p.refisn0 ? ( round(p.sc->n0() + 0.5 - (p.qd->eps()/p.qd->U())) ) : nhalf); //calculation of the energies is centered around this n
-  p.numPart = n_list(nref, p.nrange);
-  
-  bool magnetic_field = ((p.qd->EZ()!=0 || p.sc->EZ()!=0) ? true : false); // true if there is magnetic field, implying that Sz=0.5 states are NOT degenerate
-  // Sz values for n are in Szs[n]
-  for (auto ntot : p.numPart) {
-    std::vector<spin> sz_list;
-    if (even(ntot))
-      sz_list.push_back(spin0);
-    else {
-      sz_list.push_back(spinp);
-      if (magnetic_field) sz_list.push_back(spinm);
-    }
-    p.Szs[ntot] = sz_list;
-    for (auto sz : sz_list) 
-      p.iterateOver.push_back(subspace(ntot, sz));
-  }
-
+  init_subspace_lists(p);
   return input;
 }
 
@@ -228,8 +230,7 @@ MPS initPsi(int ntot, float Sz, params &p){
   if (Sz < 0.) {
     state.set(p.impindex, "Dn");
     Sztot += -0.5; 
-  }
-  else {
+  } else {
     state.set(p.impindex, "Up"); 
     Sztot += 0.5;
   }
@@ -288,11 +289,10 @@ void calculateAndPrint(InputGroup &input, store &s, params &p){
       if (p.hoppingExpectation) expectedHopping(GS, p);
       if (p.printTotSpinZ) TotalSpinz(GS, p);
 
-      double GS0 = E;
       double GS0bis = s.stats0[sub].Ebis();
       //various measures of convergence (energy deviation, residual value)
       printfln("Eigenvalue(bis): <GS|H|GS> = %.17g",GS0bis);
-      printfln("diff: E_GS - <GS|H|GS> = %.17g", GS0-GS0bis);
+      printfln("diff: E_GS - <GS|H|GS> = %.17g", E-GS0bis);
       printfln("deltaE: sqrt(<GS|H^2|GS> - <GS|H|GS>^2) = %.17g", s.stats0[sub].deltaE());
       printfln("residuum: <GS|H|GS> - E_GS*<GS|GS> = %.17g", s.stats0[sub].residuum());
 

@@ -192,7 +192,6 @@ struct params {
   std::unique_ptr<SCbath> sc;
   std::unique_ptr<hyb> Gamma;
   double V12;           // QD-SC capacitive coupling
-  double EZ_bulk;        // bulk Zeeman energy
 
   // TWO CHANNEL PARAMETERS
   double alpha1, alpha2;
