@@ -57,7 +57,7 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
       throw std::runtime_error("specify either N or NBath!");
     p.N = p.NBath+p.NImp;
   } 
-  if (p.MPO == "middle") {
+  if (p.MPO == "middle" || p.MPO == "middle_2channel") {
     assert(even(p.NBath));
     p.impindex = 1+p.NBath/2;
   } else if (p.MPO == "std" || p.MPO == "Ec" || p.MPO == "Ec_V") {
@@ -211,11 +211,13 @@ std::tuple<MPO, double> initH(int ntot, params &p){
     double epseff = p.qd->eps() - p.V12 * p.sc->n0();
     double epsishift = -p.V12 * p.qd->nu();
     Fill_SCBath_MPO_Ec_V(H, eps, V, epseff, epsishift, p);
-  } else if (p.MPO == "middle_2C") {
+  } else if (p.MPO == "middle_2channel") {
     Eshift = p.Ec1*pow(p.n01, 2) + p.Ec2*pow(p.n02, 2);
     Fill_SCBath_MPO_MiddleImp_TwoChannel(H, eps, V, p);
-  } else
+  } else {
+    std::cout << MPO << std::endl;
     throw std::runtime_error("Unknown MPO type");
+  }
   
   Eshift += p.qd->U()/2.; // RZ, for convenience
   return std::make_tuple(H, Eshift);
