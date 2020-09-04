@@ -62,9 +62,9 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   p.sc = std::make_unique<SCbath>(p.NBath, input.getReal("alpha", 0), input.getReal("Ec", 0), input.getReal("n0", p.N-1));
 //  p.alpha = p.sc->alpha();
 //  p.Ec = p.sc->Ec();
-  p.n0 = p.sc->n0();
-  p.d = p.sc->d();
-  p.g = p.sc->g();
+//  p.n0 = p.sc->n0();
+//  p.d = p.sc->d();
+//  p.g = p.sc->g();
   
   // sites is an ITensor thing. it defines the local hilbert space and
   // operators living on each site of the lattice
@@ -120,7 +120,7 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
 
   p.numPart={};
   const int nhalf = p.N; // total nr of electrons at half-filling
-  const int nref = (p.refisn0 ? ( round(p.n0 + 0.5 - (p.qd->eps()/p.qd->U())) ) : nhalf); //calculation of the energies is centered around this n
+  const int nref = (p.refisn0 ? ( round(p.sc->n0() + 0.5 - (p.qd->eps()/p.qd->U())) ) : nhalf); //calculation of the energies is centered around this n
   p.numPart.push_back(nref);
   for (int i = 1; i <= p.nrange; i++) {
     p.numPart.push_back(nref+i);
@@ -246,7 +246,7 @@ void GetBathParams(std::vector<double>& eps, std::vector<double>& V, params &p) 
   V.push_back(999999.);   // idem
   // Note: different sign in band_level_shift compared to the paper because of the difference of
   // sign in the definition of the pairing term.
-  const double band_level_shift = (p.band_level_shift ? -p.g/2.0 : 0.0);
+  const double band_level_shift = (p.band_level_shift ? -p.sc->g()/2.0 : 0.0);
   for(auto k: range1(p.NBath)){
     eps.push_back( -1 + (k-0.5)*d + band_level_shift );
     V.push_back( Vval );
@@ -267,21 +267,21 @@ std::tuple<MPO, double> initH(int ntot, params &p){
   MPO H(p.sites); // MPO is the hamiltonian in "MPS-form" after this line it is still a trivial operator
   if (p.MPO == "std") {
     assert(p.V12 != 0.0);
-    Eshift = p.sc->Ec()*pow(ntot-p.n0,2); // occupancy dependent effective energy shift
-    double epseff = p.qd->eps() - 2.*p.sc->Ec()*(ntot-p.n0) + p.sc->Ec();
+    Eshift = p.sc->Ec()*pow(ntot-p.sc->n0(),2); // occupancy dependent effective energy shift
+    double epseff = p.qd->eps() - 2.*p.sc->Ec()*(ntot-p.sc->n0()) + p.sc->Ec();
     Fill_SCBath_MPO(H, eps, V, epseff, p); // defined in SC_BathMPO.h, fills the MPO with the necessary entries
   } else if (p.MPO == "middle") {
     assert(p.V12 != 0.0);
-    Eshift = p.sc->Ec()*pow(ntot-p.n0,2); // occupancy dependent effective energy shift
-    double epseff = p.qd->eps() - 2.*p.sc->Ec()*(ntot-p.n0) + p.sc->Ec();
+    Eshift = p.sc->Ec()*pow(ntot-p.sc->n0(),2); // occupancy dependent effective energy shift
+    double epseff = p.qd->eps() - 2.*p.sc->Ec()*(ntot-p.sc->n0()) + p.sc->Ec();
     Fill_SCBath_MPO_MiddleImp(H, eps, V, epseff, p);
   } else if (p.MPO == "Ec") {
     assert(p.V12 != 0.0);
-    Eshift = p.sc->Ec()*pow(p.n0, 2);
+    Eshift = p.sc->Ec()*pow(p.sc->n0(), 2);
     Fill_SCBath_MPO_Ec(H, eps, V, p);
   } else if (p.MPO == "Ec_V") {
-    Eshift = p.sc->Ec()*pow(p.n0, 2) + p.V12 * p.n0 * p.qd->nu();
-    double epseff = p.qd->eps() - p.V12 * p.n0;
+    Eshift = p.sc->Ec()*pow(p.sc->n0(), 2) + p.V12 * p.sc->n0() * p.qd->nu();
+    double epseff = p.qd->eps() - p.V12 * p.sc->n0();
     double epsishift = -p.V12 * p.qd->nu();
     Fill_SCBath_MPO_Ec_V(H, eps, V, epseff, epsishift, p);
   } else if (p.MPO == "middle_2C") {
@@ -777,7 +777,7 @@ void MeasurePairing(MPS& psi, const params &p){
     auto val2  = psi.A(i) * p.sites.op("Cdagup*Cup*Cdagdn*Cdn", i) * dag(prime(psi.A(i),"Site"));
     auto val1u = psi.A(i) * p.sites.op("Cdagup*Cup", i) * dag(prime(psi.A(i),"Site"));
     auto val1d = psi.A(i) * p.sites.op("Cdagdn*Cdn", i) * dag(prime(psi.A(i),"Site"));
-    auto sq = p.g * sqrt( val2.cplx() - val1u.cplx() * val1d.cplx() );
+    auto sq = p.sc->g() * sqrt( val2.cplx() - val1u.cplx() * val1d.cplx() );
     std::cout << std::setprecision(17) << sq << " ";
     if (i != p.impindex) tot += sq; // exclude the impurity site in the sum
   }
@@ -796,7 +796,7 @@ void MeasureAmplitudes(MPS& psi, const params &p){
     auto v = sqrt( std::real(valv.cplx()) );
     auto u = sqrt( std::real(valu.cplx()) );
     auto pdt = v*u;
-    auto element = p.g * pdt;
+    auto element = p.sc->g() * pdt;
     std::cout << "[v=" << v << " u=" << u << " pdt=" << pdt << "] ";
     if (i != p.impindex) tot += element; // exclude the impurity site in the sum
   }

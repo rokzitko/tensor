@@ -104,9 +104,9 @@ struct params {
   
   std::unique_ptr<SCbath> sc;
   int NBath;            // number of bath sites
-  double d;             // d=2D/NBath, level spacing
-  double g;             // strength of the SC coupling
-  double n0;            // charge offset
+//  double d;             // d=2D/NBath, level spacing
+//  double g;             // strength of the SC coupling
+//  double n0;            // charge offset
 //  double alpha;         // e-e coupling
 //  double Ec;            // charging energy
 

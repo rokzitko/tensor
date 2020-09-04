@@ -66,7 +66,7 @@ void Fill_SCBath_MPO_MiddleImp(MPO& H, const std::vector<double>& eps_,
         W += p.sites.op("Ntot",i)  * setElt(right(2)) * eps_[i]; // here use index i
         W += p.sites.op("Nup",i)  * setElt(right(2)) * p.EZ_bulk; 
         W += p.sites.op("Ndn",i)  * setElt(right(2)) * (-1) * p.EZ_bulk;
-        W += p.sites.op("Nupdn",i) * setElt(right(2)) * p.g;
+        W += p.sites.op("Nupdn",i) * setElt(right(2)) * p.sc->g();
 
         //hybridization
         W += p.sites.op("Cdagup*F",i) * setElt(right(3))* (+v_[i]); // here use index i 
@@ -75,8 +75,8 @@ void Fill_SCBath_MPO_MiddleImp(MPO& H, const std::vector<double>& eps_,
         W += p.sites.op("Cdn*F",   i) * setElt(right(6))* (-v_[i]); // here use index i
 
         //SC pairing
-        W += p.sites.op("Cdn*Cup",       i) * setElt(right(7)) * p.g;
-        W += p.sites.op("Cdagup*Cdagdn", i) * setElt(right(8)) * p.g;
+        W += p.sites.op("Cdn*Cup",       i) * setElt(right(7)) * p.sc->g();
+        W += p.sites.op("Cdagup*Cdagdn", i) * setElt(right(8)) * p.sc->g();
 
         if (p.verbose) std::cout << "using " << eps_[i] << " and "<<v_[i]<<std::endl;
     }
@@ -95,7 +95,7 @@ void Fill_SCBath_MPO_MiddleImp(MPO& H, const std::vector<double>& eps_,
         W += p.sites.op("Ntot",i)           * setElt(left(1),right(2)) * eps_[i]; // here use index i
         W += p.sites.op("Nup",i)           * setElt(left(1),right(2)) * p.EZ_bulk;
         W += p.sites.op("Ndn",i)           * setElt(left(1),right(2)) * (-1) * p.EZ_bulk;
-        W += p.sites.op("Nupdn",i)          * setElt(left(1),right(2)) * p.g;
+        W += p.sites.op("Nupdn",i)          * setElt(left(1),right(2)) * p.sc->g();
 
         // hybridizations 
         W += p.sites.op("Cdagup*F",i)*setElt(left(1),right(3))* (+v_[i] ); // here use index i 
@@ -104,8 +104,8 @@ void Fill_SCBath_MPO_MiddleImp(MPO& H, const std::vector<double>& eps_,
         W += p.sites.op("Cdn*F",   i)*setElt(left(1),right(6))* (-v_[i] ); // here use index i
 
         //SC pairing 
-        W += p.sites.op("Cdn*Cup",i)        * setElt(left(1),right(7)) * p.g;
-        W += p.sites.op("Cdagup*Cdagdn",i)  * setElt(left(1),right(8)) * p.g;
+        W += p.sites.op("Cdn*Cup",i)        * setElt(left(1),right(7)) * p.sc->g();
+        W += p.sites.op("Cdagup*Cdagdn",i)  * setElt(left(1),right(8)) * p.sc->g();
 
         // keep terms
         W += p.sites.op("Id",i)*setElt(left(2),right(2));
@@ -176,10 +176,10 @@ void Fill_SCBath_MPO_MiddleImp(MPO& H, const std::vector<double>& eps_,
         W += p.sites.op("Ntot",i)           * setElt(left(1),right(2)) * eps_[i-1];  // use index i-1
         W += p.sites.op("Nup",i)           * setElt(left(1),right(2)) * p.EZ_bulk;
         W += p.sites.op("Ndn",i)           * setElt(left(1),right(2)) * (-1) * p.EZ_bulk;
-        W += p.sites.op("Nupdn",i)          * setElt(left(1),right(2)) * p.g;
+        W += p.sites.op("Nupdn",i)          * setElt(left(1),right(2)) * p.sc->g();
 
-        W += p.sites.op("Cdn*Cup",i)        * setElt(left(1),right(7)) * p.g;
-        W += p.sites.op("Cdagup*Cdagdn",i)  * setElt(left(1),right(8)) * p.g;
+        W += p.sites.op("Cdn*Cup",i)        * setElt(left(1),right(7)) * p.sc->g();
+        W += p.sites.op("Cdagup*Cdagdn",i)  * setElt(left(1),right(8)) * p.sc->g();
 
         W += p.sites.op("Id",i)*setElt(left(2),right(2));
         W += p.sites.op("F" ,i)*setElt(left(3),right(3));
@@ -211,7 +211,7 @@ void Fill_SCBath_MPO_MiddleImp(MPO& H, const std::vector<double>& eps_,
         W += p.sites.op("Ntot",  i) * setElt(left(1)) * eps_[i-1]; // use index i-1
         W += p.sites.op("Nup",  i) * setElt(left(1)) * p.EZ_bulk;
         W += p.sites.op("Ndn",  i) * setElt(left(1)) * (-1) * p.EZ_bulk;
-        W += p.sites.op("Nupdn",i)  * setElt(left(1)) * p.g;
+        W += p.sites.op("Nupdn",i)  * setElt(left(1)) * p.sc->g();
 
         W += p.sites.op("Id",    i) * setElt(left(2)) ;
         W += p.sites.op("Cdagup",i) * setElt(left(3)) * v_[i-1];  // use index i-1

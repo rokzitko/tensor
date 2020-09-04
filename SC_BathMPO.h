@@ -69,10 +69,10 @@ void Fill_SCBath_MPO(MPO& H, const std::vector<double>& eps_,
         W += p.sites.op("Ntot",i)           * setElt(left(1),right(2)) * eps_[i-1];
         W += p.sites.op("Nup",i)           * setElt(left(1),right(2)) * p.EZ_bulk;
         W += p.sites.op("Ndn",i)           * setElt(left(1),right(2)) * (-1) * p.EZ_bulk;
-        W += p.sites.op("Nupdn",i)          * setElt(left(1),right(2)) * p.g;
+        W += p.sites.op("Nupdn",i)          * setElt(left(1),right(2)) * p.sc->g();
 
-        W += p.sites.op("Cdn*Cup",i)        * setElt(left(1),right(7)) * p.g;
-        W += p.sites.op("Cdagup*Cdagdn",i)  * setElt(left(1),right(8)) * p.g;
+        W += p.sites.op("Cdn*Cup",i)        * setElt(left(1),right(7)) * p.sc->g();
+        W += p.sites.op("Cdagup*Cdagdn",i)  * setElt(left(1),right(8)) * p.sc->g();
 
         W += p.sites.op("Id",i)*setElt(left(2),right(2));
         W += p.sites.op("F" ,i)*setElt(left(3),right(3));
@@ -104,7 +104,7 @@ void Fill_SCBath_MPO(MPO& H, const std::vector<double>& eps_,
         W += p.sites.op("Ntot",  i) * setElt(left(1)) * eps_[i-1];
         W += p.sites.op("Nup",  i) * setElt(left(1)) * p.EZ_bulk;
         W += p.sites.op("Ndn",  i) * setElt(left(1)) * (-1) * p.EZ_bulk;
-        W += p.sites.op("Nupdn",i)  * setElt(left(1)) * p.g;
+        W += p.sites.op("Nupdn",i)  * setElt(left(1)) * p.sc->g();
 
         W += p.sites.op("Id",    i) * setElt(left(2)) ;
         W += p.sites.op("Cdagup",i) * setElt(left(3)) * v_[i-1];
