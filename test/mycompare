@@ -36,9 +36,9 @@ while (<A>) {
   next if ($a =~ /sqrt/); # these lines lead to false positives, ignore them
   next if ($a eq $b); # equal as strings, ok
   # extract first floating-point number after equality sign
-  $a =~ /=\s*([-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?)/ or next; # skip this line if not found
+  $a =~ /[=:]\s*([-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?)/ or next; # skip this line if not found
   $x = $1;
-  $b =~ /=\s*([-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?)/ or next; # -||-
+  $b =~ /[=:]\s*([-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?)/ or next; # -||-
   $y = $1;
   next if (abs($x) < $small) || (abs($y) < $small); # ignore small numbers
   $absdiff = abs($x-$y);

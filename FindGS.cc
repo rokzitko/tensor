@@ -261,12 +261,14 @@ std::tuple<MPO, double> initH(std::vector<double> eps, std::vector<double> V, in
     double epseff = p.epsimp - p.V12 * p.n0;
     double epsishift = -p.V12 * p.nu;
     Fill_SCBath_MPO_Ec_V(H, eps, V, epseff, epsishift, p);
-  } else if (p.MPO == "middle_2C") {
+  } else if (p.MPO == "A") {
     Eshift = p.Ec1*pow(p.n01, 2) + p.Ec2*pow(p.n02, 2);
     Fill_SCBath_MPO_MiddleImp_TwoChannel(H, eps, V, p);
-  } else
+  } 
+  else{
+    std::cout << p.MPO;
     throw std::runtime_error("Unknown MPO type");
-  
+  }
   Eshift += p.U/2.; // RZ, for convenience
   return std::make_tuple(H, Eshift);
 }
