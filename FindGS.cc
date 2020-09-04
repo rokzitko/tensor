@@ -404,10 +404,12 @@ auto calcOcc(MPS &psi, const params &p) {
   return r;
 }
 
-void MeasureOcc(MPS& psi, const params &p) {
+void MeasureOcc(MPS& psi, auto & file, std::string path, const params &p) {
   auto r = calcOcc(psi, p);
   std::cout << "site occupancies = " << std::setprecision(17) << r << std::endl;
+  dump(file, path + "/site_occupancies", r);
   auto tot = std::accumulate(r.begin(), r.end(), 0.0);
+  dump(file, path + "/total_occupancy", tot);
   Print(tot);
 }
 
@@ -581,7 +583,7 @@ void calculateAndPrint(InputGroup &input, store &s, params &p) {
       printfln("Ground state energy = %.17g", E);
       printfln("norm = %.17g", s.stats0[sub].norm()); // TODO: move below
       //occupancy; site pairing; v and u amplitudes 
-      MeasureOcc(GS, p);
+      MeasureOcc(GS, file, str(sub, "0"), p);
       MeasurePairing(GS, p);
       MeasureAmplitudes(GS, p);
 
@@ -602,7 +604,7 @@ void calculateAndPrint(InputGroup &input, store &s, params &p) {
 
       if (p.excited_state){
         MPS & ES = s.eigen1[sub].psi();
-        MeasureOcc(ES, p);
+        MeasureOcc(ES, file, str(sub, "1"), p);
         printfln("Excited state energy = %.17g", s.eigen1[sub].E());
        }
     } //end of Sz for loop 

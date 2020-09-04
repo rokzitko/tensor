@@ -156,6 +156,9 @@ class psi_stats {
    auto residuum() const { return _residuum; }
    void dump(auto &file, std::string path) const {
      H5Easy::dump(file, path + "/norm", _norm);
+     H5Easy::dump(file, path + "/Ebis", _Ebis);
+     H5Easy::dump(file, path + "/deltaE", _deltaE);
+     H5Easy::dump(file, path + "/residuum", _residuum);
    }
 };
 
