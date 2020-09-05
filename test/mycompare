@@ -6,7 +6,7 @@ use warnings;
 my $verbose = 0;
 
 my $small = 1e-12; # too small to be considered
-my $epsilon = 1e-5; # maximal relative error allowed
+my $epsilon = 1e-4; # maximal relative error allowed
 
 my $what = shift;
 defined($what) or die "Syntax: compare <filename>.";
