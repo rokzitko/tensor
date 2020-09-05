@@ -89,7 +89,7 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
 //  p.computeEntropy = input.getYesNo("computeEntropy", false);
   p.printTotSpinZ = input.getYesNo("printTotSpinZ", false);
 
-  p.impNupNdn = input.getYesNo("impNupNdn", false);
+//  p.impNupNdn = input.getYesNo("impNupNdn", false);
   p.chargeCorrelation = input.getYesNo("chargeCorrelation", false);
   p.pairCorrelation = input.getYesNo("pairCorrelation", false);
   p.spinCorrelation = input.getYesNo("spinCorrelation", false);
@@ -370,12 +370,18 @@ void expectedHopping(MPS& psi, const params &p){
 }
 
 //prints the occupation number Nup and Ndn at the impurity
-void ImpurityUpDn(MPS& psi, const params &p){
-  std::cout << "impurity nup ndn = ";
+auto calcImpurityUpDn(MPS& psi, const params &p){
   psi.position(p.impindex);
   auto valnup = psi.A(p.impindex) * p.sites.op("Nup",p.impindex)* dag(prime(psi.A(p.impindex),"Site"));
   auto valndn = psi.A(p.impindex) * p.sites.op("Ndn",p.impindex)* dag(prime(psi.A(p.impindex),"Site"));
-  std::cout << std::setprecision(full) << std::real(valnup.cplx()) << " " << std::real(valndn.cplx()) << "\n";
+  return std::make_pair(std::real(valnup.cplx()), std::real(valndn.cplx()));
+}
+
+void ImpurityUpDn(MPS& psi, auto &file, std::string path, const params &p){
+  auto [up, dn] = calcImpurityUpDn(psi, p);
+  std::cout << "impurity nup ndn = " << std::setprecision(full) << up << " " << dn << "\n";
+  dump(file, path + "/impurity_n_up", up);
+  dump(file, path + "/impurity_n_dn", dn);
 }
 
 //prints total Sz of the state
@@ -611,7 +617,7 @@ void calculateAndPrint(InputGroup &input, store &s, params &p) {
       MeasureAmplitudes(GS, file, str(sub, "0"), p);
 
       if (input.getYesNo("computeEntropy", false)) PrintEntropy(GS, file, str(sub, "0"), p);
-      if (p.impNupNdn) ImpurityUpDn(GS, p);
+      if (input.getYesNo("impNupNdn", false)) ImpurityUpDn(GS, file, str(sub, "0"), p);
       if (p.chargeCorrelation) ChargeCorrelation(GS, p);
       if (p.spinCorrelation) SpinCorrelation(GS, p);
       if (p.pairCorrelation) PairCorrelation(GS, p);
