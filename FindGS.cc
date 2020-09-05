@@ -36,10 +36,9 @@ void init_subspace_lists(params &p)
 InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   if (argc != 2)
     throw std::runtime_error("Please provide input file. Usage: executable <input file>");
-  p.inputfn = { argv[1] };                      // read parameters from the input file
-  auto input = InputGroup{p.inputfn, "params"}; // get input parameters using InputGroup from itensor
-  p.MPO = input.getString("MPO", "std");        // problem type
-  p.problem = set_problem(p.MPO);
+  p.inputfn = { argv[1] };                                 // read parameters from the input file
+  auto input = InputGroup{p.inputfn, "params"};            // get input parameters using InputGroup from itensor
+  p.problem = set_problem(input.getString("MPO", "std"));  // problem type
   p.NImp = 1;
   p.N = input.getInt("N", 0);
   if (p.N != 0)
@@ -52,37 +51,39 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   }
   p.impindex = p.problem->imp_index(p.NBath);
   std::cout << "N=" << p.N << " NBath=" << p.NBath << " impindex=" << p.impindex << std::endl;
-  
+  // sites is an ITensor thing. It defines the local hilbert space and operators living on each site of the lattice.
+  // For example sites.op("N",1) gives the pariticle number operator on the first site.
+  p.sites = Hubbard(p.N);
+
+  // parameters entering the problem definition
   double U = input.getReal("U", 0); // need to parse it first because it enters the default value for epsimp just below
   p.qd = std::make_unique<imp>(U, input.getReal("epsimp", -U/2.), input.getReal("EZ_imp", 0.));
   p.sc = std::make_unique<SCbath>(p.NBath, input.getReal("alpha", 0), input.getReal("Ec", 0), input.getReal("n0", p.N-1), input.getReal("EZ_bulk", 0.));
   p.Gamma = std::make_unique<hyb>(input.getReal("gamma", 0));
   p.V12 = input.getReal("V", 0); // handled in a special way
+  p.band_level_shift = input.getYesNo("band_level_shift", false);
 
-  // sites is an ITensor thing. It defines the local hilbert space and operators living on each site of the lattice.
-  // For example sites.op("N",1) gives the pariticle number operator on the first site.
-  p.sites = Hubbard(p.N);
+  // parameters controlling the calculation targets
+  p.nrange = input.getInt("nrange", 1);
+  p.refisn0 = input.getYesNo("refisn0", false);
+  p.excited_state = input.getYesNo("excited_state", false);
 
+  // parameters controlling the postprocessing and output
   p.computeEntropy = input.getYesNo("computeEntropy", false);
   p.impNupNdn = input.getYesNo("impNupNdn", false);
   p.chargeCorrelation = input.getYesNo("chargeCorrelation", false);
   p.spinCorrelation = input.getYesNo("spinCorrelation", false);
   p.pairCorrelation = input.getYesNo("pairCorrelation", false);
   p.hoppingExpectation = input.getYesNo("hoppingExpectation", false);
-
-  p.excited_state = input.getYesNo("excited_state", false);
-  p.printDimensions = input.getYesNo("printDimensions", false);
   p.calcweights = input.getYesNo("calcweights", false);
-  p.refisn0 = input.getYesNo("refisn0", false);
-  p.parallel = input.getYesNo("parallel", false);
-  p.verbose = input.getYesNo("verbose", false);
-  p.band_level_shift = input.getYesNo("band_level_shift", false);
   p.printTotSpinZ = input.getYesNo("printTotSpinZ", false);
 
-
+  // parameters controlling the calculation
+  p.printDimensions = input.getYesNo("printDimensions", false);
+  p.parallel = input.getYesNo("parallel", false);
+  p.verbose = input.getYesNo("verbose", false);
   p.EnergyErrgoal = input.getReal("EnergyErrgoal", 1e-16);
   p.nrH = input.getInt("nrH", 5);
-  p.nrange = input.getInt("nrange", 1);
 
   // TWO CHANNEL PARAMETERS
   p.alpha1 = input.getReal("alpha1", 0);
@@ -331,9 +332,9 @@ void expectedHopping(MPS& psi, File & file, std::string path, const params &p) {
   std::cout << "total hopping correlation = " << tot << std::endl;
   dump(file, path + "/hopping/up", rup);
   dump(file, path + "/hopping/dn", rdn);
-  dump(file, path + "/hopping_total_up", totup);
-  dump(file, path + "/hopping_total_dn", totdn);
-  dump(file, path + "/hopping_total", tot);
+  dump(file, path + "/hopping_total/up",  totup);
+  dump(file, path + "/hopping_total/dn",  totdn);
+  dump(file, path + "/hopping_total/sum", tot);
 }
 
 //prints the occupation number Nup and Ndn at the impurity
@@ -346,23 +347,34 @@ auto calcImpurityUpDn(MPS& psi, const params &p){
 
 void ImpurityUpDn(MPS& psi, auto &file, std::string path, const params &p){
   auto [up, dn] = calcImpurityUpDn(psi, p);
-  std::cout << "impurity nup ndn = " << std::setprecision(full) << up << " " << dn << "\n";
-  dump(file, path + "/impurity_n_up", up);
-  dump(file, path + "/impurity_n_dn", dn);
+  auto sz = 0.5*(up-dn);
+  std::cout << "impurity nup ndn = " << std::setprecision(full) << up << " " << dn << " sz = " << sz << std::endl;
+  dump(file, path + "/impurity_Nup", up);
+  dump(file, path + "/impurity_Ndn", dn);
+  dump(file, path + "/imputity_Sz",  sz);
 }
 
-//prints total Sz of the state
-void TotalSpinz(MPS& psi, const params &p){
+// total Sz of the state
+auto calcTotalSpinz(MPS& psi, const params &p) {
   double totNup = 0.;
   double totNdn = 0.;
-  for(auto j: range1(length(psi))) {
+  for (auto j: range1(length(psi))) {
     psi.position(j);
     auto Nupi = psi.A(j) * p.sites.op("Nup",j)* dag(prime(psi.A(j),"Site"));
     auto Ndni = psi.A(j) * p.sites.op("Ndn",j)* dag(prime(psi.A(j),"Site"));
     totNup += std::real(Nupi.cplx());
     totNdn += std::real(Ndni.cplx());
   }
-  std::cout << std::setprecision(full) << "Total spin z: " << " Nup = " << totNup << " Ndn = " << totNdn << " Sztot = " << 0.5*(totNup-totNdn) <<  "\n";
+  auto totSz =  0.5*(totNup-totNdn);
+  return std::make_tuple(totNup, totNdn, totSz);
+}
+
+void TotalSpinz(MPS& psi, File &file, std::string path, const params &p) {
+  auto [totNup, totNdn, totSz] = calcTotalSpinz(psi, p);
+  std::cout << std::setprecision(full) << "Total spin z: " << " Nup = " << totNup << " Ndn = " << totNdn << " Sztot = " << totSz << std::endl;
+  dump(file, path + "/total_Nup", totNup);
+  dump(file, path + "/total_Ndn", totNdn);
+  dump(file, path + "/total_Sz",  totSz);
 }
 
 // occupation numbers of all levels in the problem
@@ -410,7 +422,7 @@ void MeasurePairing(MPS& psi, auto & file, std::string path, const params &p) {
   std::cout << "site pairing = " << std::setprecision(full) << r << std::endl;
   Print(tot);
   dumpreal(file, path + "/pairing", r);
-  dumpreal(file, path + "/total_pairing", tot);
+  dumpreal(file, path + "/pairing_total", tot);
 }
 
 // See von Delft, Zaikin, Golubev, Tichy, PRL 77, 3189 (1996)
@@ -443,7 +455,7 @@ void MeasureAmplitudes(MPS& psi, auto & file, std::string path, const params &p)
   dumpreal(file, path + "/amplitudes/u", ru);
   dumpreal(file, path + "/amplitudes/v", rv);
   dumpreal(file, path + "/amplitudes/pdt", rpdt);
-  dumpreal(file, path + "/total_amplitude", tot);
+  dumpreal(file, path + "/amplitudes_total", tot);
 }
 
 // Computed entanglement/von Neumann entropy between the impurity and the system.
@@ -576,7 +588,7 @@ auto find_global_GS_subspace(store &s) {
   return subGS;
 }
 
-//Loops over all particle sectors and prints relevant quantities.
+// Loops over all particle sectors and prints relevant quantities
 void calculateAndPrint(InputGroup &input, store &s, params &p) {
   File file("solution.h5", File::Overwrite);
   for(auto ntot: p.numPart) {
@@ -598,7 +610,7 @@ void calculateAndPrint(InputGroup &input, store &s, params &p) {
       if (p.spinCorrelation) SpinCorrelation(GS, file, path0, p);
       if (p.pairCorrelation) PairCorrelation(GS, file, path0, p);
       if (p.hoppingExpectation) expectedHopping(GS, file, path0, p);
-      if (p.printTotSpinZ) TotalSpinz(GS, p);
+      if (p.printTotSpinZ) TotalSpinz(GS, file, path0, p);
       //various measures of convergence (energy deviation, residual value)
       printfln("Eigenvalue(bis): <GS|H|GS> = %.17g", s.stats0[sub].Ebis());
       printfln("diff: E_GS - <GS|H|GS> = %.17g", E-s.stats0[sub].Ebis()); // TODO: remove this
