@@ -1,8 +1,4 @@
-#include <vector>
-using namespace itensor;
-
-//fills the MPO tensors
-void Fill_SCBath_MPO_MiddleImp_TwoChannel(MPO& H, const std::vector<double>& eps_,
+inline void Fill_SCBath_MPO_MiddleImp_TwoChannel(MPO& H, const std::vector<double>& eps_,
                 const std::vector<double>& v_, const params &p)
 {
       //QN objects are necessary to have abelian symmetries in MPS
@@ -16,11 +12,9 @@ void Fill_SCBath_MPO_MiddleImp_TwoChannel(MPO& H, const std::vector<double>& eps
     std::vector<Index> links;
     links.push_back( Index() );
 
-    if(length(H)%2 != 1){
-        // currently only allow an odd total number of sites
-        Error("Total number of sites should be odd so that the number of bath sites is even");
-    }
+    assert(odd(length(H)));
     int impSite = std::round( (length(H)+1)/2 );
+    assert(p.impIndex == impSite);
 
     //first we create the link indices which carry quantum number information
     for(auto i : range1( impSite-1 )){
@@ -60,16 +54,14 @@ void Fill_SCBath_MPO_MiddleImp_TwoChannel(MPO& H, const std::vector<double>& eps
         ITensor& W = H.ref(i);
         Index right = links.at(i);
 
-
         W = ITensor(right, p.sites.si(i), p.sites.siP(i) );
         W += p.sites.op("Id",i) * setElt(right(1));
 
-
         // local H on site
-        W += p.sites.op("Ntot",i)  * setElt(right(2)) * (eps_[i] + p.Ec1*(1-2*p.n01)); // here use index i
-        W += p.sites.op("Nup",i)  * setElt(right(2)) * p.EZ_bulk1; 
-        W += p.sites.op("Ndn",i)  * setElt(right(2)) * (-1) * p.EZ_bulk1;
-        W += p.sites.op("Nupdn",i) * setElt(right(2)) * (p.g1 + 2*p.Ec1);
+        W += p.sites.op("Ntot",i)  * setElt(right(2)) * (eps_[i] + p.sc1->Ec()*(1-2*p.sc1->n0())); // here use index i
+        W += p.sites.op("Nup",i)  * setElt(right(2)) * p.sc1->EZ(); 
+        W += p.sites.op("Ndn",i)  * setElt(right(2)) * (-1) * p.sc1->EZ();
+        W += p.sites.op("Nupdn",i) * setElt(right(2)) * (p.sc1->g() + 2*p.sc1->Ec());
 
         //hybridization
         W += p.sites.op("Cdagup*F",i) * setElt(right(3))* (+v_[i]); // here use index i 
@@ -78,17 +70,15 @@ void Fill_SCBath_MPO_MiddleImp_TwoChannel(MPO& H, const std::vector<double>& eps
         W += p.sites.op("Cdn*F",   i) * setElt(right(6))* (-v_[i]); // here use index i
 
         //SC pairing
-        W += p.sites.op("Cdn*Cup",      i) * setElt(right(7)) * p.g1;
-        W += p.sites.op("Cdagup*Cdagdn",i) * setElt(right(8)) * p.g1;
+        W += p.sites.op("Cdn*Cup",      i) * setElt(right(7)) * p.sc1->g();
+        W += p.sites.op("Cdagup*Cdagdn",i) * setElt(right(8)) * p.sc1->g();
 
-
-        W += p.sites.op("Ntot",i) * setElt(right(9)) * 2*p.Ec1;
+        W += p.sites.op("Ntot",i) * setElt(right(9)) * 2*p.sc1->Ec();
     }
 
 
     // sites 2 ... impSite-1 are matrices
     for(auto i : range1(2, impSite-1 )){
-        
         ITensor& W = H.ref(i);
         Index left = dag( links.at(i-1) );
         Index right = links.at(i);
@@ -98,10 +88,10 @@ void Fill_SCBath_MPO_MiddleImp_TwoChannel(MPO& H, const std::vector<double>& eps
         W += p.sites.op("Id",i) * setElt(left(1), right(1));
 
         // local H on site
-        W += p.sites.op("Ntot",i)           * setElt(left(1),right(2)) * (eps_[i] + p.Ec1*(1-2*p.n01)); // here use index i
-        W += p.sites.op("Nup",i)           * setElt(left(1),right(2)) * p.EZ_bulk1;
-        W += p.sites.op("Ndn",i)           * setElt(left(1),right(2)) * (-1) * p.EZ_bulk1;
-        W += p.sites.op("Nupdn",i)          * setElt(left(1),right(2)) * (p.g1 + 2*p.Ec1);
+        W += p.sites.op("Ntot",i)           * setElt(left(1),right(2)) * (eps_[i] + p.sc1->Ec()*(1-2*p.sc1->n0())); // here use index i
+        W += p.sites.op("Nup",i)           * setElt(left(1),right(2)) * p.sc1->EZ();
+        W += p.sites.op("Ndn",i)           * setElt(left(1),right(2)) * (-1) * p.sc1->EZ();
+        W += p.sites.op("Nupdn",i)          * setElt(left(1),right(2)) * (p.sc1->g() + 2*p.sc1->Ec());
 
         // hybridizations 
         W += p.sites.op("Cdagup*F",i)*setElt(left(1),right(3))* (+v_[i] ); // here use index i 
@@ -109,10 +99,10 @@ void Fill_SCBath_MPO_MiddleImp_TwoChannel(MPO& H, const std::vector<double>& eps
         W += p.sites.op("Cup*F",   i)*setElt(left(1),right(5))* (-v_[i] ); // here use index i
         W += p.sites.op("Cdn*F",   i)*setElt(left(1),right(6))* (-v_[i] ); // here use index i
 
-        //SC pairing 
-        W += p.sites.op("Cdn*Cup",i)        * setElt(left(1),right(7)) * p.g1;
-        W += p.sites.op("Cdagup*Cdagdn",i)  * setElt(left(1),right(8)) * p.g1;
-        W += p.sites.op("Ntot",i)  * setElt(left(1),right(9)) * 2*p.Ec1;
+        //SC pairing
+        W += p.sites.op("Cdn*Cup",i)        * setElt(left(1),right(7)) * p.sc1->g();
+        W += p.sites.op("Cdagup*Cdagdn",i)  * setElt(left(1),right(8)) * p.sc1->g();
+        W += p.sites.op("Ntot",i)  * setElt(left(1),right(9)) * 2*p.sc1->Ec();
 
         // keep terms
         W += p.sites.op("Id",i)*setElt(left(2),right(2));
@@ -127,7 +117,7 @@ void Fill_SCBath_MPO_MiddleImp_TwoChannel(MPO& H, const std::vector<double>& eps
         // add SC pairing terms
         W += p.sites.op("Cdagup*Cdagdn",i)*setElt(left(7),right(2));
         W += p.sites.op("Cdn*Cup",i)      *setElt(left(8),right(2));
-        W += p.sites.op("Ntot",i)      *setElt(left(9),right(2));
+        W += p.sites.op("Ntot",i)         *setElt(left(9),right(2));
     }
 
     // impurity 
@@ -142,8 +132,8 @@ void Fill_SCBath_MPO_MiddleImp_TwoChannel(MPO& H, const std::vector<double>& eps
         W += p.sites.op("Id",i) * setElt(left(1), right(1));
 
         W += p.sites.op("Ntot",i)  * setElt(left(1), right(2)) * p.qd->eps(); //CHECK THIS
-        W += p.sites.op("Nup",i)  * setElt(left(1), right(2)) * p.qd->EZ();
-        W += p.sites.op("Ndn",i)  * setElt(left(1), right(2)) * (-1) * p.qd->EZ();
+        W += p.sites.op("Nup",i)   * setElt(left(1), right(2)) * p.qd->EZ();
+        W += p.sites.op("Ndn",i)   * setElt(left(1), right(2)) * (-1) * p.qd->EZ();
         W += p.sites.op("Nupdn",i) * setElt(left(1), right(2)) * p.qd->U();
 
         // hybridizations
@@ -177,14 +167,14 @@ void Fill_SCBath_MPO_MiddleImp_TwoChannel(MPO& H, const std::vector<double>& eps
 
         W += p.sites.op("Id",i) * setElt(left(1), right(1));
 
-        W += p.sites.op("Ntot",i)           * setElt(left(1),right(2)) * (eps_[i-1] + p.Ec2*(1-2*p.n02));  // use index i-1
-        W += p.sites.op("Nup",i)           * setElt(left(1),right(2)) * p.EZ_bulk2;
-        W += p.sites.op("Ndn",i)           * setElt(left(1),right(2)) * (-1) * p.EZ_bulk2;
-        W += p.sites.op("Nupdn",i)          * setElt(left(1),right(2)) * (p.g2 + p.Ec2);
+        W += p.sites.op("Ntot",i)           * setElt(left(1),right(2)) * (eps_[i-1] + p.sc2->Ec()*(1-2*p.sc2->n0()));  // use index i-1
+        W += p.sites.op("Nup",i)            * setElt(left(1),right(2)) * p.sc2->EZ();
+        W += p.sites.op("Ndn",i)            * setElt(left(1),right(2)) * (-1) * p.sc2->EZ();
+        W += p.sites.op("Nupdn",i)          * setElt(left(1),right(2)) * (p.sc2->g() + p.sc2->Ec());
 
-        W += p.sites.op("Cdn*Cup",i)        * setElt(left(1),right(7)) * p.g2;
-        W += p.sites.op("Cdagup*Cdagdn",i)  * setElt(left(1),right(8)) * p.g2;
-        W += p.sites.op("Ntot",i)  * setElt(left(1),right(9)) * p.Ec2;
+        W += p.sites.op("Cdn*Cup",i)        * setElt(left(1),right(7)) * p.sc2->g();
+        W += p.sites.op("Cdagup*Cdagdn",i)  * setElt(left(1),right(8)) * p.sc2->g();
+        W += p.sites.op("Ntot",i)           * setElt(left(1),right(9)) * p.sc2->Ec();
 
         W += p.sites.op("Id",i)*setElt(left(2),right(2));
         W += p.sites.op("F" ,i)*setElt(left(3),right(3));
@@ -200,9 +190,9 @@ void Fill_SCBath_MPO_MiddleImp_TwoChannel(MPO& H, const std::vector<double>& eps
         W += p.sites.op("Cup",   i)*setElt(left(5),right(2))* v_[i-1];  // use index i-1
         W += p.sites.op("Cdn",   i)*setElt(left(6),right(2))* v_[i-1];  // use index i-1
 
-        W += p.sites.op("Cdagup*Cdagdn",i)*setElt(left(7),right(2));
-        W += p.sites.op("Cdn*Cup",i)      *setElt(left(8),right(2));
-        W += p.sites.op("Ntot",i)      *setElt(left(9),right(2));
+        W += p.sites.op("Cdagup*Cdagdn",i) * setElt(left(7),right(2));
+        W += p.sites.op("Cdn*Cup",i)       * setElt(left(8),right(2));
+        W += p.sites.op("Ntot",i)          * setElt(left(9),right(2));
     }
 
     //site N is a vector again - same as before
@@ -213,10 +203,10 @@ void Fill_SCBath_MPO_MiddleImp_TwoChannel(MPO& H, const std::vector<double>& eps
 
         W = ITensor(left, p.sites.si(i), p.sites.siP(i) );
 
-        W += p.sites.op("Ntot",  i) * setElt(left(1)) * (eps_[i-1] + p.Ec2*(1-2*p.n02)); // use index i-1
-        W += p.sites.op("Nup",  i) * setElt(left(1)) * p.EZ_bulk2;
-        W += p.sites.op("Ndn",  i) * setElt(left(1)) * (-1) * p.EZ_bulk2;
-        W += p.sites.op("Nupdn",i)  * setElt(left(1)) * (p.g2 + 2*p.Ec2);
+        W += p.sites.op("Ntot",  i) * setElt(left(1)) * (eps_[i-1] + p.sc2->Ec()*(1-2*p.sc2->n0())); // use index i-1
+        W += p.sites.op("Nup",  i)  * setElt(left(1)) * p.sc2->EZ();
+        W += p.sites.op("Ndn",  i)  * setElt(left(1)) * (-1) * p.sc2->EZ();
+        W += p.sites.op("Nupdn",i)  * setElt(left(1)) * (p.sc2->g() + 2*p.sc2->Ec());
 
         W += p.sites.op("Id",    i) * setElt(left(2)) ;
         W += p.sites.op("Cdagup",i) * setElt(left(3)) * v_[i-1];  // use index i-1
@@ -226,9 +216,7 @@ void Fill_SCBath_MPO_MiddleImp_TwoChannel(MPO& H, const std::vector<double>& eps
 
         W += p.sites.op("Cdagup*Cdagdn",i) * setElt(left(7));
         W += p.sites.op("Cdn*Cup",      i) * setElt(left(8));
-        W += p.sites.op("Ntot",      i) * setElt(left(9));
+        W += p.sites.op("Ntot",         i) * setElt(left(9));
     }
- 
-
   }
 

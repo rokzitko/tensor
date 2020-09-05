@@ -14,6 +14,7 @@
 #include <stdexcept>
 #include <limits> // quiet_NaN
 #include <tuple>
+#include <cassert>
 
 #include <omp.h>
 
@@ -90,7 +91,7 @@ class imp {
 class bath { // normal-state bath
  private:
    int _Nbath; // number of levels
-   double _D; // half-bandwidth
+   double _D;  // half-bandwidth
  public:
    bath(int Nbath, double D = 1.0) : _Nbath(Nbath), _D(D) {};
    auto Nbath() const { return _Nbath; }
@@ -108,9 +109,9 @@ class bath { // normal-state bath
 class SCbath : public bath { // superconducting island bath
  private:
    double _alpha; // pairing strength
-   double _Ec; // charging energy
-   double _n0; // offset
-   double _EZ;
+   double _Ec;    // charging energy
+   double _n0;    // offset
+   double _EZ;    // Zeeman energy
  public:
    SCbath(int Nbath, double alpha, double Ec, double n0, double EZ) :
      bath(Nbath), _alpha(alpha), _Ec(Ec), _n0(n0), _EZ(EZ) {};
@@ -130,7 +131,7 @@ class SCbath : public bath { // superconducting island bath
 
 class hyb {
  private:
-   double _Gamma;
+   double _Gamma; // hybridisation strength
  public:
    hyb(double Gamma) : _Gamma(Gamma) {};
    auto Gamma() const { return _Gamma; }
@@ -166,8 +167,8 @@ inline std::string str(subspace &sub, std::string s)
 
 class eigenpair {
  private:
-   Real _E = 0;
-   MPS _psi;
+   Real _E = 0; // eigenenergy
+   MPS _psi;    // eigenvector
  public:
    eigenpair() {}
    eigenpair(Real E, MPS psi) : _E(E), _psi(psi) {}
@@ -214,7 +215,7 @@ struct params {
   int NBath;            // number of bath sites
   int NImp;             // number of impurity orbitals
   int impindex;         // impurity position in the chain (1 based)
-   
+
   Hubbard sites;        // itensor object
 
   // all bools have default value false
@@ -228,7 +229,7 @@ struct params {
 
   bool calcweights;      // calculates the spectral weights of the two closes spectroscopically availabe excitations
   bool excited_state;    // computes the first excited state
-   
+
   bool printDimensions;  // prints dmrg() prints info during the sweep
   bool refisn0;          // the energies will be computed in the sectors centered around the one with n = round(n0) + 1
   bool parallel;         // enables openMP parallel calculation of the for loop in findGS()
@@ -245,15 +246,9 @@ struct params {
   std::unique_ptr<hyb>    Gamma;
   double V12;           // QD-SC capacitive coupling
 
-  // TWO CHANNEL PARAMETERS
-  double alpha1, alpha2;
-  double n01, n02;
-  double g1, g2;
-  double gamma1, gamma2;
-  double Ec1, Ec2;
-  double EZ_bulk1, EZ_bulk2;
-
-  int SCSCinteraction; //test parameter for the 2 channel MPO
+  std::unique_ptr<SCbath> sc1, sc2;
+  std::unique_ptr<hyb> Gamma1, Gamma2;
+  int SCSCinteraction;  // test parameter for the 2 channel MPO
 
   std::vector<int> numPart; // range of total occupancies of interest
   std::map<int, std::vector<double>> Szs; // Szs for each n in numPart
@@ -331,7 +326,7 @@ namespace prob {
         return std::make_tuple(H, Eshift);
       }
    };
-   
+
    class Ec : public imp_first, public single_channel {
     public:
       H_t initH(int ntot, params &p) override {
@@ -342,7 +337,7 @@ namespace prob {
         return std::make_tuple(H, Eshift);
       }
    };
-   
+
    class Ec_V : public imp_first, public single_channel {
     public:
       H_t initH(int ntot, params &p) override {
@@ -355,7 +350,7 @@ namespace prob {
         return std::make_tuple(H, Eshift);
       }
    };
-      
+
    class middle : public imp_middle, public single_channel {
     public:
       H_t initH(int ntot, params &p) override {
@@ -368,13 +363,13 @@ namespace prob {
         return std::make_tuple(H, Eshift);
       }
    };
-   
+
    class middle_2channel : public imp_middle, public single_channel {
     public:
       H_t initH(int ntot, params &p) override {
         auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
         MPO H(p.sites);
-        double Eshift = p.Ec1*pow(p.n01, 2) + p.Ec2*pow(p.n02, 2) + p.qd->U()/2;
+        double Eshift = p.sc1->Ec()*pow(p.sc1->n0(), 2) + p.sc2->Ec()*pow(p.sc2->n0(), 2) + p.qd->U()/2;
         Fill_SCBath_MPO_MiddleImp_TwoChannel(H, eps, V, p);
         return std::make_tuple(H, Eshift);
       }

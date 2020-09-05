@@ -1,8 +1,4 @@
-#include <vector>
-using namespace itensor;
-
-//fills the MPO tensors
-void Fill_SCBath_MPO(MPO& H, const std::vector<double>& eps_,
+inline void Fill_SCBath_MPO(MPO& H, const std::vector<double>& eps_,
                 const std::vector<double>& v_, double epseff, double Ueff, const params &p)
 {
       //QN objects are necessary to have abelian symmetries in MPS

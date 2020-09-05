@@ -63,6 +63,13 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   p.V12 = input.getReal("V", 0); // handled in a special way
   p.band_level_shift = input.getYesNo("band_level_shift", false);
 
+  // parameters for the 2-channel problem
+  p.sc1 = std::make_unique<SCbath>(p.NBath, input.getReal("alpha1", 0), input.getReal("Ec1", 0), input.getReal("n01", (p.N-1)/2), input.getReal("EZ_bulk1", 0));
+  p.sc2 = std::make_unique<SCbath>(p.NBath, input.getReal("alpha2", 0), input.getReal("Ec2", 0), input.getReal("n02", (p.N-1)/2), input.getReal("EZ_bulk2", 0));
+  p.Gamma1 = std::make_unique<hyb>(input.getReal("gamma1", 0));
+  p.Gamma2 = std::make_unique<hyb>(input.getReal("gamma2", 0));
+  p.SCSCinteraction = input.getReal("SCSCinteraction", 0);
+
   // parameters controlling the calculation targets
   p.nrange = input.getInt("nrange", 1);
   p.refisn0 = input.getYesNo("refisn0", false);
@@ -84,22 +91,6 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   p.verbose = input.getYesNo("verbose", false);
   p.EnergyErrgoal = input.getReal("EnergyErrgoal", 1e-16);
   p.nrH = input.getInt("nrH", 5);
-
-  // TWO CHANNEL PARAMETERS
-  p.alpha1 = input.getReal("alpha1", 0);
-  p.alpha2 = input.getReal("alpha2", 0);
-  p.n01 = input.getReal("n01", (p.N-1)/2);
-  p.n02 = input.getReal("n02", (p.N-1)/2);
-  p.gamma1 = input.getReal("gamma1", 0);
-  p.gamma2 = input.getReal("gamma2", 0);
-  p.Ec1 = input.getReal("Ec1", 0);
-  p.Ec2 = input.getReal("Ec2", 0);
-  p.EZ_bulk1 = input.getReal("EZ_bulk1", 0);
-  p.EZ_bulk2 = input.getReal("EZ_bulk2", 0);
-  // TO DO
-  // p.sc1 = std::make_unique<SCbath>(p.NBath, input.getReal("alpha1", 0), input.getReal("Ec1", 0), input.getReal("n01", p.N-1), input.getReal("EZ_bulk1", 0));
-  // p.sc2 = std::make_unique<SCbath>(p.NBath, input.getReal("alpha2", 0), input.getReal("Ec2", 0), input.getReal("n02", p.N-1), input.getReal("EZ_bulk2", 0));
-  p.SCSCinteraction = input.getReal("SCSCinteraction", 0);
 
   init_subspace_lists(p);
   return input;
@@ -611,7 +602,7 @@ void calculateAndPrint(InputGroup &input, store &s, params &p) {
       if (p.pairCorrelation) PairCorrelation(GS, file, path0, p);
       if (p.hoppingExpectation) expectedHopping(GS, file, path0, p);
       if (p.printTotSpinZ) TotalSpinz(GS, file, path0, p);
-      //various measures of convergence (energy deviation, residual value)
+      // various measures of convergence (energy deviation, residual value)
       printfln("Eigenvalue(bis): <GS|H|GS> = %.17g", s.stats0[sub].Ebis());
       printfln("diff: E_GS - <GS|H|GS> = %.17g", E-s.stats0[sub].Ebis()); // TODO: remove this
       printfln("deltaE: sqrt(<GS|H^2|GS> - <GS|H|GS>^2) = %.17g", s.stats0[sub].deltaE());

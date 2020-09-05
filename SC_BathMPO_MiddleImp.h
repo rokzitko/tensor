@@ -1,8 +1,4 @@
-#include <vector>
-using namespace itensor;
-
-//fills the MPO tensors
-void Fill_SCBath_MPO_MiddleImp(MPO& H, const std::vector<double>& eps_,
+inline void Fill_SCBath_MPO_MiddleImp(MPO& H, const std::vector<double>& eps_,
                 const std::vector<double>& v_, double epseff, double Ueff, const params &p)
 {
       //QN objects are necessary to have abelian symmetries in MPS
@@ -17,12 +13,9 @@ void Fill_SCBath_MPO_MiddleImp(MPO& H, const std::vector<double>& eps_,
     std::vector<Index> links;
     links.push_back( Index() );
 
-    if(length(H)%2 != 1){
-        // currently only allow an odd total number of sites
-        Error("Total number of sites should be odd so that the number of bath sites is even");
-    }
+    assert(odd(length(H)));
     int impSite = std::round( (length(H)+1)/2 );
-
+    assert(p.impIndex == impSite);
 
     //first we create the link indices which carry quantum number information
     for(auto i : range1( impSite-1 )){
