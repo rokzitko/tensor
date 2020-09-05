@@ -1,0 +1,11 @@
+#!/usr/bin/env perl
+
+open(F, "find . -iname result*.dat.ref |");
+
+while (<F>) {
+    chomp;
+    $target = $_;
+    s/\.ref$//;
+    $source = $_;
+    system "cp -v $source $target";
+}
