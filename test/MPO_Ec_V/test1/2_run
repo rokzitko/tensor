@@ -1,4 +1,6 @@
 #!/bin/bash
 PATH=../../..:../..:$PATH
 calcGS inputFile-Ec_V.txt >result-Ec_V.dat
+mv solution.h5 solution2.h5
 mycompare result-Ec_V.dat
+h5diff -d 1e-6 solution2.h5 solution2.h5.ref
