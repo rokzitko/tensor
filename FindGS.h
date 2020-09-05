@@ -188,12 +188,51 @@ class psi_stats {
    }
 };
 
+class problem_type {
+ public:
+   virtual int imp_index(int) = 0;
+};
+
+class imp_first : public problem_type
+{
+ public:
+   int imp_index(int) override { return 1; }
+};
+
+class imp_middle : public problem_type
+{
+ public:
+   int imp_index(int NBath) override {
+     assert(even(NBath));
+     return 1+NBath/2;
+   }
+};
+
+namespace prob {
+   class std : public imp_first {};
+   class Ec : public imp_first {};
+   class Ec_V : public imp_first {};
+   class middle : public imp_middle {};
+   class middle_2channel : public imp_middle {};
+}
+
+inline std::unique_ptr<problem_type> set_problem(std::string str)
+{
+  if (str == "std") return std::make_unique<prob::std>();
+  if (str == "Ec") return std::make_unique<prob::Ec>();
+  if (str == "Ec_V") return std::make_unique<prob::Ec_V>();
+  if (str == "middle") return std::make_unique<prob::middle>();
+  if (str == "middle_2channel") return std::make_unique<prob::middle_2channel>();
+  throw std::runtime_error("Unknown MPO type");
+}
+
 // parameters from the input file
 struct params {
   string inputfn;       // filename of the input file
   InputGroup input;     // itensor input parser
 
   string MPO = "std";   // which MPO representation to use
+//  std::unique_ptr<problem_typ> problem;
 
   int N;                // number of sites
   int NBath;            // number of bath sites

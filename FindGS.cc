@@ -41,13 +41,11 @@ void init_subspace_lists(params &p)
 
 InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   if (argc != 2)
-    throw std::runtime_error("Please provide input file. Usage: ./executable inputfile.txt");
-
-  //read parameters from the input file
-  p.inputfn = {argv[1]};
-  auto input = InputGroup{p.inputfn, "params"}; //get input parameters using InputGroup from itensor
-
-  p.MPO = input.getString("MPO", "std"); // problem type
+    throw std::runtime_error("Please provide input file. Usage: executable <input file>");
+  p.inputfn = { argv[1] };                      // read parameters from the input file
+  auto input = InputGroup{p.inputfn, "params"}; // get input parameters using InputGroup from itensor
+  p.MPO = input.getString("MPO", "std");        // problem type
+  auto problem = set_problem(p.MPO);
   p.NImp = 1;
   p.N = input.getInt("N", 0);
   if (p.N != 0)
@@ -57,16 +55,10 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
     if (p.NBath == 0) 
       throw std::runtime_error("specify either N or NBath!");
     p.N = p.NBath+p.NImp;
-  } 
-  if (p.MPO == "middle" || p.MPO == "middle_2channel") {
-    assert(even(p.NBath));
-    p.impindex = 1+p.NBath/2;
-  } else if (p.MPO == "std" || p.MPO == "Ec" || p.MPO == "Ec_V") {
-    p.impindex = 1;
-  } else
-    throw std::runtime_error("Unknown MPO type");
+  }
+  p.impindex = problem->imp_index(p.NBath);
   std::cout << "N=" << p.N << " NBath=" << p.NBath << " impindex=" << p.impindex << std::endl;
-
+  
   double U = input.getReal("U", 0); // need to parse it first because it enters the default value for epsimp just below
   p.qd = std::make_unique<imp>(U, input.getReal("epsimp", -U/2.), input.getReal("EZ_imp", 0.));
   p.sc = std::make_unique<SCbath>(p.NBath, input.getReal("alpha", 0), input.getReal("Ec", 0), input.getReal("n0", p.N-1), input.getReal("EZ_bulk", 0.));
