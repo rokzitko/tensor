@@ -210,7 +210,7 @@ struct params {
   bool parallel;         // enables openMP parallel calculation of the for loop in findGS()
   bool verbose;          // verbosity level
   bool band_level_shift; // shifts the band levels for a constant in order to make H particle-hole symmetric
-  bool computeEntropy;   // prints von Neumann entropy at the bond between impurity and next site. Works as intended is p.impindex=1.
+//  bool computeEntropy;   // von Neumann entropy at the bond between impurity and next site. Works as intended if p.impindex=1.
   bool printTotSpinZ;    // prints total Nup, Ndn and Sz.
 
   bool impNupNdn;        // print the number of up and dn electrons on the impurity

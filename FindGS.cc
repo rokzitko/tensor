@@ -86,7 +86,7 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   p.parallel = input.getYesNo("parallel", false);
   p.verbose = input.getYesNo("verbose", false);
   p.band_level_shift = input.getYesNo("band_level_shift", false);
-  p.computeEntropy = input.getYesNo("computeEntropy", false);
+//  p.computeEntropy = input.getYesNo("computeEntropy", false);
   p.printTotSpinZ = input.getYesNo("printTotSpinZ", false);
 
   p.impNupNdn = input.getYesNo("impNupNdn", false);
@@ -436,8 +436,8 @@ void MeasurePairing(MPS& psi, auto & file, std::string path, const params &p) {
   auto [r, tot] = calcPairing(psi, p);
   std::cout << "site pairing = " << std::setprecision(full) << r << std::endl;
   Print(tot);
-//  dump(file, path + "/pairing", r);
-//  dump(file, path + "/total_pairing", tot);
+  dumpreal(file, path + "/pairing", r);
+  dumpreal(file, path + "/total_pairing", tot);
 }
 
 // See von Delft, Zaikin, Golubev, Tichy, PRL 77, 3189 (1996)
@@ -462,15 +462,17 @@ void MeasureAmplitudes(MPS& psi, auto & file, std::string path, const params &p)
   auto [r, tot] = calcAmplitudes(psi, p);
   std::cout << "amplitudes vu = " << std::setprecision(full) << r << std::endl;
   Print(tot);
-//  dump(file, path + "/amplitudes", r);
-//  dump(file, path + "/total_amplitude", tot);
+  dumpreal(file, path + "/amplitudes", r);
+  dumpreal(file, path + "/total_amplitude", tot);
 }
 
 // Computed entanglement/von Neumann entropy between the impurity and the system.
 // Copied from https://www.itensor.org/docs.cgi?vers=cppv3&page=formulas/entanglement_mps
-void PrintEntropy(MPS& psi, const params &p){
+// von Neumann entropy at the bond between impurity and next site.
+auto calcEntropy(MPS& psi, const params &p) {
+  assert(p.impindex == 1); // Works as intended only if p.impindex=1.
   psi.position(p.impindex);
-  //SVD this wavefunction to get the spectrum of density-matrix eigenvalues
+  // SVD this wavefunction to get the spectrum of density-matrix eigenvalues
   auto l = leftLinkIndex(psi, p.impindex);
   auto s = siteIndex(psi, p.impindex);
   auto [U,S,V] = svd(psi(p.impindex), {l,s});
@@ -482,7 +484,13 @@ void PrintEntropy(MPS& psi, const params &p){
     auto pp = sqr(Sn);
     if(pp > 1E-12) SvN += -pp*log(pp);
   }
+  return SvN;
+}
+
+void PrintEntropy(MPS& psi, auto & file, std::string path, const params &p) {
+  auto SvN = calcEntropy(psi, p);
   printfln("Entanglement entropy across impurity bond b=%d, SvN = %.10f", p.impindex, SvN);
+  dump(file, path + "/entanglement_entropy_imp", SvN);
 }
 
 //calculates the groundstates and the energies of the relevant particle number sectors
@@ -602,7 +610,7 @@ void calculateAndPrint(InputGroup &input, store &s, params &p) {
       MeasurePairing(GS, file, str(sub, "0"), p);
       MeasureAmplitudes(GS, file, str(sub, "0"), p);
 
-      if (p.computeEntropy) PrintEntropy(GS, p);
+      if (input.getYesNo("computeEntropy", false)) PrintEntropy(GS, file, str(sub, "0"), p);
       if (p.impNupNdn) ImpurityUpDn(GS, p);
       if (p.chargeCorrelation) ChargeCorrelation(GS, p);
       if (p.spinCorrelation) SpinCorrelation(GS, p);
