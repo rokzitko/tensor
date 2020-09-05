@@ -192,56 +192,8 @@ class psi_stats {
    }
 };
 
-class problem_type {
- public:
-   virtual int imp_index(int) = 0;
-   virtual void get_eps_V() = 0;
-};
-
-class imp_first : virtual public problem_type
-{
- public:
-   int imp_index(int) override { return 1; }
-};
-
-class imp_middle : virtual public problem_type
-{
- public:
-   int imp_index(int NBath) override {
-     assert(even(NBath));
-     return 1+NBath/2;
-   }
-};
-
-class single_channel : virtual public problem_type
-{
- public:
-   void get_eps_V() override {};
-};
-
-//class two_channel : virtual public problem_type
-//{
-// public:
-//  void get_eps_V() override {};
-//};
-
-namespace prob {
-   class std : public imp_first, public single_channel {};
-   class Ec : public imp_first, public single_channel {};
-   class Ec_V : public imp_first, public single_channel {};
-   class middle : public imp_middle, public single_channel {};
-   class middle_2channel : public imp_middle, public single_channel {};
-}
-
-inline std::unique_ptr<problem_type> set_problem(std::string str)
-{
-  if (str == "std") return std::make_unique<prob::std>();
-  if (str == "Ec") return std::make_unique<prob::Ec>();
-  if (str == "Ec_V") return std::make_unique<prob::Ec_V>();
-  if (str == "middle") return std::make_unique<prob::middle>();
-  if (str == "middle_2channel") return std::make_unique<prob::middle_2channel>();
-  throw std::runtime_error("Unknown MPO type");
-}
+class problem_type;
+std::unique_ptr<problem_type> set_problem(std::string);
 
 // parameters from the input file
 struct params {
@@ -307,6 +259,67 @@ struct store
   std::map<subspace, eigenpair> eigen0, eigen1; // 0=GS, 1=1st ES, etc.
   std::map<subspace, psi_stats> stats0;
 };
+
+class problem_type {
+ public:
+   virtual int imp_index(int) = 0;
+   virtual std::tuple<MPO, double> initH(int, params &) = 0;
+};
+
+class imp_first : virtual public problem_type
+{
+ public:
+   int imp_index(int) override { return 1; }
+};
+
+class imp_middle : virtual public problem_type
+{
+ public:
+   int imp_index(int NBath) override {
+     assert(even(NBath));
+     return 1+NBath/2;
+   }
+};
+
+class single_channel : virtual public problem_type
+{
+ public:
+   auto get_eps_V(auto & sc, auto & Gamma, params &p) {
+     auto eps0 = sc->eps(p.band_level_shift);
+     auto V0 = Gamma->V(sc->Nbath());
+     if (p.verbose) {
+       std::cout << "eps=" << eps0 << std::endl;
+       std::cout << "V=" << V0 << std::endl;
+     }
+     auto eps = shift1(eps0);
+     auto V = shift1(V0);
+     return std::make_pair(eps, V);
+   }
+};
+
+//class two_channel : virtual public problem_type
+//{
+// public:
+//  void get_eps_V() override {};
+//};
+
+namespace prob {
+   class std : public imp_first, public single_channel {};
+   class Ec : public imp_first, public single_channel {};
+   class Ec_V : public imp_first, public single_channel {};
+   class middle : public imp_middle, public single_channel {};
+   class middle_2channel : public imp_middle, public single_channel {};
+}
+
+inline std::unique_ptr<problem_type> set_problem(std::string str)
+{
+  if (str == "std") return std::make_unique<prob::std>();
+  if (str == "Ec") return std::make_unique<prob::Ec>();
+  if (str == "Ec_V") return std::make_unique<prob::Ec_V>();
+  if (str == "middle") return std::make_unique<prob::middle>();
+  if (str == "middle_2channel") return std::make_unique<prob::middle_2channel>();
+  throw std::runtime_error("Unknown MPO type");
+}
 
 InputGroup parse_cmd_line(int, char * [], params &p);
 void FindGS(InputGroup &input, store &s, params &p);
