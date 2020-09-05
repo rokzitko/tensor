@@ -68,6 +68,7 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   p.chargeCorrelation = input.getYesNo("chargeCorrelation", false);
   p.spinCorrelation = input.getYesNo("spinCorrelation", false);
   p.pairCorrelation = input.getYesNo("pairCorrelation", false);
+  p.hoppingExpectation = input.getYesNo("hoppingExpectation", false);
 
   p.excited_state = input.getYesNo("excited_state", false);
   p.printDimensions = input.getYesNo("printDimensions", false);
@@ -78,7 +79,6 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   p.band_level_shift = input.getYesNo("band_level_shift", false);
   p.printTotSpinZ = input.getYesNo("printTotSpinZ", false);
 
-  p.hoppingExpectation = input.getYesNo("hoppingExpectation", false);
 
   p.EnergyErrgoal = input.getReal("EnergyErrgoal", 1e-16);
   p.nrH = input.getInt("nrH", 5);
@@ -289,40 +289,51 @@ void PairCorrelation(MPS& psi, File & file, std::string path, const params &p) {
 
 //Prints <d^dag c_i + c_i^dag d> for each i. the sum of this expected value, weighted by 1/sqrt(N)
 //gives <d^dag f_0 + f_0^dag d>, where f_0 = 1/sqrt(N) sum_i c_i. This is the expected value of hopping.
-void expectedHopping(MPS& psi, const params &p){
+auto calcexpectedHopping(MPS& psi, const params &p) {
+  assert(p.impindex == 1);
+  std::vector<double> rup, rdn;
+  double totup = 0;
+  double totdn = 0;
   auto impOpUp = op(p.sites, "Cup", p.impindex);
   auto impOpDagUp = op(p.sites, "Cdagup", p.impindex);
   auto impOpDn = op(p.sites, "Cdn", p.impindex);
   auto impOpDagDn = op(p.sites, "Cdagdn", p.impindex);
-  double totup = 0;
-  double totdn = 0;
   // hopping expectation values for spin up
-  std::cout << "hopping spin up = ";
   for (auto j : range1(2, length(psi))){
     auto scDagOp = op(p.sites, "Cdagup", j);
     auto scOp = op(p.sites, "Cup", j);
-    double result = ImpurityCorrelator(psi, impOpUp, j, scDagOp, p);    // <d c_i^dag>
-    double resultdag = ImpurityCorrelator(psi, impOpDagUp, j, scOp, p); // <d^dag c_i>
-    std::cout << std::setprecision(full) << result << " " << resultdag << " ";
-    std::cout << std::setprecision(full) << result+resultdag << " ";
-    totup += result+resultdag;
+    auto result1 = ImpurityCorrelator(psi, impOpUp, j, scDagOp, p); // <d c_i^dag>
+    auto result2 = ImpurityCorrelator(psi, impOpDagUp, j, scOp, p); // <d^dag c_i>
+    auto sum = result1+result2;
+    rup.push_back(sum);
+    totup += sum;
   }
-  std::cout << std::endl;
-  std::cout << "hopping correlation up tot = " << totup << "\n";
-  // hopping expectation values for spin up
-  std::cout << "hopping spin down = ";
+  // hopping expectation values for spin dn
   for (auto j : range1(2, length(psi))){
     auto scDagOp = op(p.sites, "Cdagdn", j);
     auto scOp = op(p.sites, "Cdn", j);
-    double result = ImpurityCorrelator(psi, impOpDn, j, scDagOp, p);    // <d c_i^dag>
-    double resultdag =  ImpurityCorrelator(psi, impOpDagDn, j, scOp, p); // <d^dag c_i>
-    std::cout << std::setprecision(full) << result << " " << resultdag << " ";
-    //std::cout << std::setprecision(full) << result+resultdag << " ";
-    totdn+=result+resultdag;
+    auto result1 = ImpurityCorrelator(psi, impOpDn, j, scDagOp, p);    // <d c_i^dag>
+    auto result2 =  ImpurityCorrelator(psi, impOpDagDn, j, scOp, p); // <d^dag c_i>
+    auto sum = result1+result2;
+    rdn.push_back(sum);
+    totdn += sum;
   }
-  std::cout << std::endl;
-  std::cout << "hopping correlation down tot = " << totdn << "\n";
-  std::cout << "total hopping correlation = " << totup + totdn << "\n";
+  return std::make_tuple(rup, rdn, totup, totdn);
+}
+
+void expectedHopping(MPS& psi, File & file, std::string path, const params &p) {
+  auto [rup, rdn, totup, totdn] = calcexpectedHopping(psi, p);
+  std::cout << "hopping spin up = " << std::setprecision(full) << rup << std::endl;
+  std::cout << "hopping correlation up tot = " << totup << std::endl;
+  std::cout << "hopping spin down = " << std::setprecision(full) << rdn << std::endl;
+  std::cout << "hopping correlation down tot = " << totdn << std::endl;
+  auto tot = totup+totdn;
+  std::cout << "total hopping correlation = " << tot << std::endl;
+  dump(file, path + "/hopping/up", rup);
+  dump(file, path + "/hopping/dn", rdn);
+  dump(file, path + "/hopping_total_up", totup);
+  dump(file, path + "/hopping_total_dn", totdn);
+  dump(file, path + "/hopping_total", tot);
 }
 
 //prints the occupation number Nup and Ndn at the impurity
@@ -586,7 +597,7 @@ void calculateAndPrint(InputGroup &input, store &s, params &p) {
       if (p.chargeCorrelation) ChargeCorrelation(GS, file, path0, p);
       if (p.spinCorrelation) SpinCorrelation(GS, file, path0, p);
       if (p.pairCorrelation) PairCorrelation(GS, file, path0, p);
-      if (p.hoppingExpectation) expectedHopping(GS, p);
+      if (p.hoppingExpectation) expectedHopping(GS, file, path0, p);
       if (p.printTotSpinZ) TotalSpinz(GS, p);
       //various measures of convergence (energy deviation, residual value)
       printfln("Eigenvalue(bis): <GS|H|GS> = %.17g", s.stats0[sub].Ebis());
