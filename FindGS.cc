@@ -118,10 +118,10 @@ inline auto shift1(const std::vector<double> &a) {
   return b;
 }
 
-inline auto get_eps_V(bool shift, int Nbath, params &p)
+inline auto get_eps_V(auto & sc, auto & Gamma, params &p)
 {
-  auto eps0 = p.sc->eps(shift);
-  auto V0 = p.Gamma->V(Nbath);
+  auto eps0 = sc->eps(p.band_level_shift);
+  auto V0 = Gamma->V(sc->Nbath());
   if (p.verbose) {
     std::cout << "eps=" << eps0 << std::endl;
     std::cout << "V=" << V0 << std::endl;
@@ -132,7 +132,7 @@ inline auto get_eps_V(bool shift, int Nbath, params &p)
 }
 
 std::tuple<MPO, double> initH(int ntot, params &p){
-  auto [eps, V] = get_eps_V(p.band_level_shift, p.sc->Nbath(), p);
+  auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
   double Eshift = 0;  // constant term in the Hamiltonian
   MPO H(p.sites); // MPO is the hamiltonian in the "MPS-form"
   if (p.MPO == "std") {
