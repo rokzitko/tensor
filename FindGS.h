@@ -57,6 +57,12 @@ template <typename T>
     return out;
   }
 
+template <typename U, typename V>
+  std::ostream& operator<< (std::ostream& out, const std::pair<U,V>& v) {
+    out << v.first << "," << v.second;
+    return out;
+  }
+
 // Class containing impurity parameters
 class imp {
  private:

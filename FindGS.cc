@@ -213,24 +213,6 @@ MPS initPsi(int ntot, float Sz, const auto &sites, int impindex, bool randomMPSb
   return psi;
 }
 
-//calculates <psi1|c_dag|psi2>, according to http://itensor.org/docs.cgi?vers=cppv3&page=formulas/mps_onesite_op
-void ExpectationValueAddEl(MPS psi1, MPS psi2, std::string spin, const params &p){
-  psi2.position(p.impindex); //set orthogonality center
-  auto newTensor = noPrime(op(p.sites,"Cdag"+spin, p.impindex)*psi2(p.impindex)); //apply the local operator
-  psi2.set(p.impindex,newTensor); //plug in the new tensor, with the operator applied
-  auto res = inner(psi1, psi2);
-  std::cout << "weight w+ " << spin << ": " << res << "\n";
-}
-
-//calculates <psi1|c|psi2>
-void ExpectationValueTakeEl(MPS psi1, MPS psi2, std::string spin, const params &p){
-  psi2.position(p.impindex);
-  auto newTensor = noPrime(op(p.sites,"C"+spin, p.impindex)*psi2(p.impindex));
-  psi2.set(p.impindex,newTensor);
-  auto res = inner(psi1, psi2);
-  std::cout << "weight w- " << spin << ": " << res << "\n";
-}
-
 //computes the correlation between operator impOp on impurity and operator opj on j
 double ImpurityCorrelator(MPS& psi, auto impOp, int j, auto opj, const params &p){
   psi.position(p.impindex);
@@ -516,69 +498,72 @@ void FindGS(InputGroup &input, store &s, params &p){
     auto sub = p.iterateOver[i];
     auto [ntot, Sz] = sub;
     std::cout << "\nSweeping in the sector with " << ntot << " particles, Sz = " << Sz << std::endl;
-
-    //initialize H and psi
     auto [H, Eshift] = initH(ntot, p);
     auto psi_init = initPsi(ntot, Sz, p.sites, p.impindex, input.getYesNo("randomMPS", false)); 
-
-    Args args; //args is used to store and transport parameters between various functions
-
-    //Apply the MPO a couple of times to get DMRG started, otherwise it might not converge.
+    Args args; // args is used to store and transport parameters between various functions
+    // Apply the MPO a couple of times to get DMRG started, otherwise it might not converge.
     for(auto i : range1(p.nrH)){
       psi_init = applyMPO(H,psi_init,args);
       psi_init.noPrime().normalize();
     }
-
-    auto [E, psi] = dmrg(H,psi_init,sweeps,{"Silent",p.parallel, "Quiet",!p.printDimensions, "EnergyErrgoal",p.EnergyErrgoal}); // call itensor dmrg
+    auto [E, psi] = dmrg(H, psi_init, sweeps, {"Silent", p.parallel, 
+                                               "Quiet", !p.printDimensions, 
+                                               "EnergyErrgoal", p.EnergyErrgoal});
     double GSenergy = E+Eshift;
     s.eigen0[sub] = eigenpair(GSenergy, psi);
     s.stats0[sub] = psi_stats(E, psi, H);
-
     if (p.excited_state) {
       auto wfs = std::vector<MPS>(1);
       wfs.at(0) = psi;
-      auto [E1, psi1] = dmrg(H,wfs,psi,sweeps,{"Silent",p.parallel,"Quiet",true,"Weight",11.0});
+      auto [E1, psi1] = dmrg(H, wfs, psi, sweeps, {"Silent", p.parallel,
+                                                   "Quiet", true,
+                                                   "Weight", 11.0});
       double ESenergy = E1+Eshift;
       s.eigen1[sub] = eigenpair(ESenergy, psi1);
     }
   }
-}//end FindGS
+}
 
-void calculate_spectral_weights(store &s, subspace subGS, params &p) {
+// calculates <psi1|c_dag|psi2>, according to http://itensor.org/docs.cgi?vers=cppv3&page=formulas/mps_onesite_op
+auto ExpectationValueAddEl(MPS psi1, MPS psi2, std::string spin, const params &p){
+  psi2.position(p.impindex);                                                      // set orthogonality center
+  auto newTensor = noPrime(op(p.sites,"Cdag"+spin, p.impindex)*psi2(p.impindex)); // apply the local operator
+  psi2.set(p.impindex,newTensor);                                                 // plug in the new tensor, with the operator applied
+  return inner(psi1, psi2);
+}
+
+// calculates <psi1|c|psi2>
+auto ExpectationValueTakeEl(MPS psi1, MPS psi2, std::string spin, const params &p){
+  psi2.position(p.impindex);
+  auto newTensor = noPrime(op(p.sites,"C"+spin, p.impindex)*psi2(p.impindex));
+  psi2.set(p.impindex,newTensor);
+  return inner(psi1, psi2);
+}
+
+void calc_weight(store &s, subspace subGS, subspace subES, int q, std::string sz, auto & file, params &p)
+{
+  double res;
   MPS & psiGS = s.eigen0[subGS].psi();
-  auto [N_GS, Sz_GS] = subGS;
+  if (s.eigen0.find(subES) != s.eigen0.end()) {
+    MPS & psiES = s.eigen0[subES].psi();
+    res = (q == +1 ? ExpectationValueAddEl(psiES, psiGS, sz, p) : ExpectationValueTakeEl(psiES, psiGS, sz, p));
+    std::cout << "weight w" << (q == +1 ? "+" : "-") << " " << sz << ": " << res << std::endl;
+  } else {
+    res = std::numeric_limits<double>::quiet_NaN();
+    std::cout <<  "ERROR: we don't have info about the sector " << subES << std::endl;
+  }
+  dump(file, "weights/" + std::to_string(q) + "/" + sz, res);
+}
 
+void calculate_spectral_weights(store &s, subspace subGS, auto & file, params &p) {
   printfln(""); 
   printfln("Spectral weights:");
   printfln("(Spectral weight is the square of the absolute value of the number.)");
-
-  auto cp = subspace(N_GS+1, Sz_GS+0.5);
-  if (s.eigen0.find(cp) != s.eigen0.end()) { // if the N_GS+1 state was computed, print the <N+1|c^dag|N> terms
-    MPS & psiNp = s.eigen0[cp].psi();
-    ExpectationValueAddEl(psiNp, psiGS, "up", p);
-  }  
-  else printfln("ERROR: we don't have info about the N_GS+1, Sz_GS+0.5 occupancy sector.");
-
-  auto cm = subspace(N_GS+1, Sz_GS-0.5);
-  if (s.eigen0.find(cm) != s.eigen0.end()) { // if the N_GS+1 state was computed, print the <N+1|c^dag|N> terms
-    MPS & psiNp = s.eigen0[cm].psi();
-    ExpectationValueAddEl(psiNp, psiGS, "dn", p);
-  }  
-  else printfln("ERROR: we don't have info about the N_GS+1, Sz_GS-0.5 occupancy sector.");
-
-  auto am = subspace(N_GS-1, Sz_GS-0.5);
-  if (s.eigen0.find(am) != s.eigen0.end()) { // if the N_GS-1 state was computed, print the <N-1|c|N> terms
-    MPS & psiNm = s.eigen0[am].psi();
-    ExpectationValueTakeEl(psiNm, psiGS, "up", p);
-  }
-  else printfln("ERROR: we don't have info about the N_GS-1, Sz_GS+0.5 occupancy sector.");
-  
-  auto ap = subspace(N_GS-1, Sz_GS+0.5);
-  if (s.eigen0.find(ap) != s.eigen0.end()) { // if the N_GS-1 state was computed, print the <N-1|c|N> terms
-    MPS & psiNm = s.eigen0[ap].psi();
-    ExpectationValueTakeEl(psiNm, psiGS, "dn", p);
-  }
-  else printfln("ERROR: we don't have info about the N_GS-1, Sz_GS-0.5 occupancy sector.");
+  auto [N_GS, Sz_GS] = subGS;
+  calc_weight(s, subGS, subspace(N_GS+1, Sz_GS+0.5), +1, "up", file, p);
+  calc_weight(s, subGS, subspace(N_GS+1, Sz_GS-0.5), +1, "dn", file, p);
+  calc_weight(s, subGS, subspace(N_GS-1, Sz_GS-0.5), -1, "up", file, p);
+  calc_weight(s, subGS, subspace(N_GS-1, Sz_GS+0.5), -1, "dn", file, p);
 }
 
 void print_energies(store &s, params &p) {
@@ -616,11 +601,9 @@ void calculateAndPrint(InputGroup &input, store &s, params &p) {
       printfln("\n\nRESULTS FOR THE SECTOR WITH %i PARTICLES, Sz %i:", ntot, Sz);
       printfln("Ground state energy = %.17g", E);
       printfln("norm = %.17g", s.stats0[sub].norm());
-
       MeasureOcc(GS, file, str(sub, "0"), p);
       MeasurePairing(GS, file, str(sub, "0"), p);
       MeasureAmplitudes(GS, file, str(sub, "0"), p);
-
       if (p.computeEntropy) PrintEntropy(GS, file, str(sub, "0"), p);
       if (p.impNupNdn) ImpurityUpDn(GS, file, str(sub, "0"), p);
       if (p.chargeCorrelation) ChargeCorrelation(GS, p);
@@ -628,14 +611,12 @@ void calculateAndPrint(InputGroup &input, store &s, params &p) {
       if (p.pairCorrelation) PairCorrelation(GS, p);
       if (p.hoppingExpectation) expectedHopping(GS, p);
       if (p.printTotSpinZ) TotalSpinz(GS, p);
-
       //various measures of convergence (energy deviation, residual value)
       printfln("Eigenvalue(bis): <GS|H|GS> = %.17g", s.stats0[sub].Ebis());
       printfln("diff: E_GS - <GS|H|GS> = %.17g", E-s.stats0[sub].Ebis()); // TODO: remove this
       printfln("deltaE: sqrt(<GS|H^2|GS> - <GS|H|GS>^2) = %.17g", s.stats0[sub].deltaE());
       printfln("residuum: <GS|H|GS> - E_GS*<GS|GS> = %.17g", s.stats0[sub].residuum());
       s.stats0[sub].dump(file, str(sub, "0"));
-
       if (p.excited_state){
         double E1 = s.eigen1[sub].E();
         MPS & ES = s.eigen1[sub].psi();
@@ -645,10 +626,8 @@ void calculateAndPrint(InputGroup &input, store &s, params &p) {
        }
     } //end of Sz for loop 
   } //end of ntot for loop
-
   print_energies(s, p);
-
   subspace subGS = find_global_GS_subspace(s);
   if (p.calcweights) 
-    calculate_spectral_weights(s, subGS, p);
+    calculate_spectral_weights(s, subGS, file, p);
 }
