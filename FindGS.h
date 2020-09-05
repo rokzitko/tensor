@@ -216,24 +216,25 @@ struct params {
   int NBath;            // number of bath sites
   int NImp;             // number of impurity orbitals
   int impindex;         // impurity position in the chain (1 based)
-
+   
   Hubbard sites;        // itensor object
 
   // all bools have default value false
   bool computeEntropy;   // von Neumann entropy at the bond between impurity and next site. Works as intended if p.impindex=1.
   bool impNupNdn;        // print the number of up and dn electrons on the impurity
+  bool chargeCorrelation;// compute the impurity-superconductor correlation <n_imp n_i>
 
-  bool excited_state;    // computes the first excited state
-  bool printDimensions;  // prints dmrg() prints info during the sweep
   bool calcweights;      // calculates the spectral weights of the two closes spectroscopically availabe excitations
+  bool excited_state;    // computes the first excited state
+   
+  bool printDimensions;  // prints dmrg() prints info during the sweep
   bool refisn0;          // the energies will be computed in the sectors centered around the one with n = round(n0) + 1
   bool parallel;         // enables openMP parallel calculation of the for loop in findGS()
   bool verbose;          // verbosity level
   bool band_level_shift; // shifts the band levels for a constant in order to make H particle-hole symmetric
+
   bool printTotSpinZ;    // prints total Nup, Ndn and Sz.
 
-
-  bool chargeCorrelation;// compute the impurity-superconductor correlation <n_imp n_i>
   bool pairCorrelation;  // compute the impurity-superconductor correlation <d d c_i^dag c_i^dag>
   bool spinCorrelation;  // compute the impurity-superconductor correlation <S_imp S_i>
   bool hoppingExpectation;//compute the hopping expectation value 1/sqrt(N) \sum_sigma \sum_i <d^dag c_i> + <c^dag_i d>

@@ -65,6 +65,7 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
 
   p.computeEntropy = input.getYesNo("computeEntropy", false);
   p.impNupNdn = input.getYesNo("impNupNdn", false);
+  p.chargeCorrelation = input.getYesNo("chargeCorrelation", false);
 
   p.excited_state = input.getYesNo("excited_state", false);
   p.printDimensions = input.getYesNo("printDimensions", false);
@@ -75,7 +76,6 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   p.band_level_shift = input.getYesNo("band_level_shift", false);
   p.printTotSpinZ = input.getYesNo("printTotSpinZ", false);
 
-  p.chargeCorrelation = input.getYesNo("chargeCorrelation", false);
   p.pairCorrelation = input.getYesNo("pairCorrelation", false);
   p.spinCorrelation = input.getYesNo("spinCorrelation", false);
   p.hoppingExpectation = input.getYesNo("hoppingExpectation", false);
@@ -174,18 +174,26 @@ double ImpurityCorrelator(MPS& psi, auto impOp, int j, auto opj, const params &p
 //according to: http://www.itensor.org/docs.cgi?vers=cppv3&page=formulas/correlator_mps
 
 // <n_imp n_i>
-void ChargeCorrelation(MPS& psi, const params &p){
-  std::cout << "charge correlation = ";
-  auto impOp = op(p.sites, "Ntot", p.impindex);
+auto calcChargeCorrelation(MPS& psi, const params &p) {
+  assert(p.impindex == 1); // impurity assumed to be at the 1st position
+  std::vector<double> r;
   double tot = 0;
-  for(auto j: range1(2, length(psi))) {
+  auto impOp = op(p.sites, "Ntot", p.impindex);
+  for (auto j: range1(2, length(psi))) {
     auto scOp = op(p.sites, "Ntot", j);
     double result = ImpurityCorrelator(psi, impOp, j, scOp, p);
-    std::cout << std::setprecision(full) << result << " ";
+    r.push_back(result);
     tot += result;
   }
-  std::cout << std::endl;
-  std::cout << "charge correlation tot = " << tot << "\n"; 
+  return std::make_pair(r, tot);
+}
+
+void ChargeCorrelation(MPS& psi, auto & file, std::string path, const params &p) {
+  auto [r, tot] = calcChargeCorrelation(psi, p);
+  std::cout << "charge correlation = " << std::setprecision(full) << r << std::endl;
+  std::cout << "charge correlation tot = " << tot << std::endl;
+  dump(file, path + "/charge_correlation", r);
+  dump(file, path + "/charge_correlation_total", tot);
 }
 
 // <S_imp S_i> = <Sz_imp Sz_i> + 1/2 ( <S+_imp S-_i> + <S-_imp S+_i> )
@@ -540,12 +548,13 @@ void calculateAndPrint(InputGroup &input, store &s, params &p) {
       printfln("\n\nRESULTS FOR THE SECTOR WITH %i PARTICLES, Sz %i:", ntot, Sz);
       printfln("Ground state energy = %.17g", E);
       printfln("norm = %.17g", s.stats0[sub].norm());
-      MeasureOcc(GS, file, str(sub, "0"), p);
-      MeasurePairing(GS, file, str(sub, "0"), p);
-      MeasureAmplitudes(GS, file, str(sub, "0"), p);
-      if (p.computeEntropy) PrintEntropy(GS, file, str(sub, "0"), p);
-      if (p.impNupNdn) ImpurityUpDn(GS, file, str(sub, "0"), p);
-      if (p.chargeCorrelation) ChargeCorrelation(GS, p);
+      auto path0 = str(sub, "0");
+      MeasureOcc(GS, file, path0, p);
+      MeasurePairing(GS, file, path0, p);
+      MeasureAmplitudes(GS, file, path0, p);
+      if (p.computeEntropy) PrintEntropy(GS, file, path0, p);
+      if (p.impNupNdn) ImpurityUpDn(GS, file, path0, p);
+      if (p.chargeCorrelation) ChargeCorrelation(GS, file, path0, p);
       if (p.spinCorrelation) SpinCorrelation(GS, p);
       if (p.pairCorrelation) PairCorrelation(GS, p);
       if (p.hoppingExpectation) expectedHopping(GS, p);
@@ -555,7 +564,7 @@ void calculateAndPrint(InputGroup &input, store &s, params &p) {
       printfln("diff: E_GS - <GS|H|GS> = %.17g", E-s.stats0[sub].Ebis()); // TODO: remove this
       printfln("deltaE: sqrt(<GS|H^2|GS> - <GS|H|GS>^2) = %.17g", s.stats0[sub].deltaE());
       printfln("residuum: <GS|H|GS> - E_GS*<GS|GS> = %.17g", s.stats0[sub].residuum());
-      s.stats0[sub].dump(file, str(sub, "0"));
+      s.stats0[sub].dump(file, path0);
       if (p.excited_state){
         double E1 = s.eigen1[sub].E();
         MPS & ES = s.eigen1[sub].psi();
