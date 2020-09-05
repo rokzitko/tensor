@@ -22,6 +22,8 @@ using namespace H5Easy;
 
 using namespace itensor;
 
+using complex_t = std::complex<double>;
+
 inline bool even(int i) { return i%2 == 0; }
 inline bool odd(int i) { return i%2 != 0; }
 

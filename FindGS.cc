@@ -407,35 +407,43 @@ auto calcOcc(MPS &psi, const params &p) {
 void MeasureOcc(MPS& psi, auto & file, std::string path, const params &p) {
   auto r = calcOcc(psi, p);
   std::cout << "site occupancies = " << std::setprecision(17) << r << std::endl;
-  dump(file, path + "/site_occupancies", r);
   auto tot = std::accumulate(r.begin(), r.end(), 0.0);
-  dump(file, path + "/total_occupancy", tot);
   Print(tot);
+  dump(file, path + "/site_occupancies", r);
+  dump(file, path + "/total_occupancy", tot);
 }
 
 // The sum (tot) corresponds to \bar{\Delta}', Eq. (4) in Braun, von Delft, PRB 50, 9527 (1999), first proposed by Dan Ralph.
 // It reduces to Delta_BCS in the thermodynamic limit (if the impurity is decoupled, Gamma=0).
-// For Gamma>0, there is no guarantee that all values 'sq' are real, because the expr <C+CC+C>-<C+C><C+C> may be negative.
-void MeasurePairing(MPS& psi, const params &p){
-  std::cout << "site pairing = ";
-  std::complex<double> tot = 0;
+auto calcPairing(MPS &psi, const params &p) {
+  std::vector<complex_t> r;
+  complex_t tot = 0;
   for(auto i : range1(length(psi))){
     psi.position(i);
     auto val2  = psi.A(i) * p.sites.op("Cdagup*Cup*Cdagdn*Cdn", i) * dag(prime(psi.A(i),"Site"));
     auto val1u = psi.A(i) * p.sites.op("Cdagup*Cup", i) * dag(prime(psi.A(i),"Site"));
     auto val1d = psi.A(i) * p.sites.op("Cdagdn*Cdn", i) * dag(prime(psi.A(i),"Site"));
-    auto sq = p.sc->g() * sqrt( val2.cplx() - val1u.cplx() * val1d.cplx() );
-    std::cout << std::setprecision(17) << sq << " ";
+    // For Gamma>0, <C+CC+C>-<C+C><C+C> may be negative.
+    auto diff = val2.cplx() - val1u.cplx() * val1d.cplx();
+    auto sq = p.sc->g() * sqrt(diff);
+    r.push_back(sq);
     if (i != p.impindex) tot += sq; // exclude the impurity site in the sum
   }
-  std::cout << std::endl;
+  return std::make_pair(r, tot);
+}
+    
+void MeasurePairing(MPS& psi, auto & file, std::string path, const params &p) {
+  auto [r, tot] = calcPairing(psi, p);
+  std::cout << "site pairing = " << std::setprecision(17) << r << std::endl;
   Print(tot);
+//  dump(file, path + "/pairing", r);
+//  dump(file, path + "/total_pairing", tot);
 }
 
 // See von Delft, Zaikin, Golubev, Tichy, PRL 77, 3189 (1996)
 void MeasureAmplitudes(MPS& psi, const params &p){
   std::cout << "amplitudes vu = ";
-  std::complex<double> tot = 0;
+  complex_t tot = 0;
   for(auto i : range1(length(psi)) ){
     psi.position(i);
     auto valv = psi.A(i) * p.sites.op("Cdagup*Cdagdn*Cdn*Cup", i) * dag(prime(psi.A(i),"Site"));
@@ -574,17 +582,17 @@ auto find_global_GS_subspace(store &s) {
 void calculateAndPrint(InputGroup &input, store &s, params &p) {
   File file("solution.h5", File::Overwrite);
   for(auto ntot: p.numPart) {
-    for (double Sz:p.Szs[ntot]) {
+    for (double Sz: p.Szs[ntot]) {
       auto sub = subspace(ntot, Sz);
       auto E = s.eigen0[sub].E();
       dump(file, str(sub, "0/E"), E);
       MPS & GS = s.eigen0[sub].psi();
       printfln("\n\nRESULTS FOR THE SECTOR WITH %i PARTICLES, Sz %i:", ntot, Sz);
       printfln("Ground state energy = %.17g", E);
-      printfln("norm = %.17g", s.stats0[sub].norm()); // TODO: move below
-      //occupancy; site pairing; v and u amplitudes 
+      printfln("norm = %.17g", s.stats0[sub].norm());
+
       MeasureOcc(GS, file, str(sub, "0"), p);
-      MeasurePairing(GS, p);
+      MeasurePairing(GS, file, str(sub, "0"), p);
       MeasureAmplitudes(GS, p);
 
       if (p.computeEntropy) PrintEntropy(GS, p);
@@ -603,9 +611,11 @@ void calculateAndPrint(InputGroup &input, store &s, params &p) {
       s.stats0[sub].dump(file, str(sub, "0"));
 
       if (p.excited_state){
+        double E1 = s.eigen1[sub].E();
         MPS & ES = s.eigen1[sub].psi();
+        dump(file, str(sub, "1/E"), E1);
         MeasureOcc(ES, file, str(sub, "1"), p);
-        printfln("Excited state energy = %.17g", s.eigen1[sub].E());
+        printfln("Excited state energy = %.17g", E1);
        }
     } //end of Sz for loop 
   } //end of ntot for loop
