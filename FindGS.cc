@@ -1,11 +1,5 @@
 #include "FindGS.h"
 
-#include "SC_BathMPO.h"
-#include "SC_BathMPO_MiddleImp.h"
-#include "SC_BathMPO_Ec.h"
-#include "SC_BathMPO_Ec_V.h"
-#include "SC_BathMPO_MiddleImp_TwoChannel.h"
-
 // Make an array centered at nref
 auto n_list(int nref, int nrange) {
   std::vector<int> n;
@@ -110,14 +104,6 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   return input;
 }
 
-inline auto shift1(const std::vector<double> &a) {
-  std::vector<double> b;
-  b.push_back(std::numeric_limits<double>::quiet_NaN());
-  for(const auto & x: a)
-    b.push_back(x);
-  return b;
-}
-
 inline auto get_eps_V(auto & sc, auto & Gamma, params &p)
 {
   auto eps0 = sc->eps(p.band_level_shift);
@@ -159,8 +145,7 @@ std::tuple<MPO, double> initH(int ntot, params &p){
   } else if (p.MPO == "middle_2channel") {
     Eshift = p.Ec1*pow(p.n01, 2) + p.Ec2*pow(p.n02, 2);
     Fill_SCBath_MPO_MiddleImp_TwoChannel(H, eps, V, p);
-  } else
-    throw std::runtime_error("Unknown MPO type " + p.MPO);
+  }
   Eshift += p.qd->U()/2.; // RZ, for convenience
   return std::make_tuple(H, Eshift);
 }
@@ -498,7 +483,7 @@ void FindGS(InputGroup &input, store &s, params &p){
     auto sub = p.iterateOver[i];
     auto [ntot, Sz] = sub;
     std::cout << "\nSweeping in the sector with " << ntot << " particles, Sz = " << Sz << std::endl;
-    auto [H, Eshift] = initH(ntot, p);
+    auto [H, Eshift] = p.problem->initH(ntot, p);
     auto psi_init = initPsi(ntot, Sz, p.sites, p.impindex, input.getYesNo("randomMPS", false)); 
     Args args; // args is used to store and transport parameters between various functions
     // Apply the MPO a couple of times to get DMRG started, otherwise it might not converge.
