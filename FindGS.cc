@@ -68,7 +68,6 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   p.sc2 = std::make_unique<SCbath>(p.NBath, input.getReal("alpha2", 0), input.getReal("Ec2", 0), input.getReal("n02", (p.N-1)/2), input.getReal("EZ_bulk2", 0));
   p.Gamma1 = std::make_unique<hyb>(input.getReal("gamma1", 0));
   p.Gamma2 = std::make_unique<hyb>(input.getReal("gamma2", 0));
-  p.SCSCinteraction = input.getReal("SCSCinteraction", 0);
 
   // parameters controlling the calculation targets
   p.nrange = input.getInt("nrange", 1);
@@ -99,10 +98,10 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
 // Initialize the MPS in a product state with ntot electrons.
 // Sz is the spin of the electron on the impurity site.
 MPS initPsi(int ntot, float Sz, const auto &sites, int impindex, bool randomMPSb) {
-  assert(ntot >= 0);
-  assert(Sz == -0.5 || Sz == 0 || Sz == +0.5);
-  int tot = 0;   // electron counter, for assertion test
-  int SZtot = 0; // SZ counter, for assertion test
+  my_assert(ntot >= 0);
+  my_assert(Sz == -0.5 || Sz == 0 || Sz == +0.5);
+  int tot = 0;      // electron counter, for assertion test
+  double SZtot = 0; // SZ counter, for assertion test
   auto state = InitState(sites);
   // ** Add electron to the impurity site
   if (ntot > 0) {
@@ -129,23 +128,26 @@ MPS initPsi(int ntot, float Sz, const auto &sites, int impindex, bool randomMPSb
         tot += 2;            // SZtot does not change!
       }
     if (odd(nsc)) {          // if ncs is odd (implies even ntot and sz=0), add spin-down electron
-      if (i == impindex) 
+      if (i == impindex)
         i++;
       state.set(i,"Dn");
       SZtot -= 0.5;
       tot++;
     }
   }
-  assert(tot == n);
-  assert(SZtot == Sz);
+  std::cout << "tot=" << tot << " SZtot=" << SZtot << std::endl;
+  std::cout << "ntot=" << ntot << " SZ=" << Sz << std::endl;
+  my_assert(tot == ntot);
+  my_assert(SZtot == Sz);
   MPS psi(state);
-  if (randomMPSb) 
+  if (randomMPSb)
     psi = randomMPS(state);
   return psi;
 }
 
-//computes the correlation between operator impOp on impurity and operator opj on j
-double ImpurityCorrelator(MPS& psi, auto impOp, int j, auto opj, const params &p){
+// computes the correlation between operator impOp on impurity and operator opj on j
+double ImpurityCorrelator(MPS& psi, auto impOp, int j, auto opj, const params &p) {
+  my_assert(p.impindex == 1); // !!!
   psi.position(p.impindex);
   MPS psidag = dag(psi);
   psidag.prime("Link");
@@ -167,15 +169,16 @@ double ImpurityCorrelator(MPS& psi, auto impOp, int j, auto opj, const params &p
 
 // <n_imp n_i>
 auto calcChargeCorrelation(MPS& psi, const params &p) {
-  assert(p.impindex == 1); // impurity assumed to be at the 1st position
   std::vector<double> r;
   double tot = 0;
   auto impOp = op(p.sites, "Ntot", p.impindex);
-  for (auto j: range1(2, length(psi))) {
-    auto scOp = op(p.sites, "Ntot", j);
-    double result = ImpurityCorrelator(psi, impOp, j, scOp, p);
-    r.push_back(result);
-    tot += result;
+  for (auto j: range1(1, length(psi))) {
+    if (j != p.impindex) { // skip impurity site!
+      auto scOp = op(p.sites, "Ntot", j);
+      double result = ImpurityCorrelator(psi, impOp, j, scOp, p);
+      r.push_back(result);
+      tot += result;
+    }
   }
   return std::make_pair(r, tot);
 }
@@ -190,7 +193,6 @@ void ChargeCorrelation(MPS& psi, auto & file, std::string path, const params &p)
 
 // <S_imp S_i> = <Sz_imp Sz_i> + 1/2 ( <S+_imp S-_i> + <S-_imp S+_i> )
 auto calcSpinCorrelation(MPS& psi, const params &p) {
-  assert(p.impindex == 1);
   std::vector<double> rzz, rpm, rmp;
   //squares of the impurity operators; for on-site terms
   double tot = 0;
@@ -205,33 +207,39 @@ auto calcSpinCorrelation(MPS& psi, const params &p) {
   //on site term
   auto onSiteSzSz = elt(psi(p.impindex) * SzSz *  dag(prime(psi(p.impindex),"Site")));
   tot += onSiteSzSz;
-  for(auto j: range1(2, length(psi))) {
-    auto scSz = 0.5*( op(p.sites, "Nup", j) - op(p.sites, "Ndn", j) );
-    auto result = ImpurityCorrelator(psi, impSz, j, scSz, p);
-    rzz.push_back(result);
-    tot += result;
+  for(auto j: range1(1, length(psi))) {
+    if (j != p.impindex) {
+      auto scSz = 0.5*( op(p.sites, "Nup", j) - op(p.sites, "Ndn", j) );
+      auto result = ImpurityCorrelator(psi, impSz, j, scSz, p);
+      rzz.push_back(result);
+      tot += result;
+    }
   }
   //S+S- term
   psi.position(p.impindex);
   //on site term
   auto onSiteSpSm = elt(psi(p.impindex) * op(p.sites, "Cdagup*Cdn*Cdagdn*Cup", p.impindex) * dag(prime(psi(p.impindex),"Site")));
   tot += 0.5*onSiteSpSm; 
-  for(auto j: range1(2, length(psi))) {
-    auto scSm = op(p.sites, "Cdagdn*Cup", j);
-    auto result = ImpurityCorrelator(psi, impSp, j, scSm, p);
-    rpm.push_back(result);
-    tot += 0.5*result;
+  for(auto j: range1(1, length(psi))) {
+    if (j != p.impindex) {
+      auto scSm = op(p.sites, "Cdagdn*Cup", j);
+      auto result = ImpurityCorrelator(psi, impSp, j, scSm, p);
+      rpm.push_back(result);
+      tot += 0.5*result;
+    }
   }
   //S- S+ term
   psi.position(p.impindex);
   //on site term
   auto onSiteSmSp = elt(psi(p.impindex) * op(p.sites, "Cdagdn*Cup*Cdagup*Cdn", p.impindex) * dag(prime(psi(p.impindex),"Site")));
   tot += 0.5*onSiteSmSp; 
-  for(auto j: range1(2, length(psi))) {
-    auto scSp = op(p.sites, "Cdagup*Cdn", j);
-    auto result = ImpurityCorrelator(psi, impSm, j, scSp, p);
-    rmp.push_back(result);
-    tot += 0.5*result;
+  for(auto j: range1(1, length(psi))) {
+    if (j != p.impindex) {
+      auto scSp = op(p.sites, "Cdagup*Cdn", j);
+      auto result = ImpurityCorrelator(psi, impSm, j, scSp, p);
+      rmp.push_back(result);
+      tot += 0.5*result;
+    }
   }
   return std::make_tuple(onSiteSzSz, onSiteSpSm, onSiteSmSp, rzz, rpm, rmp, tot);
 }
@@ -282,7 +290,6 @@ void PairCorrelation(MPS& psi, File & file, std::string path, const params &p) {
 //Prints <d^dag c_i + c_i^dag d> for each i. the sum of this expected value, weighted by 1/sqrt(N)
 //gives <d^dag f_0 + f_0^dag d>, where f_0 = 1/sqrt(N) sum_i c_i. This is the expected value of hopping.
 auto calcexpectedHopping(MPS& psi, const params &p) {
-  assert(p.impindex == 1);
   std::vector<double> rup, rdn;
   double totup = 0;
   double totdn = 0;
@@ -291,24 +298,28 @@ auto calcexpectedHopping(MPS& psi, const params &p) {
   auto impOpDn = op(p.sites, "Cdn", p.impindex);
   auto impOpDagDn = op(p.sites, "Cdagdn", p.impindex);
   // hopping expectation values for spin up
-  for (auto j : range1(2, length(psi))){
-    auto scDagOp = op(p.sites, "Cdagup", j);
-    auto scOp = op(p.sites, "Cup", j);
-    auto result1 = ImpurityCorrelator(psi, impOpUp, j, scDagOp, p); // <d c_i^dag>
-    auto result2 = ImpurityCorrelator(psi, impOpDagUp, j, scOp, p); // <d^dag c_i>
-    auto sum = result1+result2;
-    rup.push_back(sum);
-    totup += sum;
+  for (auto j : range1(1, length(psi))) {
+    if (j != p.impindex) {
+      auto scDagOp = op(p.sites, "Cdagup", j);
+      auto scOp = op(p.sites, "Cup", j);
+      auto result1 = ImpurityCorrelator(psi, impOpUp, j, scDagOp, p); // <d c_i^dag>
+      auto result2 = ImpurityCorrelator(psi, impOpDagUp, j, scOp, p); // <d^dag c_i>
+      auto sum = result1+result2;
+      rup.push_back(sum);
+      totup += sum;
+    }
   }
   // hopping expectation values for spin dn
-  for (auto j : range1(2, length(psi))){
-    auto scDagOp = op(p.sites, "Cdagdn", j);
-    auto scOp = op(p.sites, "Cdn", j);
-    auto result1 = ImpurityCorrelator(psi, impOpDn, j, scDagOp, p);    // <d c_i^dag>
-    auto result2 =  ImpurityCorrelator(psi, impOpDagDn, j, scOp, p); // <d^dag c_i>
-    auto sum = result1+result2;
-    rdn.push_back(sum);
-    totdn += sum;
+  for (auto j : range1(1, length(psi))) {
+    if (j != p.impindex) {
+      auto scDagOp = op(p.sites, "Cdagdn", j);
+      auto scOp = op(p.sites, "Cdn", j);
+      auto result1 = ImpurityCorrelator(psi, impOpDn, j, scDagOp, p);    // <d c_i^dag>
+      auto result2 =  ImpurityCorrelator(psi, impOpDagDn, j, scOp, p); // <d^dag c_i>
+      auto sum = result1+result2;
+      rdn.push_back(sum);
+      totdn += sum;
+    }
   }
   return std::make_tuple(rup, rdn, totup, totdn);
 }
@@ -453,7 +464,7 @@ void MeasureAmplitudes(MPS& psi, auto & file, std::string path, const params &p)
 // Copied from https://www.itensor.org/docs.cgi?vers=cppv3&page=formulas/entanglement_mps
 // von Neumann entropy at the bond between impurity and next site.
 auto calcEntropy(MPS& psi, const params &p) {
-  assert(p.impindex == 1); // Works as intended only if p.impindex=1.
+  my_assert(p.impindex == 1); // Works as intended only if p.impindex=1.
   psi.position(p.impindex);
   // SVD this wavefunction to get the spectrum of density-matrix eigenvalues
   auto l = leftLinkIndex(psi, p.impindex);

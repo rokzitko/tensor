@@ -12,9 +12,9 @@ inline void Fill_SCBath_MPO_MiddleImp_TwoChannel(MPO& H, const std::vector<doubl
     std::vector<Index> links;
     links.push_back( Index() );
 
-    assert(odd(length(H)));
+    my_assert(odd(length(H)));
     int impSite = std::round( (length(H)+1)/2 );
-    assert(p.impIndex == impSite);
+    my_assert(p.impindex == impSite);
 
     //first we create the link indices which carry quantum number information
     for(auto i : range1( impSite-1 )){

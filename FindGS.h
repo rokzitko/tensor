@@ -21,6 +21,12 @@
 #include <highfive/H5Easy.hpp>
 using namespace H5Easy;
 
+#define my_assert(x) do { \
+  if (!(x)) { \
+    std::cout << "Failed assertion, file " << __FILE__ << ", line " << __LINE__ << std::endl; \
+    throw std::runtime_error("Failed assertion"); \
+  }} while(0)
+
 template <typename T>
 inline DataSet dumpreal(File& file,
                         const std::string& path,
@@ -248,7 +254,7 @@ struct params {
 
   std::unique_ptr<SCbath> sc1, sc2;
   std::unique_ptr<hyb> Gamma1, Gamma2;
-  int SCSCinteraction;  // test parameter for the 2 channel MPO
+  double SCSCinteraction = 0.0;  // test parameter for the 2 channel MPO
 
   std::vector<int> numPart; // range of total occupancies of interest
   std::map<int, std::vector<double>> Szs; // Szs for each n in numPart
@@ -280,7 +286,7 @@ class imp_middle : virtual public problem_type
 {
  public:
    int imp_index(int NBath) override {
-     assert(even(NBath));
+     my_assert(even(NBath));
      return 1+NBath/2;
    }
 };
