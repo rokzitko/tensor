@@ -66,6 +66,8 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   p.computeEntropy = input.getYesNo("computeEntropy", false);
   p.impNupNdn = input.getYesNo("impNupNdn", false);
   p.chargeCorrelation = input.getYesNo("chargeCorrelation", false);
+  p.spinCorrelation = input.getYesNo("spinCorrelation", false);
+  p.pairCorrelation = input.getYesNo("pairCorrelation", false);
 
   p.excited_state = input.getYesNo("excited_state", false);
   p.printDimensions = input.getYesNo("printDimensions", false);
@@ -76,8 +78,6 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   p.band_level_shift = input.getYesNo("band_level_shift", false);
   p.printTotSpinZ = input.getYesNo("printTotSpinZ", false);
 
-  p.pairCorrelation = input.getYesNo("pairCorrelation", false);
-  p.spinCorrelation = input.getYesNo("spinCorrelation", false);
   p.hoppingExpectation = input.getYesNo("hoppingExpectation", false);
 
   p.EnergyErrgoal = input.getReal("EnergyErrgoal", 1e-16);
@@ -197,72 +197,94 @@ void ChargeCorrelation(MPS& psi, auto & file, std::string path, const params &p)
 }
 
 // <S_imp S_i> = <Sz_imp Sz_i> + 1/2 ( <S+_imp S-_i> + <S-_imp S+_i> )
-void SpinCorrelation(MPS& psi, const params &p){
-  std::cout << "spin correlations:\n";
+auto calcSpinCorrelation(MPS& psi, const params &p) {
+  assert(p.impindex == 1);
+  std::vector<double> rzz, rpm, rmp;
+  //squares of the impurity operators; for on-site terms
+  double tot = 0;
+    
   //impurity spin operators
   auto impSz = 0.5*( op(p.sites, "Nup", p.impindex) - op(p.sites, "Ndn", p.impindex) );
   auto impSp = op(p.sites, "Cdagup*Cdn", p.impindex);
   auto impSm = op(p.sites, "Cdagdn*Cup", p.impindex);
   auto SzSz = 0.25 * ( op(p.sites, "Nup*Nup", p.impindex) - op(p.sites, "Nup*Ndn", p.impindex) - op(p.sites, "Ndn*Nup", p.impindex) + op(p.sites, "Ndn*Ndn", p.impindex));
-  //squares of the impurity operators; for on-site terms
-  double tot = 0;
   //SzSz term
-  std::cout << "SzSz correlations: ";
   psi.position(p.impindex);
   //on site term
   auto onSiteSzSz = elt(psi(p.impindex) * SzSz *  dag(prime(psi(p.impindex),"Site")));
-  std::cout << std::setprecision(full) << onSiteSzSz << " ";
-  tot+=onSiteSzSz;
+  tot += onSiteSzSz;
   for(auto j: range1(2, length(psi))) {
     auto scSz = 0.5*( op(p.sites, "Nup", j) - op(p.sites, "Ndn", j) );
-    double result = ImpurityCorrelator(psi, impSz, j, scSz, p);
-    std::cout << std::setprecision(full) << result << " ";
+    auto result = ImpurityCorrelator(psi, impSz, j, scSz, p);
+    rzz.push_back(result);
     tot += result;
   }
-  std::cout << std::endl;
   //S+S- term
-  std::cout << "S+S- correlations: ";
   psi.position(p.impindex);
   //on site term
-  auto onSiteSpSm = elt(psi(p.impindex) * op(p.sites, "Cdagup*Cdn*Cdagdn*Cup", p.impindex) *  dag(prime(psi(p.impindex),"Site")));
-  std::cout << std::setprecision(17) << onSiteSpSm << " ";
+  auto onSiteSpSm = elt(psi(p.impindex) * op(p.sites, "Cdagup*Cdn*Cdagdn*Cup", p.impindex) * dag(prime(psi(p.impindex),"Site")));
   tot += 0.5*onSiteSpSm; 
   for(auto j: range1(2, length(psi))) {
     auto scSm = op(p.sites, "Cdagdn*Cup", j);
-    double result = ImpurityCorrelator(psi, impSp, j, scSm, p);
-    std::cout << std::setprecision(full) << result << " ";
+    auto result = ImpurityCorrelator(psi, impSp, j, scSm, p);
+    rpm.push_back(result);
     tot += 0.5*result;
   }
-  std::cout << std::endl;
   //S- S+ term
-  std::cout << "S-S+ correlations: ";
   psi.position(p.impindex);
   //on site term
-  auto onSiteSmSp = elt(psi(p.impindex) * op(p.sites, "Cdagdn*Cup*Cdagup*Cdn", p.impindex) *  dag(prime(psi(p.impindex),"Site")));
-  std::cout << std::setprecision(full) << onSiteSmSp << " ";
+  auto onSiteSmSp = elt(psi(p.impindex) * op(p.sites, "Cdagdn*Cup*Cdagup*Cdn", p.impindex) * dag(prime(psi(p.impindex),"Site")));
   tot += 0.5*onSiteSmSp; 
   for(auto j: range1(2, length(psi))) {
     auto scSp = op(p.sites, "Cdagup*Cdn", j);
-    double result = ImpurityCorrelator(psi, impSm, j, scSp, p);
-    std::cout << std::setprecision(full) << result << " ";
+    auto result = ImpurityCorrelator(psi, impSm, j, scSp, p);
+    rmp.push_back(result);
     tot += 0.5*result;
   }
-  std::cout << std::endl;
-  std::cout << "spin correlation tot = " << tot << "\n";
+  return std::make_tuple(onSiteSzSz, onSiteSpSm, onSiteSmSp, rzz, rpm, rmp, tot);
 }
 
-void PairCorrelation(MPS& psi, const params &p){
-  std::cout << "pair correlation = ";
-  auto impOp = op(p.sites, "Cup*Cdn", p.impindex);
+void SpinCorrelation(MPS& psi, File & file, std::string path, const params &p) {
+  auto [onSiteSzSz, onSiteSpSm, onSiteSmSp, rzz, rpm, rmp, tot] = calcSpinCorrelation(psi, p);
+  std::cout << "spin correlations:\n";
+  std::cout << "SzSz correlations: ";
+  std::cout << std::setprecision(full) << onSiteSzSz << " ";
+  std::cout << std::setprecision(full) << rzz << std::endl;
+  std::cout << "S+S- correlations: ";
+  std::cout << std::setprecision(full) << onSiteSpSm << " ";
+  std::cout << std::setprecision(full) << rpm << std::endl;
+  std::cout << "S-S+ correlations: ";
+  std::cout << std::setprecision(full) << onSiteSmSp << " ";
+  std::cout << std::setprecision(full) << rmp << std::endl;
+  std::cout << "spin correlation tot = " << tot << "\n";
+  dump(file, path + "/spin_correlation_imp/zz", onSiteSzSz);
+  dump(file, path + "/spin_correlation_imp/pm", onSiteSpSm);
+  dump(file, path + "/spin_correlation_imp/mp", onSiteSmSp);
+  dump(file, path + "/spin_correlation/zz", rzz);
+  dump(file, path + "/spin_correlation/pm", rpm);
+  dump(file, path + "/spin_correlation/mp", rmp);
+  dump(file, path + "/spin_correlation_total", tot);
+}
+
+auto calcPairCorrelation(MPS& psi, const params &p) {
+  std::vector<double> r;
   double tot = 0;
+  auto impOp = op(p.sites, "Cup*Cdn", p.impindex);
   for(auto j: range1(2, length(psi))) {
     auto scOp = op(p.sites, "Cdagdn*Cdagup", j);
     double result = ImpurityCorrelator(psi, impOp, j, scOp, p);
-    std::cout << std::setprecision(full) << result << " ";
-    tot+=result;
+    r.push_back(result);
+    tot += result;
   }
-  std::cout << std::endl;
-  std::cout << "pair correlation tot = " << tot << "\n";
+  return std::make_pair(r, tot);
+}
+
+void PairCorrelation(MPS& psi, File & file, std::string path, const params &p) {
+  auto [r, tot] = calcPairCorrelation(psi, p);
+  std::cout << "pair correlation = " << std::setprecision(full) << r << std::endl;
+  std::cout << "pair correlation tot = " << tot << std::endl;
+  dump(file, path + "/pair_correlation", r);
+  dump(file, path + "/pair_correlation_total", tot);
 }
 
 //Prints <d^dag c_i + c_i^dag d> for each i. the sum of this expected value, weighted by 1/sqrt(N)
@@ -382,7 +404,7 @@ void MeasurePairing(MPS& psi, auto & file, std::string path, const params &p) {
 
 // See von Delft, Zaikin, Golubev, Tichy, PRL 77, 3189 (1996)
 auto calcAmplitudes(MPS &psi, const params &p) {
-  std::vector<complex_t> r;
+  std::vector<complex_t> rv, ru, rpdt;
   complex_t tot = 0;
   for(auto i : range1(length(psi)) ) {
     psi.position(i);
@@ -392,17 +414,24 @@ auto calcAmplitudes(MPS &psi, const params &p) {
     auto u = sqrt( std::real(valu.cplx()) );
     auto pdt = v*u;
     auto element = p.sc->g() * pdt;
-    std::cout << "[v=" << v << " u=" << u << " pdt=" << pdt << "] ";
+    ru.push_back(u);
+    rv.push_back(v);
+    rpdt.push_back(pdt);
     if (i != p.impindex) tot += element; // exclude the impurity site in the sum
   }
-  return std::make_pair(r, tot);
+  return std::make_tuple(rv, ru, rpdt, tot);
 }
 
 void MeasureAmplitudes(MPS& psi, auto & file, std::string path, const params &p) {
-  auto [r, tot] = calcAmplitudes(psi, p);
-  std::cout << "amplitudes vu = " << std::setprecision(full) << r << std::endl;
+  auto [rv, ru, rpdt, tot] = calcAmplitudes(psi, p);
+  std::cout << "amplitudes vu = " << std::setprecision(full);
+  for (size_t i = 0; i < rv.size(); i++)
+    std::cout << "[v=" << rv[i] << " u=" << ru[i] << " pdt=" << rpdt[i] << "] ";
+  std::cout << std::endl;
   Print(tot);
-  dumpreal(file, path + "/amplitudes", r);
+  dumpreal(file, path + "/amplitudes/u", ru);
+  dumpreal(file, path + "/amplitudes/v", rv);
+  dumpreal(file, path + "/amplitudes/pdt", rpdt);
   dumpreal(file, path + "/total_amplitude", tot);
 }
 
@@ -555,8 +584,8 @@ void calculateAndPrint(InputGroup &input, store &s, params &p) {
       if (p.computeEntropy) PrintEntropy(GS, file, path0, p);
       if (p.impNupNdn) ImpurityUpDn(GS, file, path0, p);
       if (p.chargeCorrelation) ChargeCorrelation(GS, file, path0, p);
-      if (p.spinCorrelation) SpinCorrelation(GS, p);
-      if (p.pairCorrelation) PairCorrelation(GS, p);
+      if (p.spinCorrelation) SpinCorrelation(GS, file, path0, p);
+      if (p.pairCorrelation) PairCorrelation(GS, file, path0, p);
       if (p.hoppingExpectation) expectedHopping(GS, p);
       if (p.printTotSpinZ) TotalSpinz(GS, p);
       //various measures of convergence (energy deviation, residual value)

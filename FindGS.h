@@ -20,7 +20,7 @@
 #include <highfive/H5Easy.hpp>
 using namespace H5Easy;
 
-template <class T>
+template <typename T>
 inline DataSet dumpreal(File& file,
                         const std::string& path,
                         const std::complex<T>& data,
@@ -30,7 +30,7 @@ inline DataSet dumpreal(File& file,
   return dump(file, path, realdata, mode);
 }
 
-template <class T>
+template <typename T>
 inline DataSet dumpreal(File& file,
                         const std::string& path,
                         const std::vector<std::complex<T>>& data,
@@ -195,8 +195,6 @@ class psi_stats {
    auto residuum() const { return _residuum; }
    void dump(auto &file, std::string path) const {
      H5Easy::dump(file, path + "/norm", _norm);
-     H5Easy::dump(file, path + "/Ebis", _Ebis);
-     H5Easy::dump(file, path + "/deltaE", _deltaE);
      H5Easy::dump(file, path + "/residuum", _residuum);
    }
 };
@@ -223,6 +221,7 @@ struct params {
   bool computeEntropy;   // von Neumann entropy at the bond between impurity and next site. Works as intended if p.impindex=1.
   bool impNupNdn;        // print the number of up and dn electrons on the impurity
   bool chargeCorrelation;// compute the impurity-superconductor correlation <n_imp n_i>
+  bool spinCorrelation;  // compute the impurity-superconductor correlation <S_imp S_i>
 
   bool calcweights;      // calculates the spectral weights of the two closes spectroscopically availabe excitations
   bool excited_state;    // computes the first excited state
@@ -236,7 +235,6 @@ struct params {
   bool printTotSpinZ;    // prints total Nup, Ndn and Sz.
 
   bool pairCorrelation;  // compute the impurity-superconductor correlation <d d c_i^dag c_i^dag>
-  bool spinCorrelation;  // compute the impurity-superconductor correlation <S_imp S_i>
   bool hoppingExpectation;//compute the hopping expectation value 1/sqrt(N) \sum_sigma \sum_i <d^dag c_i> + <c^dag_i d>
 
   double EnergyErrgoal; // the convergence value at which dmrg() will stop the sweeps; default is machine precision
