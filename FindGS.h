@@ -269,10 +269,12 @@ struct store
   std::map<subspace, psi_stats> stats0;
 };
 
+using H_t = std::tuple<MPO, double>;
+
 class problem_type {
  public:
    virtual int imp_index(int) = 0;
-   virtual std::tuple<MPO, double> initH(int, params &) = 0;
+   virtual H_t initH(int, params &) = 0;
 };
 
 class imp_first : virtual public problem_type
@@ -310,39 +312,6 @@ class single_channel : virtual public problem_type
      auto V = shift1(V0);
      return std::make_pair(eps, V);
    }
-   
-   std::tuple<MPO, double> initH(int ntot, params &p){
-       auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
-       double Eshift = 0;  // constant term in the Hamiltonian
-       MPO H(p.sites); // MPO is the hamiltonian in the "MPS-form"
-       if (p.MPO == "std") {
-             assert(p.V12 != 0.0);
-             Eshift = p.sc->Ec()*pow(ntot-p.sc->n0(),2); // occupancy dependent effective energy shift
-             double epseff = p.qd->eps() - 2.*p.sc->Ec()*(ntot-p.sc->n0()) + p.sc->Ec();
-             double Ueff = p.qd->U() + 2.*p.sc->Ec();
-             Fill_SCBath_MPO(H, eps, V, epseff, Ueff, p); // defined in SC_BathMPO.h, fills the MPO with the necessary entries
-       } else if (p.MPO == "middle") {
-             assert(p.V12 != 0.0);
-             Eshift = p.sc->Ec()*pow(ntot-p.sc->n0(),2); // occupancy dependent effective energy shift
-             double epseff = p.qd->eps() - 2.*p.sc->Ec()*(ntot-p.sc->n0()) + p.sc->Ec();
-             double Ueff = p.qd->U() + 2.*p.sc->Ec();
-             Fill_SCBath_MPO_MiddleImp(H, eps, V, epseff, Ueff, p);
-       } else if (p.MPO == "Ec") {
-             assert(p.V12 != 0.0);
-             Eshift = p.sc->Ec()*pow(p.sc->n0(), 2);
-             Fill_SCBath_MPO_Ec(H, eps, V, p);
-       } else if (p.MPO == "Ec_V") {
-             Eshift = p.sc->Ec()*pow(p.sc->n0(), 2) + p.V12 * p.sc->n0() * p.qd->nu();
-             double epseff = p.qd->eps() - p.V12 * p.sc->n0();
-             double epsishift = -p.V12 * p.qd->nu();
-             Fill_SCBath_MPO_Ec_V(H, eps, V, epseff, epsishift, p);
-       } else if (p.MPO == "middle_2channel") {
-             Eshift = p.Ec1*pow(p.n01, 2) + p.Ec2*pow(p.n02, 2);
-             Fill_SCBath_MPO_MiddleImp_TwoChannel(H, eps, V, p);
-       }
-       Eshift += p.qd->U()/2.; // RZ, for convenience
-     return std::make_tuple(H, Eshift);
-   }
 };
 
 //class two_channel : virtual public problem_type
@@ -352,16 +321,71 @@ class single_channel : virtual public problem_type
 //};
 
 namespace prob {
-   class std : public imp_first, public single_channel {};
-   class Ec : public imp_first, public single_channel {};
-   class Ec_V : public imp_first, public single_channel {};
-   class middle : public imp_middle, public single_channel {};
-   class middle_2channel : public imp_middle, public single_channel {};
+   class Std : public imp_first, public single_channel { // Note: avoid lowercase 'std'!!
+    public:
+      H_t initH(int ntot, params &p) override {
+        auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
+        MPO H(p.sites); // MPO is the hamiltonian in the "MPS-form"
+        double Eshift = p.sc->Ec()*pow(ntot-p.sc->n0(),2) + p.qd->U()/2; // occupancy dependent effective energy shift
+        double epseff = p.qd->eps() - 2.*p.sc->Ec()*(ntot-p.sc->n0()) + p.sc->Ec();
+        double Ueff = p.qd->U() + 2.*p.sc->Ec();
+        Fill_SCBath_MPO(H, eps, V, epseff, Ueff, p); // defined in SC_BathMPO.h, fills the MPO with the necessary entries
+        return std::make_tuple(H, Eshift);
+      }
+   };
+   
+   class Ec : public imp_first, public single_channel {
+    public:
+      H_t initH(int ntot, params &p) override {
+        auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
+        MPO H(p.sites);
+        double Eshift = p.sc->Ec()*pow(p.sc->n0(), 2) + p.qd->U()/2;
+        Fill_SCBath_MPO_Ec(H, eps, V, p);
+        return std::make_tuple(H, Eshift);
+      }
+   };
+   
+   class Ec_V : public imp_first, public single_channel {
+    public:
+      H_t initH(int ntot, params &p) override {
+        auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
+        MPO H(p.sites);
+        double Eshift = p.sc->Ec()*pow(p.sc->n0(), 2) + p.V12 * p.sc->n0() * p.qd->nu() + p.qd->U()/2;
+        double epseff = p.qd->eps() - p.V12 * p.sc->n0();
+        double epsishift = -p.V12 * p.qd->nu();
+        Fill_SCBath_MPO_Ec_V(H, eps, V, epseff, epsishift, p);
+        return std::make_tuple(H, Eshift);
+      }
+   };
+      
+   class middle : public imp_middle, public single_channel {
+    public:
+      H_t initH(int ntot, params &p) override {
+        auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
+        MPO H(p.sites);
+        double Eshift = p.sc->Ec()*pow(ntot-p.sc->n0(),2) + p.qd->U()/2;
+        double epseff = p.qd->eps() - 2.*p.sc->Ec()*(ntot-p.sc->n0()) + p.sc->Ec();
+        double Ueff = p.qd->U() + 2.*p.sc->Ec();
+        Fill_SCBath_MPO_MiddleImp(H, eps, V, epseff, Ueff, p);
+        return std::make_tuple(H, Eshift);
+      }
+   };
+   
+   class middle_2channel : public imp_middle, public single_channel {
+    public:
+      H_t initH(int ntot, params &p) override {
+        auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
+        MPO H(p.sites);
+        double Eshift = p.Ec1*pow(p.n01, 2) + p.Ec2*pow(p.n02, 2) + p.qd->U()/2;
+        Fill_SCBath_MPO_MiddleImp_TwoChannel(H, eps, V, p);
+        return std::make_tuple(H, Eshift);
+      }
+   };
 }
 
 inline std::unique_ptr<problem_type> set_problem(std::string str)
 {
-  if (str == "std") return std::make_unique<prob::std>();
+  if (str == "std") return std::make_unique<prob::Std>();
   if (str == "Ec") return std::make_unique<prob::Ec>();
   if (str == "Ec_V") return std::make_unique<prob::Ec_V>();
   if (str == "middle") return std::make_unique<prob::middle>();

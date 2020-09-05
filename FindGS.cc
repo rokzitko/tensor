@@ -104,52 +104,6 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   return input;
 }
 
-inline auto get_eps_V(auto & sc, auto & Gamma, params &p)
-{
-  auto eps0 = sc->eps(p.band_level_shift);
-  auto V0 = Gamma->V(sc->Nbath());
-  if (p.verbose) {
-    std::cout << "eps=" << eps0 << std::endl;
-    std::cout << "V=" << V0 << std::endl;
-  }
-  auto eps = shift1(eps0);
-  auto V = shift1(V0);
-  return std::make_pair(eps, V);
-}
-
-std::tuple<MPO, double> initH(int ntot, params &p){
-  auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
-  double Eshift = 0;  // constant term in the Hamiltonian
-  MPO H(p.sites); // MPO is the hamiltonian in the "MPS-form"
-  if (p.MPO == "std") {
-    assert(p.V12 != 0.0);
-    Eshift = p.sc->Ec()*pow(ntot-p.sc->n0(),2); // occupancy dependent effective energy shift
-    double epseff = p.qd->eps() - 2.*p.sc->Ec()*(ntot-p.sc->n0()) + p.sc->Ec();
-    double Ueff = p.qd->U() + 2.*p.sc->Ec();
-    Fill_SCBath_MPO(H, eps, V, epseff, Ueff, p); // defined in SC_BathMPO.h, fills the MPO with the necessary entries
-  } else if (p.MPO == "middle") {
-    assert(p.V12 != 0.0);
-    Eshift = p.sc->Ec()*pow(ntot-p.sc->n0(),2); // occupancy dependent effective energy shift
-    double epseff = p.qd->eps() - 2.*p.sc->Ec()*(ntot-p.sc->n0()) + p.sc->Ec();
-    double Ueff = p.qd->U() + 2.*p.sc->Ec();
-    Fill_SCBath_MPO_MiddleImp(H, eps, V, epseff, Ueff, p);
-  } else if (p.MPO == "Ec") {
-    assert(p.V12 != 0.0);
-    Eshift = p.sc->Ec()*pow(p.sc->n0(), 2);
-    Fill_SCBath_MPO_Ec(H, eps, V, p);
-  } else if (p.MPO == "Ec_V") {
-    Eshift = p.sc->Ec()*pow(p.sc->n0(), 2) + p.V12 * p.sc->n0() * p.qd->nu();
-    double epseff = p.qd->eps() - p.V12 * p.sc->n0();
-    double epsishift = -p.V12 * p.qd->nu();
-    Fill_SCBath_MPO_Ec_V(H, eps, V, epseff, epsishift, p);
-  } else if (p.MPO == "middle_2channel") {
-    Eshift = p.Ec1*pow(p.n01, 2) + p.Ec2*pow(p.n02, 2);
-    Fill_SCBath_MPO_MiddleImp_TwoChannel(H, eps, V, p);
-  }
-  Eshift += p.qd->U()/2.; // RZ, for convenience
-  return std::make_tuple(H, Eshift);
-}
-
 // Initialize the MPS in a product state with ntot electrons.
 // Sz is the spin of the electron on the impurity site.
 MPS initPsi(int ntot, float Sz, const auto &sites, int impindex, bool randomMPSb) {
