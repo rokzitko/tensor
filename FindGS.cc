@@ -255,7 +255,7 @@ void ChargeCorrelation(MPS& psi, const params &p){
   for(auto j: range1(2, length(psi))) {
     auto scOp = op(p.sites, "Ntot", j);
     double result = ImpurityCorrelator(psi, impOp, j, scOp, p);
-    std::cout << std::setprecision(17) << result << " ";
+    std::cout << std::setprecision(full) << result << " ";
     tot += result;
   }
   std::cout << std::endl;
@@ -277,12 +277,12 @@ void SpinCorrelation(MPS& psi, const params &p){
   psi.position(p.impindex);
   //on site term
   auto onSiteSzSz = elt(psi(p.impindex) * SzSz *  dag(prime(psi(p.impindex),"Site")));
-  std::cout << std::setprecision(17) << onSiteSzSz << " ";
+  std::cout << std::setprecision(full) << onSiteSzSz << " ";
   tot+=onSiteSzSz;
   for(auto j: range1(2, length(psi))) {
     auto scSz = 0.5*( op(p.sites, "Nup", j) - op(p.sites, "Ndn", j) );
     double result = ImpurityCorrelator(psi, impSz, j, scSz, p);
-    std::cout << std::setprecision(17) << result << " ";
+    std::cout << std::setprecision(full) << result << " ";
     tot += result;
   }
   std::cout << std::endl;
@@ -296,7 +296,7 @@ void SpinCorrelation(MPS& psi, const params &p){
   for(auto j: range1(2, length(psi))) {
     auto scSm = op(p.sites, "Cdagdn*Cup", j);
     double result = ImpurityCorrelator(psi, impSp, j, scSm, p);
-    std::cout << std::setprecision(17) << result << " ";
+    std::cout << std::setprecision(full) << result << " ";
     tot += 0.5*result;
   }
   std::cout << std::endl;
@@ -305,12 +305,12 @@ void SpinCorrelation(MPS& psi, const params &p){
   psi.position(p.impindex);
   //on site term
   auto onSiteSmSp = elt(psi(p.impindex) * op(p.sites, "Cdagdn*Cup*Cdagup*Cdn", p.impindex) *  dag(prime(psi(p.impindex),"Site")));
-  std::cout << std::setprecision(17) << onSiteSmSp << " ";
+  std::cout << std::setprecision(full) << onSiteSmSp << " ";
   tot += 0.5*onSiteSmSp; 
   for(auto j: range1(2, length(psi))) {
     auto scSp = op(p.sites, "Cdagup*Cdn", j);
     double result = ImpurityCorrelator(psi, impSm, j, scSp, p);
-    std::cout << std::setprecision(17) << result << " ";
+    std::cout << std::setprecision(full) << result << " ";
     tot += 0.5*result;
   }
   std::cout << std::endl;
@@ -324,7 +324,7 @@ void PairCorrelation(MPS& psi, const params &p){
   for(auto j: range1(2, length(psi))) {
     auto scOp = op(p.sites, "Cdagdn*Cdagup", j);
     double result = ImpurityCorrelator(psi, impOp, j, scOp, p);
-    std::cout << std::setprecision(17) << result << " ";
+    std::cout << std::setprecision(full) << result << " ";
     tot+=result;
   }
   std::cout << std::endl;
@@ -347,8 +347,8 @@ void expectedHopping(MPS& psi, const params &p){
     auto scOp = op(p.sites, "Cup", j);
     double result = ImpurityCorrelator(psi, impOpUp, j, scDagOp, p);    // <d c_i^dag>
     double resultdag = ImpurityCorrelator(psi, impOpDagUp, j, scOp, p); // <d^dag c_i>
-    std::cout << std::setprecision(17) << result << " " << resultdag << " ";
-    std::cout << std::setprecision(17) << result+resultdag << " ";
+    std::cout << std::setprecision(full) << result << " " << resultdag << " ";
+    std::cout << std::setprecision(full) << result+resultdag << " ";
     totup += result+resultdag;
   }
   std::cout << std::endl;
@@ -360,8 +360,8 @@ void expectedHopping(MPS& psi, const params &p){
     auto scOp = op(p.sites, "Cdn", j);
     double result = ImpurityCorrelator(psi, impOpDn, j, scDagOp, p);    // <d c_i^dag>
     double resultdag =  ImpurityCorrelator(psi, impOpDagDn, j, scOp, p); // <d^dag c_i>
-    std::cout << std::setprecision(17) << result << " " << resultdag << " ";
-    //std::cout << std::setprecision(17) << result+resultdag << " ";
+    std::cout << std::setprecision(full) << result << " " << resultdag << " ";
+    //std::cout << std::setprecision(full) << result+resultdag << " ";
     totdn+=result+resultdag;
   }
   std::cout << std::endl;
@@ -375,7 +375,7 @@ void ImpurityUpDn(MPS& psi, const params &p){
   psi.position(p.impindex);
   auto valnup = psi.A(p.impindex) * p.sites.op("Nup",p.impindex)* dag(prime(psi.A(p.impindex),"Site"));
   auto valndn = psi.A(p.impindex) * p.sites.op("Ndn",p.impindex)* dag(prime(psi.A(p.impindex),"Site"));
-  std::cout << std::setprecision(17) << std::real(valnup.cplx()) << " " << std::real(valndn.cplx()) << "\n";
+  std::cout << std::setprecision(full) << std::real(valnup.cplx()) << " " << std::real(valndn.cplx()) << "\n";
 }
 
 //prints total Sz of the state
@@ -389,7 +389,7 @@ void TotalSpinz(MPS& psi, const params &p){
     totNup += std::real(Nupi.cplx());
     totNdn += std::real(Ndni.cplx());
   }
-  std::cout << std::setprecision(17) << "Total spin z: " << " Nup = " << totNup << " Ndn = " << totNdn << " Sztot = " << 0.5*(totNup-totNdn) <<  "\n";
+  std::cout << std::setprecision(full) << "Total spin z: " << " Nup = " << totNup << " Ndn = " << totNdn << " Sztot = " << 0.5*(totNup-totNdn) <<  "\n";
 }
 
 // occupation numbers of all levels in the problem
@@ -406,7 +406,7 @@ auto calcOcc(MPS &psi, const params &p) {
 
 void MeasureOcc(MPS& psi, auto & file, std::string path, const params &p) {
   auto r = calcOcc(psi, p);
-  std::cout << "site occupancies = " << std::setprecision(17) << r << std::endl;
+  std::cout << "site occupancies = " << std::setprecision(full) << r << std::endl;
   auto tot = std::accumulate(r.begin(), r.end(), 0.0);
   Print(tot);
   dump(file, path + "/site_occupancies", r);
@@ -418,7 +418,7 @@ void MeasureOcc(MPS& psi, auto & file, std::string path, const params &p) {
 auto calcPairing(MPS &psi, const params &p) {
   std::vector<complex_t> r;
   complex_t tot = 0;
-  for(auto i : range1(length(psi))){
+  for(auto i : range1(length(psi))) {
     psi.position(i);
     auto val2  = psi.A(i) * p.sites.op("Cdagup*Cup*Cdagdn*Cdn", i) * dag(prime(psi.A(i),"Site"));
     auto val1u = psi.A(i) * p.sites.op("Cdagup*Cup", i) * dag(prime(psi.A(i),"Site"));
@@ -431,32 +431,39 @@ auto calcPairing(MPS &psi, const params &p) {
   }
   return std::make_pair(r, tot);
 }
-    
+
 void MeasurePairing(MPS& psi, auto & file, std::string path, const params &p) {
   auto [r, tot] = calcPairing(psi, p);
-  std::cout << "site pairing = " << std::setprecision(17) << r << std::endl;
+  std::cout << "site pairing = " << std::setprecision(full) << r << std::endl;
   Print(tot);
 //  dump(file, path + "/pairing", r);
 //  dump(file, path + "/total_pairing", tot);
 }
 
 // See von Delft, Zaikin, Golubev, Tichy, PRL 77, 3189 (1996)
-void MeasureAmplitudes(MPS& psi, const params &p){
-  std::cout << "amplitudes vu = ";
+auto calcAmplitudes(MPS &psi, const params &p) {
+  std::vector<complex_t> r;
   complex_t tot = 0;
-  for(auto i : range1(length(psi)) ){
+  for(auto i : range1(length(psi)) ) {
     psi.position(i);
     auto valv = psi.A(i) * p.sites.op("Cdagup*Cdagdn*Cdn*Cup", i) * dag(prime(psi.A(i),"Site"));
     auto valu = psi.A(i) * p.sites.op("Cdn*Cup*Cdagup*Cdagdn", i) * dag(prime(psi.A(i),"Site"));
-    auto v = sqrt( std::real(valv.cplx()) );
+    auto v = sqrt( std::real(valv.cplx()) ); // XXX
     auto u = sqrt( std::real(valu.cplx()) );
     auto pdt = v*u;
     auto element = p.sc->g() * pdt;
     std::cout << "[v=" << v << " u=" << u << " pdt=" << pdt << "] ";
     if (i != p.impindex) tot += element; // exclude the impurity site in the sum
   }
-  std::cout << std::endl;
+  return std::make_pair(r, tot);
+}
+
+void MeasureAmplitudes(MPS& psi, auto & file, std::string path, const params &p) {
+  auto [r, tot] = calcAmplitudes(psi, p);
+  std::cout << "amplitudes vu = " << std::setprecision(full) << r << std::endl;
   Print(tot);
+//  dump(file, path + "/amplitudes", r);
+//  dump(file, path + "/total_amplitude", tot);
 }
 
 // Computed entanglement/von Neumann entropy between the impurity and the system.
@@ -593,7 +600,7 @@ void calculateAndPrint(InputGroup &input, store &s, params &p) {
 
       MeasureOcc(GS, file, str(sub, "0"), p);
       MeasurePairing(GS, file, str(sub, "0"), p);
-      MeasureAmplitudes(GS, p);
+      MeasureAmplitudes(GS, file, str(sub, "0"), p);
 
       if (p.computeEntropy) PrintEntropy(GS, p);
       if (p.impNupNdn) ImpurityUpDn(GS, p);

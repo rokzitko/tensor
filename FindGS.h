@@ -20,9 +20,33 @@
 #include <highfive/H5Easy.hpp>
 using namespace H5Easy;
 
+template <class T>
+inline DataSet dumpreal(File& file,
+                        const std::string& path,
+                        const std::complex<T>& data,
+                        DumpMode mode = DumpMode::Create)
+{
+  const T realdata = std::real(data);
+  return dump(file, path, realdata, mode);
+}
+
+template <class T>
+inline DataSet dumpreal(File& file,
+                        const std::string& path,
+                        const std::vector<std::complex<T>>& data,
+                        DumpMode mode = DumpMode::Create)
+{
+  std::vector<T> realdata;
+  for (const auto &z : data)
+    realdata.push_back(std::real(z));
+  return dump(file, path, realdata, mode);
+}
+
 using namespace itensor;
 
 using complex_t = std::complex<double>;
+
+constexpr auto full = std::numeric_limits<double>::max_digits10;
 
 inline bool even(int i) { return i%2 == 0; }
 inline bool odd(int i) { return i%2 != 0; }
