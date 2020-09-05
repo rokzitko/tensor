@@ -195,15 +195,16 @@ class psi_stats {
 class problem_type {
  public:
    virtual int imp_index(int) = 0;
+   virtual void get_eps_V() = 0;
 };
 
-class imp_first : public problem_type
+class imp_first : virtual public problem_type
 {
  public:
    int imp_index(int) override { return 1; }
 };
 
-class imp_middle : public problem_type
+class imp_middle : virtual public problem_type
 {
  public:
    int imp_index(int NBath) override {
@@ -212,12 +213,24 @@ class imp_middle : public problem_type
    }
 };
 
+class single_channel : virtual public problem_type
+{
+ public:
+   void get_eps_V() override {};
+};
+
+//class two_channel : virtual public problem_type
+//{
+// public:
+//  void get_eps_V() override {};
+//};
+
 namespace prob {
-   class std : public imp_first {};
-   class Ec : public imp_first {};
-   class Ec_V : public imp_first {};
-   class middle : public imp_middle {};
-   class middle_2channel : public imp_middle {};
+   class std : public imp_first, public single_channel {};
+   class Ec : public imp_first, public single_channel {};
+   class Ec_V : public imp_first, public single_channel {};
+   class middle : public imp_middle, public single_channel {};
+   class middle_2channel : public imp_middle, public single_channel {};
 }
 
 inline std::unique_ptr<problem_type> set_problem(std::string str)
