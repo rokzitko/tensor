@@ -203,6 +203,9 @@ struct params {
   Hubbard sites;        // itensor object
 
   // all bools have default value false
+  bool computeEntropy;   // von Neumann entropy at the bond between impurity and next site. Works as intended if p.impindex=1.
+  bool impNupNdn;        // print the number of up and dn electrons on the impurity
+
   bool excited_state;    // computes the first excited state
   bool printDimensions;  // prints dmrg() prints info during the sweep
   bool calcweights;      // calculates the spectral weights of the two closes spectroscopically availabe excitations
@@ -210,10 +213,8 @@ struct params {
   bool parallel;         // enables openMP parallel calculation of the for loop in findGS()
   bool verbose;          // verbosity level
   bool band_level_shift; // shifts the band levels for a constant in order to make H particle-hole symmetric
-//  bool computeEntropy;   // von Neumann entropy at the bond between impurity and next site. Works as intended if p.impindex=1.
   bool printTotSpinZ;    // prints total Nup, Ndn and Sz.
 
-//  bool impNupNdn;        // print the number of up and dn electrons on the impurity
 
   bool chargeCorrelation;// compute the impurity-superconductor correlation <n_imp n_i>
   bool pairCorrelation;  // compute the impurity-superconductor correlation <d d c_i^dag c_i^dag>

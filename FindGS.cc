@@ -73,11 +73,12 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   p.Gamma = std::make_unique<hyb>(input.getReal("gamma", 0));
   p.V12 = input.getReal("V", 0); // handled in a special way
 
-  // sites is an ITensor thing. it defines the local hilbert space and
-  // operators living on each site of the lattice
-  // for example sites.op("N",1) gives the pariticle number operator
-  // on the first site
+  // sites is an ITensor thing. It defines the local hilbert space and operators living on each site of the lattice.
+  // For example sites.op("N",1) gives the pariticle number operator on the first site.
   p.sites = Hubbard(p.N);
+
+  p.computeEntropy = input.getYesNo("computeEntropy", false);
+  p.impNupNdn = input.getYesNo("impNupNdn", false);
 
   p.excited_state = input.getYesNo("excited_state", false);
   p.printDimensions = input.getYesNo("printDimensions", false);
@@ -86,10 +87,8 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   p.parallel = input.getYesNo("parallel", false);
   p.verbose = input.getYesNo("verbose", false);
   p.band_level_shift = input.getYesNo("band_level_shift", false);
-//  p.computeEntropy = input.getYesNo("computeEntropy", false);
   p.printTotSpinZ = input.getYesNo("printTotSpinZ", false);
 
-//  p.impNupNdn = input.getYesNo("impNupNdn", false);
   p.chargeCorrelation = input.getYesNo("chargeCorrelation", false);
   p.pairCorrelation = input.getYesNo("pairCorrelation", false);
   p.spinCorrelation = input.getYesNo("spinCorrelation", false);
@@ -616,8 +615,8 @@ void calculateAndPrint(InputGroup &input, store &s, params &p) {
       MeasurePairing(GS, file, str(sub, "0"), p);
       MeasureAmplitudes(GS, file, str(sub, "0"), p);
 
-      if (input.getYesNo("computeEntropy", false)) PrintEntropy(GS, file, str(sub, "0"), p);
-      if (input.getYesNo("impNupNdn", false)) ImpurityUpDn(GS, file, str(sub, "0"), p);
+      if (p.computeEntropy) PrintEntropy(GS, file, str(sub, "0"), p);
+      if (p.impNupNdn) ImpurityUpDn(GS, file, str(sub, "0"), p);
       if (p.chargeCorrelation) ChargeCorrelation(GS, p);
       if (p.spinCorrelation) SpinCorrelation(GS, p);
       if (p.pairCorrelation) PairCorrelation(GS, p);
