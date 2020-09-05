@@ -2,13 +2,25 @@ inline void Fill_SCBath_MPO_MiddleImp(MPO& H, const std::vector<double>& eps_,
                 const std::vector<double>& v_, double epseff, double Ueff, const params &p)
 {
       //QN objects are necessary to have abelian symmetries in MPS
+#ifdef OLD
+      QN    qn0  ( {"Sz",  0},{"Nf", 0} ),
+            cupC ( {"Sz", +1},{"Nf",+1} ),
+            cdnC ( {"Sz", -1},{"Nf",+1} ),
+            cupA ( {"Sz", -1},{"Nf",-1} ),
+            cdnA ( {"Sz", +1},{"Nf",-1} );
+#endif
+
+//#ifdef ALTERNATIVE
       // automatically find the correct values
       QN    qn0  = - div( p.sites.op( "Id",      1) ),
             cupC = - div( p.sites.op( "Cdagup",  1) ),
             cdnC = - div( p.sites.op( "Cdagdn",  1) ),
             cupA = - div( p.sites.op( "Cup",     1) ),
             cdnA = - div( p.sites.op( "Cdn",     1) );
+//#endif
 
+    std::cout << "g=" << p.sc->g() << std::endl;
+    std::cout << "Ec=" << p.sc->Ec() << std::endl;
 
     std::vector<Index> links;
     links.push_back( Index() );
@@ -57,8 +69,8 @@ inline void Fill_SCBath_MPO_MiddleImp(MPO& H, const std::vector<double>& eps_,
 
         // local H on site
         W += p.sites.op("Ntot",i)  * setElt(right(2)) * eps_[i]; // here use index i
-        W += p.sites.op("Nup",i)  * setElt(right(2)) * p.sc->EZ(); 
-        W += p.sites.op("Ndn",i)  * setElt(right(2)) * (-1) * p.sc->EZ();
+        W += p.sites.op("Nup",i)   * setElt(right(2)) * p.sc->EZ(); 
+        W += p.sites.op("Ndn",i)   * setElt(right(2)) * (-1) * p.sc->EZ();
         W += p.sites.op("Nupdn",i) * setElt(right(2)) * p.sc->g();
 
         //hybridization
@@ -84,8 +96,8 @@ inline void Fill_SCBath_MPO_MiddleImp(MPO& H, const std::vector<double>& eps_,
 
         // local H on site
         W += p.sites.op("Ntot",i)           * setElt(left(1),right(2)) * eps_[i]; // here use index i
-        W += p.sites.op("Nup",i)           * setElt(left(1),right(2)) * p.sc->EZ();
-        W += p.sites.op("Ndn",i)           * setElt(left(1),right(2)) * (-1) * p.sc->EZ();
+        W += p.sites.op("Nup",i)            * setElt(left(1),right(2)) * p.sc->EZ();
+        W += p.sites.op("Ndn",i)            * setElt(left(1),right(2)) * (-1) * p.sc->EZ();
         W += p.sites.op("Nupdn",i)          * setElt(left(1),right(2)) * p.sc->g();
 
         // hybridizations 
@@ -135,7 +147,6 @@ inline void Fill_SCBath_MPO_MiddleImp(MPO& H, const std::vector<double>& eps_,
         W += p.sites.op("Cdagup*F", i)*setElt(left(1),right(5)) * (+1);
         W += p.sites.op("Cdagdn*F", i)*setElt(left(1),right(6)) * (+1);
 
-
         W += p.sites.op("Id",i) * setElt(left(2), right(2));
 
         // hybridizations
@@ -161,8 +172,8 @@ inline void Fill_SCBath_MPO_MiddleImp(MPO& H, const std::vector<double>& eps_,
         W += p.sites.op("Id",i) * setElt(left(1), right(1));
 
         W += p.sites.op("Ntot",i)           * setElt(left(1),right(2)) * eps_[i-1];  // use index i-1
-        W += p.sites.op("Nup",i)           * setElt(left(1),right(2)) * p.sc->EZ();
-        W += p.sites.op("Ndn",i)           * setElt(left(1),right(2)) * (-1) * p.sc->EZ();
+        W += p.sites.op("Nup",i)            * setElt(left(1),right(2)) * p.sc->EZ();
+        W += p.sites.op("Ndn",i)            * setElt(left(1),right(2)) * (-1) * p.sc->EZ();
         W += p.sites.op("Nupdn",i)          * setElt(left(1),right(2)) * p.sc->g();
 
         W += p.sites.op("Cdn*Cup",i)        * setElt(left(1),right(7)) * p.sc->g();
@@ -194,8 +205,8 @@ inline void Fill_SCBath_MPO_MiddleImp(MPO& H, const std::vector<double>& eps_,
         W = ITensor(left, p.sites.si(i), p.sites.siP(i) );
 
         W += p.sites.op("Ntot",  i) * setElt(left(1)) * eps_[i-1]; // use index i-1
-        W += p.sites.op("Nup",  i) * setElt(left(1)) * p.sc->EZ();
-        W += p.sites.op("Ndn",  i) * setElt(left(1)) * (-1) * p.sc->EZ();
+        W += p.sites.op("Nup",  i)  * setElt(left(1)) * p.sc->EZ();
+        W += p.sites.op("Ndn",  i)  * setElt(left(1)) * (-1) * p.sc->EZ();
         W += p.sites.op("Nupdn",i)  * setElt(left(1)) * p.sc->g();
 
         W += p.sites.op("Id",    i) * setElt(left(2)) ;

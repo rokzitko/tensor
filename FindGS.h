@@ -370,12 +370,17 @@ namespace prob {
       }
    };
 
+   // For testing only!! This is the same as 'middle', but using the MPO for the
+   // 2-ch problem. It uses Gamma for hybridisation, but alpha1,alpha2, etc. for
+   // channel parameters.
    class middle_2channel : public imp_middle, public single_channel {
     public:
       H_t initH(int ntot, params &p) override {
         auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
         MPO H(p.sites);
-        double Eshift = p.sc1->Ec()*pow(p.sc1->n0(), 2) + p.sc2->Ec()*pow(p.sc2->n0(), 2) + p.qd->U()/2;
+        //double Eshift = p.sc1->Ec()*pow(p.sc1->n0(), 2) + p.sc2->Ec()*pow(p.sc2->n0(), 2) + p.qd->U()/2;
+        double Eshift = p.sc1->Ec()*pow(p.sc1->n0(), 2) + p.qd->U()/2;
+        p.SCSCinteraction = 1.0; // IMPORTANT!
         Fill_SCBath_MPO_MiddleImp_TwoChannel(H, eps, V, p);
         return std::make_tuple(H, Eshift);
       }
