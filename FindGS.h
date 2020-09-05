@@ -84,7 +84,6 @@ class bath { // normal-state bath
    }
    auto eps() const {
      std::vector<double> eps;
-     eps.push_back(std::numeric_limits<double>::quiet_NaN()); // we use 1-based indexing
      for (auto k: range1(_Nbath))
        eps.push_back( -_D + (k-0.5)*d() );
      return eps;
@@ -122,7 +121,6 @@ class hyb {
    auto Gamma() const { return _Gamma; }
    auto V(int Nbath) const {
      std::vector<double> V;
-     V.push_back(std::numeric_limits<double>::quiet_NaN()); // we use 1-based indexing
      for (auto k: range1(Nbath))
        V.push_back( std::sqrt( 2.0*_Gamma/(M_PI*Nbath) ) );
      return V;
@@ -232,7 +230,7 @@ struct params {
   InputGroup input;     // itensor input parser
 
   string MPO = "std";   // which MPO representation to use
-//  std::unique_ptr<problem_typ> problem;
+  std::unique_ptr<problem_type> problem = set_problem(MPO);
 
   int N;                // number of sites
   int NBath;            // number of bath sites

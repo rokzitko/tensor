@@ -45,7 +45,7 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   p.inputfn = { argv[1] };                      // read parameters from the input file
   auto input = InputGroup{p.inputfn, "params"}; // get input parameters using InputGroup from itensor
   p.MPO = input.getString("MPO", "std");        // problem type
-  auto problem = set_problem(p.MPO);
+  p.problem = set_problem(p.MPO);
   p.NImp = 1;
   p.N = input.getInt("N", 0);
   if (p.N != 0)
@@ -56,7 +56,7 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
       throw std::runtime_error("specify either N or NBath!");
     p.N = p.NBath+p.NImp;
   }
-  p.impindex = problem->imp_index(p.NBath);
+  p.impindex = p.problem->imp_index(p.NBath);
   std::cout << "N=" << p.N << " NBath=" << p.NBath << " impindex=" << p.impindex << std::endl;
   
   double U = input.getReal("U", 0); // need to parse it first because it enters the default value for epsimp just below
@@ -110,17 +110,31 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   return input;
 }
 
-//initialize the Hamiltonian
-std::tuple<MPO, double> initH(int ntot, params &p){
-  auto eps = p.sc->eps(p.band_level_shift);
-  auto V = p.Gamma->V(p.sc->Nbath());
-  if (p.verbose) {
-    std::cout << "eps=" << eps << std::endl;
-    std::cout << "V=" << V << std::endl;
-  }
+inline auto shift1(const std::vector<double> &a) {
+  std::vector<double> b;
+  b.push_back(std::numeric_limits<double>::quiet_NaN());
+  for(const auto & x: a)
+    b.push_back(x);
+  return b;
+}
 
+inline auto get_eps_V(bool shift, int Nbath, params &p)
+{
+  auto eps0 = p.sc->eps(shift);
+  auto V0 = p.Gamma->V(Nbath);
+  if (p.verbose) {
+    std::cout << "eps=" << eps0 << std::endl;
+    std::cout << "V=" << V0 << std::endl;
+  }
+  auto eps = shift1(eps0);
+  auto V = shift1(V0);
+  return std::make_pair(eps, V);
+}
+
+std::tuple<MPO, double> initH(int ntot, params &p){
+  auto [eps, V] = get_eps_V(p.band_level_shift, p.sc->Nbath(), p);
   double Eshift = 0;  // constant term in the Hamiltonian
-  MPO H(p.sites); // MPO is the hamiltonian in "MPS-form" after this line it is still a trivial operator
+  MPO H(p.sites); // MPO is the hamiltonian in the "MPS-form"
   if (p.MPO == "std") {
     assert(p.V12 != 0.0);
     Eshift = p.sc->Ec()*pow(ntot-p.sc->n0(),2); // occupancy dependent effective energy shift
