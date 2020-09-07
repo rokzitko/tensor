@@ -1,0 +1,63 @@
+params{
+     NBath = 8
+
+     U = 1.0
+     epsimp = -0.75
+     EZ_imp = 0
+
+     gamma1 = 0.1
+     gamma2 = 0.1
+     alpha1 = 0
+     alpha2 = 0
+     Ec1 = 0
+     Ec2 = 0
+     n01 = 0
+     n02 = 0
+     EZ_bulk1 = 0
+     EZ_bulk2 = 0
+
+     verbose = true
+     band_level_shift = false
+
+     nrange = 2
+
+     impNupNdn = true
+
+     MPO = 2ch
+}
+
+
+sweeps
+{
+
+sweeps
+     {
+     maxdim  mindim  cutoff  niter  noise
+     20      20      1E-7    3     0
+     20      20      1E-7    3     0
+     20      20      1E-7    3     0
+     20      20      1E-7    3     0
+     20      20      1E-7    3     0
+     40      1      1E-8    3     0
+     40      1      1E-8    3     0
+     40      1      1E-8    3     0
+     40      1      1E-8    3     0
+     40      1      1E-8    3     0
+     160     1      1E-12   3      0
+     160     1      1E-12   5      0
+     160     1      1E-12   5      0
+     160     1      1E-12   5      0
+     160     1      1E-12   5      0
+     240     1      1E-12   5      0
+     240     1      1E-12   5      0
+     240     1      1E-12   5      0
+     400     1      1E-12   5      0
+     400     1      1E-12   5      0
+     800     1      1E-12   5      0
+     800     1      1E-12   5      0
+     1200    1      1E-12   5      0
+     1200    1      1E-12   5      0
+     }
+
+
+}

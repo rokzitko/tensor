@@ -319,9 +319,11 @@ template <class T>
   auto concat(const std::vector<T> &t1, const std::vector<T> &t2)
 {
    std::vector<T> t;
+   std::cout << "a" << std::endl;
    t.reserve(t1.size() + t2.size());
-   t.insert(end(t), cbegin(t1), cend(t2));
-   t.insert(end(t), cbegin(t2), cend(t2));
+   t.insert(t.end(), t1.cbegin(), t1.cend());
+   t.insert(t.end(), t2.cbegin(), t2.cend());
+   std::cout << "b" << std::endl;
    return t;
 }
 
