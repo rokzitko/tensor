@@ -1,33 +1,25 @@
 params{
      N = 5
 
-     U = 0.1
-     epsimp = 0.01
-     EZ_imp = 0.03
+     U = 1.0
+     epsimp = -0.75
+     EZ_imp = 0
 
-     alpha = -0.23
-         alpha1 = -0.23
-         alpha2 = -0.23
-     gamma = 0.05
-     Ec = 0.1
-         Ec1 = 0.1
-         Ec2 = 0.1
-     n0 = 2.1
-         n01 = 2.1
-         n02 = 2.1
-     EZ_bulk = 0.04
-          EZ_bulk1 = 0.04
-          EZ_bulk2 = 0.04
+     alpha = 0
+     gamma = 0.2
+     Ec = 0
+     n0 = 0
+     EZ_bulk = 0
 
      verbose = true
-     band_level_shift = true
+     band_level_shift = false
 
      nrange = 2
 
      calc_weights = true
      impNupNdn = true
 
-     MPO = middle_2channel
+     MPO = middle_Ec
 }
 
 

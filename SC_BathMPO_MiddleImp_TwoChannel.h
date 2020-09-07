@@ -1,34 +1,26 @@
 inline void Fill_SCBath_MPO_MiddleImp_TwoChannel(MPO& H, const std::vector<double>& eps_,
-                const std::vector<double>& v_, const params &p)
+                                                 const std::vector<double>& v_, const params &p)
 {
-      //QN objects are necessary to have abelian symmetries in MPS
-#ifdef OLD
-      QN    qn0  ( {"Sz",  0},{"Nf", 0} ),
-            cupC ( {"Sz", +1},{"Nf",+1} ),
-            cdnC ( {"Sz", -1},{"Nf",+1} ),
-            cupA ( {"Sz", -1},{"Nf",-1} ),
-            cdnA ( {"Sz", +1},{"Nf",-1} );
-#endif
+  // QN objects are necessary to have abelian symmetries in MPS
+  // automatically find the correct values
+  QN    qn0  = - div( p.sites.op( "Id",      1) ),
+    cupC = - div( p.sites.op( "Cdagup",  1) ),
+    cdnC = - div( p.sites.op( "Cdagdn",  1) ),
+    cupA = - div( p.sites.op( "Cup",     1) ),
+    cdnA = - div( p.sites.op( "Cdn",     1) );
+  
+  std::cout << "g1="  << p.sc1->g() << std::endl;
+  std::cout << "Ec1=" << p.sc1->Ec() << std::endl;
+  std::cout << "g2="  << p.sc2->g() << std::endl;
+  std::cout << "Ec2=" << p.sc2->Ec() << std::endl;
 
-      // automatically find the correct values
-      QN    qn0  = - div( p.sites.op( "Id",      1) ),
-            cupC = - div( p.sites.op( "Cdagup",  1) ),
-            cdnC = - div( p.sites.op( "Cdagdn",  1) ),
-            cupA = - div( p.sites.op( "Cup",     1) ),
-            cdnA = - div( p.sites.op( "Cdn",     1) );
-
-    std::cout << "g1="  << p.sc1->g() << std::endl;
-    std::cout << "Ec1=" << p.sc1->Ec() << std::endl;
-    std::cout << "g2="  << p.sc2->g() << std::endl;
-    std::cout << "Ec2=" << p.sc2->Ec() << std::endl;
-
-    std::vector<Index> links;
-    links.push_back( Index() );
-
-    my_assert(odd(length(H)));
-    int impSite = std::round( (length(H)+1)/2 );
-    my_assert(p.impindex == impSite);
-
+  std::vector<Index> links;
+  links.push_back( Index() );
+  
+  my_assert(odd(length(H)));
+  int impSite = std::round( (length(H)+1)/2 );
+  my_assert(p.impindex == impSite);
+  
     //first we create the link indices which carry quantum number information
     for(auto i : range1( impSite-1 )){
         links.push_back(Index(  qn0,       2,
@@ -182,11 +174,11 @@ inline void Fill_SCBath_MPO_MiddleImp_TwoChannel(MPO& H, const std::vector<doubl
         W += p.sites.op("Ntot",i)           * setElt(left(1),right(2)) * (eps_[i-1] + p.sc2->Ec()*(1-2*p.sc2->n0()));  // use index i-1
         W += p.sites.op("Nup",i)            * setElt(left(1),right(2)) * p.sc2->EZ();
         W += p.sites.op("Ndn",i)            * setElt(left(1),right(2)) * (-1) * p.sc2->EZ();
-        W += p.sites.op("Nupdn",i)          * setElt(left(1),right(2)) * (p.sc2->g() + p.sc2->Ec());
+        W += p.sites.op("Nupdn",i)          * setElt(left(1),right(2)) * (p.sc2->g() + 2.0*p.sc2->Ec()); // MISSING 2.0 FIXED !!
 
         W += p.sites.op("Cdn*Cup",i)        * setElt(left(1),right(7)) * p.sc2->g();
         W += p.sites.op("Cdagup*Cdagdn",i)  * setElt(left(1),right(8)) * p.sc2->g();
-        W += p.sites.op("Ntot",i)           * setElt(left(1),right(9)) * p.sc2->Ec();
+        W += p.sites.op("Ntot",i)           * setElt(left(1),right(9)) * 2.0*p.sc2->Ec(); // MISSING 2.0 FIXED !!
 
         W += p.sites.op("Id",i)*setElt(left(2),right(2));
         W += p.sites.op("F" ,i)*setElt(left(3),right(3));

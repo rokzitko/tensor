@@ -214,8 +214,8 @@ struct params {
   string inputfn;       // filename of the input file
   InputGroup input;     // itensor input parser
 
-  string MPO = "std";   // which MPO representation to use
-  std::unique_ptr<problem_type> problem = set_problem(MPO);
+//  string MPO = "std";   // which MPO representation to use
+  std::unique_ptr<problem_type> problem = set_problem("std");
 
   int N;                // number of sites
   int NBath;            // number of bath sites
@@ -292,9 +292,10 @@ class imp_middle : virtual public problem_type
 };
 
 #include "SC_BathMPO.h"
-#include "SC_BathMPO_MiddleImp.h"
 #include "SC_BathMPO_Ec.h"
 #include "SC_BathMPO_Ec_V.h"
+#include "SC_BathMPO_MiddleImp.h"
+#include "SC_BathMPO_MiddleImp_Ec.h"
 #include "SC_BathMPO_MiddleImp_TwoChannel.h"
 
 class single_channel : virtual public problem_type
@@ -370,6 +371,17 @@ namespace prob {
       }
    };
 
+   class middle_Ec : public imp_middle, public single_channel {
+    public:
+      H_t initH(int ntot, params &p) override {
+        auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
+        MPO H(p.sites);
+        double Eshift = p.sc->Ec()*pow(p.sc->n0(), 2) + p.qd->U()/2;
+        Fill_SCBath_MPO_MiddleImp_Ec(H, eps, V, p);
+        return std::make_tuple(H, Eshift);
+      }
+   };
+
    // For testing only!! This is the same as 'middle', but using the MPO for the
    // 2-ch problem. It uses Gamma for hybridisation, but alpha1,alpha2, etc. for
    // channel parameters.
@@ -393,6 +405,7 @@ inline std::unique_ptr<problem_type> set_problem(std::string str)
   if (str == "Ec") return std::make_unique<prob::Ec>();
   if (str == "Ec_V") return std::make_unique<prob::Ec_V>();
   if (str == "middle") return std::make_unique<prob::middle>();
+  if (str == "middle_Ec") return std::make_unique<prob::middle_Ec>();
   if (str == "middle_2channel") return std::make_unique<prob::middle_2channel>();
   throw std::runtime_error("Unknown MPO type");
 }
