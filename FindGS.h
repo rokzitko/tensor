@@ -96,20 +96,21 @@ class imp {
 // Class containing bath parameters
 class bath { // normal-state bath
  private:
-   int _Nbath; // number of levels
+   int _NBath; // number of levels
    double _D;  // half-bandwidth
  public:
-   bath(int Nbath, double D = 1.0) : _Nbath(Nbath), _D(D) {};
-   auto Nbath() const { return _Nbath; }
+   bath(int NBath, double D = 1.0) : _NBath(NBath), _D(D) {};
+   auto NBath() const { return _NBath; }
    auto d() const { // inter-level spacing
-     return 2.0*_D/_Nbath;
+     return 2.0*_D/_NBath;
    }
    auto eps() const {
      std::vector<double> eps;
-     for (auto k: range1(_Nbath))
+     for (auto k: range1(_NBath))
        eps.push_back( -_D + (k-0.5)*d() );
      return eps;
    }
+   void set_NBath(int NBath) { _NBath = NBath; }
 };
 
 class SCbath : public bath { // superconducting island bath
@@ -119,8 +120,8 @@ class SCbath : public bath { // superconducting island bath
    double _n0;    // offset
    double _EZ;    // Zeeman energy
  public:
-   SCbath(int Nbath, double alpha, double Ec, double n0, double EZ) :
-     bath(Nbath), _alpha(alpha), _Ec(Ec), _n0(n0), _EZ(EZ) {};
+   SCbath(int NBath, double alpha, double Ec, double n0, double EZ) :
+     bath(NBath), _alpha(alpha), _Ec(Ec), _n0(n0), _EZ(EZ) {};
    auto alpha() const { return _alpha; }
    auto Ec() const { return _Ec; }
    auto n0() const { return _n0; }
@@ -141,10 +142,10 @@ class hyb {
  public:
    hyb(double Gamma) : _Gamma(Gamma) {};
    auto Gamma() const { return _Gamma; }
-   auto V(int Nbath) const {
+   auto V(int NBath) const {
      std::vector<double> V;
-     for (auto k: range1(Nbath))
-       V.push_back( std::sqrt( 2.0*_Gamma/(M_PI*Nbath) ) );
+     for (auto k: range1(NBath))
+       V.push_back( std::sqrt( 2.0*_Gamma/(M_PI*NBath) ) );
      return V;
    }
 };
@@ -303,7 +304,7 @@ class single_channel : virtual public problem_type
  public:
    auto get_eps_V(auto & sc, auto & Gamma, params &p) {
      auto eps0 = sc->eps(p.band_level_shift);
-     auto V0 = Gamma->V(sc->Nbath());
+     auto V0 = Gamma->V(sc->NBath());
      if (p.verbose) {
        std::cout << "eps=" << eps0 << std::endl;
        std::cout << "V=" << V0 << std::endl;
@@ -314,11 +315,33 @@ class single_channel : virtual public problem_type
    }
 };
 
-//class two_channel : virtual public problem_type
-//{
-// public:
-//  void get_eps_V() override {};
-//};
+template <class T>
+  auto concat(const std::vector<T> &t1, const std::vector<T> &t2)
+{
+   std::vector<T> t;
+   t.reserve(t1.size() + t2.size());
+   t.insert(end(t), cbegin(t1), cend(t2));
+   t.insert(end(t), cbegin(t2), cend(t2));
+   return t;
+}
+
+class two_channel : virtual public problem_type
+{
+ public:
+   auto get_eps_V(auto & sc1, auto & Gamma1, auto & sc2, auto & Gamma2, params &p) {
+     auto eps1 = sc1->eps(p.band_level_shift);
+     auto eps2 = sc2->eps(p.band_level_shift);
+     auto V1 = Gamma1->V(sc1->NBath());
+     auto V2 = Gamma2->V(sc2->NBath());
+     if (p.verbose) {
+       std::cout << "eps1=" << eps1 << std::endl << "eps2=" << eps2 << std::endl;
+       std::cout << "V1=" << V1 << std::endl << "V2=" << V2 << std::endl;
+     }
+     auto eps = shift1(concat(eps1, eps2));
+     auto V = shift1(concat(V1, V2));
+     return std::make_pair(eps, V);
+   }
+};
 
 namespace prob {
    class Std : public imp_first, public single_channel { // Note: avoid lowercase 'std'!!
@@ -382,17 +405,32 @@ namespace prob {
       }
    };
 
-   // For testing only!! This is the same as 'middle', but using the MPO for the
+   // For testing only!! This is the same as 'middle_Ec', but using the MPO for the
    // 2-ch problem. It uses Gamma for hybridisation, but alpha1,alpha2, etc. for
-   // channel parameters.
+   // channel parameters. Use with care!
    class middle_2channel : public imp_middle, public single_channel {
     public:
       H_t initH(int ntot, params &p) override {
         auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
         MPO H(p.sites);
-        //double Eshift = p.sc1->Ec()*pow(p.sc1->n0(), 2) + p.sc2->Ec()*pow(p.sc2->n0(), 2) + p.qd->U()/2;
         double Eshift = p.sc1->Ec()*pow(p.sc1->n0(), 2) + p.qd->U()/2;
-        p.SCSCinteraction = 1.0; // IMPORTANT!
+        p.SCSCinteraction = 1.0; // IMPORTANT: single bath
+        p.sc1->set_NBath(p.NBath); // override!
+        p.sc2->set_NBath(p.NBath);
+        Fill_SCBath_MPO_MiddleImp_TwoChannel(H, eps, V, p);
+        return std::make_tuple(H, Eshift);
+      }
+   };
+
+   class twoch : public imp_middle, public two_channel {
+    public:
+      H_t initH(int ntot, params &p) override {
+        my_assert(even(p.NBath)); // in 2-ch problems, NBath is the total number of bath sites in both SCs !!
+        my_assert(p.sc1->NBath() + p.sc2->NBath() == p.NBath);
+        auto [eps, V] = get_eps_V(p.sc1, p.Gamma1, p.sc2, p.Gamma2, p);
+        MPO H(p.sites);
+        double Eshift = p.sc1->Ec()*pow(p.sc1->n0(), 2) + p.sc2->Ec()*pow(p.sc2->n0(), 2) + p.qd->U()/2;
+        p.SCSCinteraction = 0.0; // IMPORTANT: separate baths
         Fill_SCBath_MPO_MiddleImp_TwoChannel(H, eps, V, p);
         return std::make_tuple(H, Eshift);
       }
@@ -407,6 +445,7 @@ inline std::unique_ptr<problem_type> set_problem(std::string str)
   if (str == "middle") return std::make_unique<prob::middle>();
   if (str == "middle_Ec") return std::make_unique<prob::middle_Ec>();
   if (str == "middle_2channel") return std::make_unique<prob::middle_2channel>();
+  if (str == "2ch") return std::make_unique<prob::twoch>();
   throw std::runtime_error("Unknown MPO type");
 }
 

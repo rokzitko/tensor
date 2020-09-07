@@ -64,8 +64,8 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   p.band_level_shift = input.getYesNo("band_level_shift", false);
 
   // parameters for the 2-channel problem
-  p.sc1 = std::make_unique<SCbath>(p.NBath, input.getReal("alpha1", 0), input.getReal("Ec1", 0), input.getReal("n01", (p.N-1)/2), input.getReal("EZ_bulk1", 0));
-  p.sc2 = std::make_unique<SCbath>(p.NBath, input.getReal("alpha2", 0), input.getReal("Ec2", 0), input.getReal("n02", (p.N-1)/2), input.getReal("EZ_bulk2", 0));
+  p.sc1 = std::make_unique<SCbath>(p.NBath/2, input.getReal("alpha1", 0), input.getReal("Ec1", 0), input.getReal("n01", (p.N-1)/2), input.getReal("EZ_bulk1", 0));
+  p.sc2 = std::make_unique<SCbath>(p.NBath/2, input.getReal("alpha2", 0), input.getReal("Ec2", 0), input.getReal("n02", (p.N-1)/2), input.getReal("EZ_bulk2", 0));
   p.Gamma1 = std::make_unique<hyb>(input.getReal("gamma1", 0));
   p.Gamma2 = std::make_unique<hyb>(input.getReal("gamma2", 0));
 
