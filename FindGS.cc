@@ -353,7 +353,7 @@ void ImpurityUpDn(MPS& psi, auto &file, std::string path, const params &p){
   std::cout << "impurity nup ndn = " << std::setprecision(full) << up << " " << dn << " sz = " << sz << std::endl;
   dump(file, path + "/impurity_Nup", up);
   dump(file, path + "/impurity_Ndn", dn);
-  dump(file, path + "/imputity_Sz",  sz);
+  dump(file, path + "/impurity_Sz",  sz);
 }
 
 // total Sz of the state
