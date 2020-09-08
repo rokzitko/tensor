@@ -51,14 +51,14 @@ ntot=5 SZ=0.5
     Largest link dim during sweep 1/15 was 10
     Largest truncation error: 0
     Energy after sweep 1/15 is -2.000000000000
-    Sweep 1/15 CPU time = 0.0103s (Wall time = 0.0113s)
+    Sweep 1/15 CPU time = 0.00818s (Wall time = 0.00817s)
 
     vN Entropy at center bond b=2 = -0.000000000000
     Eigs at center bond b=2: 1.0000 
     Largest link dim during sweep 2/15 was 12
     Largest truncation error: 0
     Energy after sweep 2/15 is -2.000000000000
-    Sweep 2/15 CPU time = 0.0118s (Wall time = 0.0126s)
+    Sweep 2/15 CPU time = 0.0128s (Wall time = 0.0128s)
     Energy error goal met (dE = 0.000E+00 < 1.000E-16); returning after 2 sweeps.
 
 Sweeping in the sector with 6 particles, Sz = 0
@@ -73,14 +73,14 @@ ntot=6 SZ=0
     Largest link dim during sweep 1/15 was 12
     Largest truncation error: 0
     Energy after sweep 1/15 is -1.750000000000
-    Sweep 1/15 CPU time = 0.00569s (Wall time = 0.00649s)
+    Sweep 1/15 CPU time = 0.00648s (Wall time = 0.00648s)
 
     vN Entropy at center bond b=2 = -0.000000000000
     Eigs at center bond b=2: 1.0000 
     Largest link dim during sweep 2/15 was 8
     Largest truncation error: 0
     Energy after sweep 2/15 is -1.750000000000
-    Sweep 2/15 CPU time = 0.0111s (Wall time = 0.0121s)
+    Sweep 2/15 CPU time = 0.0106s (Wall time = 0.0106s)
     Energy error goal met (dE = 0.000E+00 < 1.000E-16); returning after 2 sweeps.
 
 Sweeping in the sector with 4 particles, Sz = 0
@@ -95,14 +95,14 @@ ntot=4 SZ=0
     Largest link dim during sweep 1/15 was 15
     Largest truncation error: 0
     Energy after sweep 1/15 is -1.750000000000
-    Sweep 1/15 CPU time = 0.0110s (Wall time = 0.0110s)
+    Sweep 1/15 CPU time = 0.00693s (Wall time = 0.00693s)
 
     vN Entropy at center bond b=2 = -0.000000000000
     Eigs at center bond b=2: 1.0000 
     Largest link dim during sweep 2/15 was 12
     Largest truncation error: 0
     Energy after sweep 2/15 is -1.750000000000
-    Sweep 2/15 CPU time = 0.0109s (Wall time = 0.0109s)
+    Sweep 2/15 CPU time = 0.00859s (Wall time = 0.00860s)
     Energy error goal met (dE = 0.000E+00 < 1.000E-16); returning after 2 sweeps.
 
 Sweeping in the sector with 7 particles, Sz = 0.5
@@ -117,14 +117,14 @@ ntot=7 SZ=0.5
     Largest link dim during sweep 1/15 was 14
     Largest truncation error: 0
     Energy after sweep 1/15 is -1.500000000000
-    Sweep 1/15 CPU time = 0.00567s (Wall time = 0.00567s)
+    Sweep 1/15 CPU time = 0.00526s (Wall time = 0.00526s)
 
     vN Entropy at center bond b=2 = -0.000000000000
     Eigs at center bond b=2: 1.0000 
     Largest link dim during sweep 2/15 was 12
     Largest truncation error: 0
     Energy after sweep 2/15 is -1.500000000000
-    Sweep 2/15 CPU time = 0.0120s (Wall time = 0.0120s)
+    Sweep 2/15 CPU time = 0.0102s (Wall time = 0.0102s)
     Energy error goal met (dE = 0.000E+00 < 1.000E-16); returning after 2 sweeps.
 
 Sweeping in the sector with 3 particles, Sz = 0.5
@@ -139,14 +139,14 @@ ntot=3 SZ=0.5
     Largest link dim during sweep 1/15 was 20
     Largest truncation error: 0
     Energy after sweep 1/15 is -1.500000000000
-    Sweep 1/15 CPU time = 0.00773s (Wall time = 0.00773s)
+    Sweep 1/15 CPU time = 0.00764s (Wall time = 0.00763s)
 
     vN Entropy at center bond b=2 = -0.000000000000
     Eigs at center bond b=2: 1.0000 
     Largest link dim during sweep 2/15 was 12
     Largest truncation error: 0
     Energy after sweep 2/15 is -1.500000000000
-    Sweep 2/15 CPU time = 0.0116s (Wall time = 0.0116s)
+    Sweep 2/15 CPU time = 0.0115s (Wall time = 0.0115s)
     Energy error goal met (dE = 0.000E+00 < 1.000E-16); returning after 2 sweeps.
 
 
