@@ -40,8 +40,8 @@ inline void Fill_SCBath_MPO(MPO& H, const std::vector<double>& eps_,
         W += p.sites.op("Id",i) * setElt(right(1));
 
         W += p.sites.op("Ntot",i)  * setElt(right(2)) * epseff;
-        W += p.sites.op("Nup",i)  * setElt(right(2)) * p.qd->EZ();
-        W += p.sites.op("Ndn",i)  * setElt(right(2)) * (-1) * p.qd->EZ();
+        W += p.sites.op("Nup",i)  * setElt(right(2)) * p.qd->EZ()/2.0;
+        W += p.sites.op("Ndn",i)  * setElt(right(2)) * (-1) * p.qd->EZ()/2.0;
         W += p.sites.op("Nupdn",i) * setElt(right(2)) * Ueff;
 
         W += p.sites.op("Cup*F",i) * setElt(right(3))    * (-1);
@@ -61,8 +61,8 @@ inline void Fill_SCBath_MPO(MPO& H, const std::vector<double>& eps_,
         W += p.sites.op("Id",i) * setElt(left(1), right(1));
 
         W += p.sites.op("Ntot",i)           * setElt(left(1),right(2)) * eps_[i-1];
-        W += p.sites.op("Nup",i)           * setElt(left(1),right(2)) * p.sc->EZ();
-        W += p.sites.op("Ndn",i)           * setElt(left(1),right(2)) * (-1) * p.sc->EZ();
+        W += p.sites.op("Nup",i)           * setElt(left(1),right(2)) * p.sc->EZ()/2.0;
+        W += p.sites.op("Ndn",i)           * setElt(left(1),right(2)) * (-1) * p.sc->EZ()/2.0;
         W += p.sites.op("Nupdn",i)          * setElt(left(1),right(2)) * p.sc->g();
 
         W += p.sites.op("Cdn*Cup",i)        * setElt(left(1),right(7)) * p.sc->g();
@@ -94,8 +94,8 @@ inline void Fill_SCBath_MPO(MPO& H, const std::vector<double>& eps_,
         W = ITensor(left, p.sites.si(i), p.sites.siP(i) );
 
         W += p.sites.op("Ntot",  i) * setElt(left(1)) * eps_[i-1];
-        W += p.sites.op("Nup",  i) * setElt(left(1)) * p.sc->EZ();
-        W += p.sites.op("Ndn",  i) * setElt(left(1)) * (-1) * p.sc->EZ();
+        W += p.sites.op("Nup",  i) * setElt(left(1)) * p.sc->EZ()/2.0;
+        W += p.sites.op("Ndn",  i) * setElt(left(1)) * (-1) * p.sc->EZ()/2.0;
         W += p.sites.op("Nupdn",i)  * setElt(left(1)) * p.sc->g();
 
         W += p.sites.op("Id",    i) * setElt(left(2)) ;
