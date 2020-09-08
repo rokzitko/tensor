@@ -97,7 +97,7 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
 
 // Initialize the MPS in a product state with ntot electrons.
 // Sz is the spin of the electron on the impurity site.
-MPS initPsi(int ntot, float Sz, const auto &sites, int impindex, bool randomMPSb) {
+MPS initPsi(charge ntot, spin Sz, const auto &sites, int impindex, bool randomMPSb) {
   my_assert(ntot >= 0);
   my_assert(Sz == -0.5 || Sz == 0 || Sz == +0.5);
   int tot = 0;      // electron counter, for assertion test
@@ -116,11 +116,11 @@ MPS initPsi(int ntot, float Sz, const auto &sites, int impindex, bool randomMPSb
     tot++;
   }
   // ** Add electrons to the bath
-  const int nsc = ntot-1;    // number of electrons in the bath
+  const auto nsc = ntot-1;    // number of electrons in the bath
   if (nsc > 0) {
     const int npair = nsc/2; // number of pairs in the bath
-    int j = 0;               // counts added pairs
-    int i = 1;               // site index (1 based)
+    auto j = 0;               // counts added pairs
+    auto i = 1;               // site index (1 based)
     for(; j < npair; i++)
       if (i != impindex) {   // skip impurity site
         j++;
@@ -574,7 +574,7 @@ void print_energies(store &s, params &p) {
       printfln("n = %.17g  Sz = %.17g  E = %.17g", ntot, Sz, s.eigen0[subspace(ntot,Sz)].E());
 }
 
-auto find_global_GS_subspace(store &s) {
+auto find_global_GS_subspace(store &s, auto & file) {
   subspace subGS;
   double EGS = std::numeric_limits<double>::infinity();
   for(const auto & [sub, eig] : s.eigen0) {
@@ -587,6 +587,8 @@ auto find_global_GS_subspace(store &s) {
   auto [N_GS, Sz_GS] = subGS;
   printfln("N_GS = %i",N_GS);
   printfln("Sz_GS = %i",Sz_GS);
+  dump(file, "/GS/N",  N_GS);
+  dump(file, "/GS/Sz", Sz_GS);
   return subGS;
 }
 
@@ -594,7 +596,7 @@ auto find_global_GS_subspace(store &s) {
 void calculateAndPrint(InputGroup &input, store &s, params &p) {
   File file("solution.h5", File::Overwrite);
   for(auto ntot: p.numPart) {
-    for (double Sz: p.Szs[ntot]) {
+    for (auto Sz: p.Szs[ntot]) {
       auto sub = subspace(ntot, Sz);
       auto E = s.eigen0[sub].E();
       dump(file, str(sub, "0/E"), E);
@@ -629,7 +631,7 @@ void calculateAndPrint(InputGroup &input, store &s, params &p) {
     } //end of Sz for loop 
   } //end of ntot for loop
   print_energies(s, p);
-  subspace subGS = find_global_GS_subspace(s);
+  subspace subGS = find_global_GS_subspace(s, file);
   if (p.calcweights) 
     calculate_spectral_weights(s, subGS, file, p);
 }

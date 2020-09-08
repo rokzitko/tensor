@@ -145,13 +145,14 @@ class hyb {
    }
 };
 
+using charge = int;
 using spin = double;
 
 constexpr auto spin0 = spin(0);
 constexpr auto spinp = spin(0.5);
 constexpr auto spinm = spin(-0.5);
 
-using subspace = std::pair<int, spin>;
+using subspace = std::pair<charge, spin>;
 using state = std::pair<subspace, int>;
 
 inline std::string str(subspace &sub)
@@ -210,7 +211,6 @@ struct params {
   string inputfn;       // filename of the input file
   InputGroup input;     // itensor input parser
 
-//  string MPO = "std";   // which MPO representation to use
   std::unique_ptr<problem_type> problem = set_problem("std");
 
   int N;                // number of sites
@@ -341,7 +341,7 @@ class two_channel : virtual public problem_type
 namespace prob {
    class Std : public imp_first, public single_channel { // Note: avoid lowercase 'std'!!
     public:
-      H_t initH(int ntot, params &p) override {
+      H_t initH(charge ntot, params &p) override {
         auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
         MPO H(p.sites); // MPO is the hamiltonian in the "MPS-form"
         double Eshift = p.sc->Ec()*pow(ntot-p.sc->n0(),2) + p.qd->U()/2; // occupancy dependent effective energy shift
@@ -354,7 +354,7 @@ namespace prob {
 
    class Ec : public imp_first, public single_channel {
     public:
-      H_t initH(int ntot, params &p) override {
+      H_t initH(charge ntot, params &p) override {
         auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
         MPO H(p.sites);
         double Eshift = p.sc->Ec()*pow(p.sc->n0(), 2) + p.qd->U()/2;
@@ -365,7 +365,7 @@ namespace prob {
 
    class Ec_V : public imp_first, public single_channel {
     public:
-      H_t initH(int ntot, params &p) override {
+      H_t initH(charge ntot, params &p) override {
         auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
         MPO H(p.sites);
         double Eshift = p.sc->Ec()*pow(p.sc->n0(), 2) + p.V12 * p.sc->n0() * p.qd->nu() + p.qd->U()/2;
@@ -378,7 +378,7 @@ namespace prob {
 
    class middle : public imp_middle, public single_channel {
     public:
-      H_t initH(int ntot, params &p) override {
+      H_t initH(charge ntot, params &p) override {
         auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
         MPO H(p.sites);
         double Eshift = p.sc->Ec()*pow(ntot-p.sc->n0(),2) + p.qd->U()/2;
@@ -391,7 +391,7 @@ namespace prob {
 
    class middle_Ec : public imp_middle, public single_channel {
     public:
-      H_t initH(int ntot, params &p) override {
+      H_t initH(charge ntot, params &p) override {
         auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
         MPO H(p.sites);
         double Eshift = p.sc->Ec()*pow(p.sc->n0(), 2) + p.qd->U()/2;
@@ -405,7 +405,7 @@ namespace prob {
    // channel parameters. Use with care!
    class middle_2channel : public imp_middle, public single_channel {
     public:
-      H_t initH(int ntot, params &p) override {
+      H_t initH(charge ntot, params &p) override {
         auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
         MPO H(p.sites);
         double Eshift = p.sc1->Ec()*pow(p.sc1->n0(), 2) + p.qd->U()/2;
@@ -419,7 +419,7 @@ namespace prob {
 
    class twoch : public imp_middle, public two_channel {
     public:
-      H_t initH(int ntot, params &p) override {
+      H_t initH(charge ntot, params &p) override {
         my_assert(even(p.NBath)); // in 2-ch problems, NBath is the total number of bath sites in both SCs !!
         my_assert(p.sc1->NBath() + p.sc2->NBath() == p.NBath);
         auto [eps, V] = get_eps_V(p.sc1, p.Gamma1, p.sc2, p.Gamma2, p);
