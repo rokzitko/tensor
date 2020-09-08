@@ -10,7 +10,6 @@
 #include <iomanip>
 #include <vector>
 #include <map>
-#include <unordered_map>
 #include <stdexcept>
 #include <limits> // quiet_NaN
 #include <tuple>
@@ -74,9 +73,8 @@ template <typename U, typename V>
 inline auto shift1(const std::vector<double> &a) {
   std::vector<double> b;
   b.push_back(std::numeric_limits<double>::quiet_NaN());
-  for(const auto & x: a)
-        b.push_back(x);
-    return b;
+  b.insert(b.end(), a.cbegin(), a.cend());
+  return b;
 }
 
 // Class containing impurity parameters
@@ -143,10 +141,7 @@ class hyb {
    hyb(double Gamma) : _Gamma(Gamma) {};
    auto Gamma() const { return _Gamma; }
    auto V(int NBath) const {
-     std::vector<double> V;
-     for (auto k: range1(NBath))
-       V.push_back( std::sqrt( 2.0*_Gamma/(M_PI*NBath) ) );
-     return V;
+     return std::vector<double>(NBath, std::sqrt( 2.0*_Gamma/(M_PI*NBath) ));
    }
 };
 
@@ -319,11 +314,9 @@ template <class T>
   auto concat(const std::vector<T> &t1, const std::vector<T> &t2)
 {
    std::vector<T> t;
-   std::cout << "a" << std::endl;
    t.reserve(t1.size() + t2.size());
    t.insert(t.end(), t1.cbegin(), t1.cend());
    t.insert(t.end(), t2.cbegin(), t2.cend());
-   std::cout << "b" << std::endl;
    return t;
 }
 
