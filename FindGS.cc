@@ -578,11 +578,17 @@ void calculate_spectral_weights(store &s, subspace subGS, auto & file, params &p
   calc_weight(s, subGS, subspace(N_GS-1, Sz_GS+0.5), -1, "dn", file, p);
 }
 
-void print_energies(store &s, params &p) {
+void print_energies(store &s, double EGS, params &p) {
   std::cout << std::endl;
   for(auto ntot: p.numPart)
-    for(auto Sz: p.Szs[ntot])
-      std::cout << fmt::format("n = {:5}  Sz = {:4}  E = {:17}", ntot, Sz, s.eigen0[subspace(ntot,Sz)].E()) << std::endl;
+    for(auto Sz: p.Szs[ntot]) {
+      auto E0 = s.eigen0[subspace(ntot, Sz)].E();
+      std::cout << fmt::format("n = {:5}  Sz = {:4}  E = {:17}  DeltaE = {:17}", ntot, Sz, E0, E0-EGS) << std::endl;
+      if (p.excited_state) {
+        auto E1 = s.eigen1[subspace(ntot, Sz)].E();
+        std::cout << fmt::format(" 1st excited state    E = {:17}  DeltaE = {:17}", E1, E1-EGS) << std::endl;
+      }
+    }
 }
 
 auto find_global_GS_subspace(store &s, auto & file) {
@@ -596,7 +602,7 @@ auto find_global_GS_subspace(store &s, auto & file) {
     }
   }
   auto [N_GS, Sz_GS] = subGS;
-  std::cout << fmt::format("N_GS = {}\nSZ_GS = {}\n",N_GS, Sz_GS);
+  std::cout << fmt::format("\nN_GS = {}\nSZ_GS = {}\n",N_GS, Sz_GS);
   dump(file, "/GS/N",  N_GS);
   dump(file, "/GS/Sz", Sz_GS);
   return subGS;
@@ -640,8 +646,9 @@ void calculateAndPrint(InputGroup &input, store &s, params &p) {
        }
     } //end of Sz for loop 
   } //end of ntot for loop
-  print_energies(s, p);
   subspace subGS = find_global_GS_subspace(s, file);
+  auto EGS = s.eigen0[subGS].E();
+  print_energies(s, EGS, p);
   if (p.calcweights) 
     calculate_spectral_weights(s, subGS, file, p);
 }
