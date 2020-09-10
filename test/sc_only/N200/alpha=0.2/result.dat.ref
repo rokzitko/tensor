@@ -1,0 +1,624 @@
+Got params.MPO = Ec
+Def params.N = 0
+Got params.NBath = 200
+N=201 NBath=200 impindex=1
+Got params.U = 0
+Def params.EZ_imp = 0
+Got params.epsimp = 1000
+Def params.EZ_bulk = 0
+Got params.n0 = 0
+Got params.Ec = 0
+Got params.alpha = -0.2
+Got params.gamma = 0
+Def params.V = 0
+Got params.band_level_shift = false
+Def params.EZ_bulk1 = 0
+Def params.n01 = 100
+Def params.Ec1 = 0
+Def params.alpha1 = 0
+Def params.EZ_bulk2 = 0
+Def params.n02 = 100
+Def params.Ec2 = 0
+Def params.alpha2 = 0
+Def params.gamma1 = 0
+Def params.gamma2 = 0
+Got params.nref = 200
+Got params.nrange = 1
+Def params.refisn0 = 0
+Def params.excited_state = 0
+Def params.computeEntropy = 0
+Def params.impNupNdn = 0
+Def params.chargeCorrelation = 0
+Def params.spinCorrelation = 0
+Def params.pairCorrelation = 0
+Def params.hoppingExpectation = 0
+Def params.calcweights = 0
+Def params.printTotSpinZ = 0
+Def params.printDimensions = 0
+Def params.parallel = 0
+Got params.verbose = true
+Got params.EnergyErrgoal = 1e-10
+Def params.nrH = 5
+Got params.sc_only = true
+Def params.randomMPS = 0
+Got params.nrsweeps = 26
+
+Sweeping in the sector with 200 particles, Sz = 0
+eps=-0.995 -0.985 -0.975 -0.965 -0.955 -0.945 -0.935 -0.925 -0.915 -0.905 -0.895 -0.885 -0.875 -0.865 -0.855 -0.845 -0.835 -0.825 -0.815 -0.805 -0.795 -0.785 -0.775 -0.765 -0.755 -0.745 -0.735 -0.725 -0.715 -0.705 -0.695 -0.685 -0.675 -0.665 -0.655 -0.645 -0.635 -0.625 -0.615 -0.605 -0.595 -0.585 -0.575 -0.565 -0.555 -0.545 -0.535 -0.525 -0.515 -0.505 -0.495 -0.485 -0.475 -0.465 -0.455 -0.445 -0.435 -0.425 -0.415 -0.405 -0.395 -0.385 -0.375 -0.365 -0.355 -0.345 -0.335 -0.325 -0.315 -0.305 -0.295 -0.285 -0.275 -0.265 -0.255 -0.245 -0.235 -0.225 -0.215 -0.205 -0.195 -0.185 -0.175 -0.165 -0.155 -0.145 -0.135 -0.125 -0.115 -0.105 -0.095 -0.085 -0.075 -0.065 -0.055 -0.045 -0.035 -0.025 -0.015 -0.005 0.005 0.015 0.025 0.035 0.045 0.055 0.065 0.075 0.085 0.095 0.105 0.115 0.125 0.135 0.145 0.155 0.165 0.175 0.185 0.195 0.205 0.215 0.225 0.235 0.245 0.255 0.265 0.275 0.285 0.295 0.305 0.315 0.325 0.335 0.345 0.355 0.365 0.375 0.385 0.395 0.405 0.415 0.425 0.435 0.445 0.455 0.465 0.475 0.485 0.495 0.505 0.515 0.525 0.535 0.545 0.555 0.565 0.575 0.585 0.595 0.605 0.615 0.625 0.635 0.645 0.655 0.665 0.675 0.685 0.695 0.705 0.715 0.725 0.735 0.745 0.755 0.765 0.775 0.785 0.795 0.805 0.815 0.825 0.835 0.845 0.855 0.865 0.875 0.885 0.895 0.905 0.915 0.925 0.935 0.945 0.955 0.965 0.975 0.985 0.995 
+V=0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+tot=200 Sztot=0
+ntot=200 SZ=0
+
+    vN Entropy at center bond b=100 = 0.497308451047
+    Eigs at center bond b=100: 0.8548 0.1244 0.0118 0.0068 
+    Largest link dim during sweep 1/26 was 20
+    Largest truncation error: 3.14203e-06
+    Energy after sweep 1/26 is -100.250667903213
+    Sweep 1/26 CPU time = 10.93s (Wall time = 11.38s)
+
+    vN Entropy at center bond b=100 = 0.760270310001
+    Eigs at center bond b=100: 0.7420 0.2050 0.0346 0.0107 0.0039 0.0018 
+    Largest link dim during sweep 2/26 was 20
+    Largest truncation error: 6.24159e-06
+    Energy after sweep 2/26 is -100.254320803800
+    Sweep 2/26 CPU time = 13.26s (Wall time = 13.93s)
+    Energy error dE = 3.653E-03 after 2 sweeps;
+
+    vN Entropy at center bond b=100 = 0.843263911941
+    Eigs at center bond b=100: 0.7000 0.2341 0.0435 0.0116 0.0057 0.0023 
+    Largest link dim during sweep 3/26 was 20
+    Largest truncation error: 9.95774e-06
+    Energy after sweep 3/26 is -100.254974246370
+    Sweep 3/26 CPU time = 14.10s (Wall time = 14.91s)
+
+    vN Entropy at center bond b=100 = 0.852410420968
+    Eigs at center bond b=100: 0.6946 0.2380 0.0445 0.0117 0.0059 0.0023 
+    Largest link dim during sweep 4/26 was 20
+    Largest truncation error: 1.25785e-05
+    Energy after sweep 4/26 is -100.255044979010
+    Sweep 4/26 CPU time = 13.49s (Wall time = 14.27s)
+    Energy error dE = 7.073E-05 after 4 sweeps;
+
+    vN Entropy at center bond b=100 = 0.854619987294
+    Eigs at center bond b=100: 0.6931 0.2391 0.0448 0.0117 0.0059 0.0023 
+    Largest link dim during sweep 5/26 was 20
+    Largest truncation error: 1.24676e-05
+    Energy after sweep 5/26 is -100.255057180634
+    Sweep 5/26 CPU time = 13.92s (Wall time = 14.70s)
+
+    vN Entropy at center bond b=100 = 0.818910517589
+    Eigs at center bond b=100: 0.6999 0.2398 0.0435 0.0084 0.0055 0.0015 
+    Largest link dim during sweep 6/26 was 40
+    Largest truncation error: 6.60482e-08
+    Energy after sweep 6/26 is -100.255108893514
+    Sweep 6/26 CPU time = 9.535s (Wall time = 9.757s)
+    Energy error dE = 5.171E-05 after 6 sweeps;
+
+    vN Entropy at center bond b=100 = 0.820455885768
+    Eigs at center bond b=100: 0.6991 0.2403 0.0437 0.0084 0.0056 0.0015 
+    Largest link dim during sweep 7/26 was 40
+    Largest truncation error: 3.23812e-07
+    Energy after sweep 7/26 is -100.255110725155
+    Sweep 7/26 CPU time = 8.765s (Wall time = 8.923s)
+
+    vN Entropy at center bond b=100 = 0.820712575983
+    Eigs at center bond b=100: 0.6989 0.2404 0.0437 0.0084 0.0056 0.0015 
+    Largest link dim during sweep 8/26 was 40
+    Largest truncation error: 3.47394e-07
+    Energy after sweep 8/26 is -100.255110870848
+    Sweep 8/26 CPU time = 8.517s (Wall time = 8.670s)
+    Energy error dE = 1.457E-07 after 8 sweeps;
+
+    vN Entropy at center bond b=100 = 0.820795043152
+    Eigs at center bond b=100: 0.6989 0.2405 0.0438 0.0084 0.0056 0.0015 
+    Largest link dim during sweep 9/26 was 40
+    Largest truncation error: 3.43391e-07
+    Energy after sweep 9/26 is -100.255110911801
+    Sweep 9/26 CPU time = 8.198s (Wall time = 8.333s)
+
+    vN Entropy at center bond b=100 = 0.820833214131
+    Eigs at center bond b=100: 0.6988 0.2405 0.0438 0.0084 0.0056 0.0015 
+    Largest link dim during sweep 10/26 was 40
+    Largest truncation error: 3.42042e-07
+    Energy after sweep 10/26 is -100.255110931593
+    Sweep 10/26 CPU time = 8.128s (Wall time = 8.262s)
+    Energy error dE = 1.979E-08 after 10 sweeps;
+
+    vN Entropy at center bond b=100 = 0.816498622968
+    Eigs at center bond b=100: 0.6996 0.2405 0.0436 0.0081 0.0055 0.0014 
+    Largest link dim during sweep 11/26 was 79
+    Largest truncation error: 9.87847e-10
+    Energy after sweep 11/26 is -100.255113640732
+    Sweep 11/26 CPU time = 8.987s (Wall time = 9.171s)
+
+    vN Entropy at center bond b=100 = 0.816582618747
+    Eigs at center bond b=100: 0.6996 0.2406 0.0436 0.0081 0.0055 0.0014 
+    Largest link dim during sweep 12/26 was 97
+    Largest truncation error: 9.85469e-10
+    Energy after sweep 12/26 is -100.255113697147
+    Sweep 12/26 CPU time = 14.78s (Wall time = 14.90s)
+    Energy error dE = 5.641E-08 after 12 sweeps;
+
+    vN Entropy at center bond b=100 = 0.816609111924
+    Eigs at center bond b=100: 0.6995 0.2406 0.0436 0.0081 0.0055 0.0014 
+    Largest link dim during sweep 13/26 was 97
+    Largest truncation error: 9.85439e-10
+    Energy after sweep 13/26 is -100.255113701061
+    Sweep 13/26 CPU time = 14.93s (Wall time = 14.94s)
+
+    vN Entropy at center bond b=100 = 0.816091252512
+    Eigs at center bond b=100: 0.6996 0.2406 0.0436 0.0080 0.0055 0.0014 
+    Largest link dim during sweep 14/26 was 76
+    Largest truncation error: 9.80022e-10
+    Energy after sweep 14/26 is -100.255113545004
+    Sweep 14/26 CPU time = 8.007s (Wall time = 8.009s)
+    Energy error dE = 1.561E-07 after 14 sweeps;
+
+    vN Entropy at center bond b=100 = 0.816090501948
+    Eigs at center bond b=100: 0.6996 0.2406 0.0436 0.0080 0.0055 0.0014 
+    Largest link dim during sweep 15/26 was 75
+    Largest truncation error: 9.3889e-10
+    Energy after sweep 15/26 is -100.255113509653
+    Sweep 15/26 CPU time = 7.837s (Wall time = 7.837s)
+
+    vN Entropy at center bond b=100 = 0.816092717561
+    Eigs at center bond b=100: 0.6996 0.2406 0.0436 0.0080 0.0055 0.0014 
+    Largest link dim during sweep 16/26 was 75
+    Largest truncation error: 9.34586e-10
+    Energy after sweep 16/26 is -100.255113509718
+    Sweep 16/26 CPU time = 7.927s (Wall time = 7.928s)
+    Energy error dE = 6.507E-11 after 16 sweeps;
+    Energy error goal met (dE = 6.507E-11 < 1.000E-10); returning after 16 sweeps.
+
+Sweeping in the sector with 201 particles, Sz = 0.5
+eps=-0.995 -0.985 -0.975 -0.965 -0.955 -0.945 -0.935 -0.925 -0.915 -0.905 -0.895 -0.885 -0.875 -0.865 -0.855 -0.845 -0.835 -0.825 -0.815 -0.805 -0.795 -0.785 -0.775 -0.765 -0.755 -0.745 -0.735 -0.725 -0.715 -0.705 -0.695 -0.685 -0.675 -0.665 -0.655 -0.645 -0.635 -0.625 -0.615 -0.605 -0.595 -0.585 -0.575 -0.565 -0.555 -0.545 -0.535 -0.525 -0.515 -0.505 -0.495 -0.485 -0.475 -0.465 -0.455 -0.445 -0.435 -0.425 -0.415 -0.405 -0.395 -0.385 -0.375 -0.365 -0.355 -0.345 -0.335 -0.325 -0.315 -0.305 -0.295 -0.285 -0.275 -0.265 -0.255 -0.245 -0.235 -0.225 -0.215 -0.205 -0.195 -0.185 -0.175 -0.165 -0.155 -0.145 -0.135 -0.125 -0.115 -0.105 -0.095 -0.085 -0.075 -0.065 -0.055 -0.045 -0.035 -0.025 -0.015 -0.005 0.005 0.015 0.025 0.035 0.045 0.055 0.065 0.075 0.085 0.095 0.105 0.115 0.125 0.135 0.145 0.155 0.165 0.175 0.185 0.195 0.205 0.215 0.225 0.235 0.245 0.255 0.265 0.275 0.285 0.295 0.305 0.315 0.325 0.335 0.345 0.355 0.365 0.375 0.385 0.395 0.405 0.415 0.425 0.435 0.445 0.455 0.465 0.475 0.485 0.495 0.505 0.515 0.525 0.535 0.545 0.555 0.565 0.575 0.585 0.595 0.605 0.615 0.625 0.635 0.645 0.655 0.665 0.675 0.685 0.695 0.705 0.715 0.725 0.735 0.745 0.755 0.765 0.775 0.785 0.795 0.805 0.815 0.825 0.835 0.845 0.855 0.865 0.875 0.885 0.895 0.905 0.915 0.925 0.935 0.945 0.955 0.965 0.975 0.985 0.995 
+V=0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+tot=201 Sztot=0.5
+ntot=201 SZ=0.5
+
+    vN Entropy at center bond b=100 = 0.415768295243
+    Eigs at center bond b=100: 0.8846 0.1011 0.0072 0.0059 
+    Largest link dim during sweep 1/26 was 20
+    Largest truncation error: 2.79155e-07
+    Energy after sweep 1/26 is -100.240422105233
+    Sweep 1/26 CPU time = 10.81s (Wall time = 10.82s)
+
+    vN Entropy at center bond b=100 = 0.572818338573
+    Eigs at center bond b=100: 0.8289 0.1407 0.0175 0.0090 0.0016 
+    Largest link dim during sweep 2/26 was 20
+    Largest truncation error: 2.46482e-06
+    Energy after sweep 2/26 is -100.241786430955
+    Sweep 2/26 CPU time = 13.17s (Wall time = 13.17s)
+    Energy error dE = 1.364E-03 after 2 sweeps;
+
+    vN Entropy at center bond b=100 = 0.597737096943
+    Eigs at center bond b=100: 0.8195 0.1473 0.0191 0.0094 0.0020 0.0011 
+    Largest link dim during sweep 3/26 was 20
+    Largest truncation error: 3.94536e-06
+    Energy after sweep 3/26 is -100.241864737826
+    Sweep 3/26 CPU time = 13.76s (Wall time = 13.77s)
+
+    vN Entropy at center bond b=100 = 0.599584697666
+    Eigs at center bond b=100: 0.8187 0.1479 0.0192 0.0095 0.0020 0.0011 
+    Largest link dim during sweep 4/26 was 20
+    Largest truncation error: 3.91353e-06
+    Energy after sweep 4/26 is -100.241868453723
+    Sweep 4/26 CPU time = 13.40s (Wall time = 13.40s)
+    Energy error dE = 3.716E-06 after 4 sweeps;
+
+    vN Entropy at center bond b=100 = 0.599661631862
+    Eigs at center bond b=100: 0.8186 0.1480 0.0192 0.0094 0.0020 0.0011 
+    Largest link dim during sweep 5/26 was 20
+    Largest truncation error: 3.8235e-06
+    Energy after sweep 5/26 is -100.241868672792
+    Sweep 5/26 CPU time = 13.41s (Wall time = 13.41s)
+
+    vN Entropy at center bond b=100 = 0.562179881552
+    Eigs at center bond b=100: 0.8272 0.1457 0.0180 0.0061 0.0017 
+    Largest link dim during sweep 6/26 was 37
+    Largest truncation error: 9.98823e-09
+    Energy after sweep 6/26 is -100.241881827175
+    Sweep 6/26 CPU time = 8.811s (Wall time = 8.811s)
+    Energy error dE = 1.315E-05 after 6 sweeps;
+
+    vN Entropy at center bond b=100 = 0.562841203619
+    Eigs at center bond b=100: 0.8270 0.1458 0.0181 0.0061 0.0018 
+    Largest link dim during sweep 7/26 was 40
+    Largest truncation error: 1.98556e-08
+    Energy after sweep 7/26 is -100.241882876059
+    Sweep 7/26 CPU time = 8.259s (Wall time = 8.262s)
+
+    vN Entropy at center bond b=100 = 0.562889773325
+    Eigs at center bond b=100: 0.8270 0.1458 0.0181 0.0061 0.0018 
+    Largest link dim during sweep 8/26 was 40
+    Largest truncation error: 5.22104e-08
+    Energy after sweep 8/26 is -100.241882920982
+    Sweep 8/26 CPU time = 8.208s (Wall time = 8.207s)
+    Energy error dE = 4.492E-08 after 8 sweeps;
+
+    vN Entropy at center bond b=100 = 0.562897575034
+    Eigs at center bond b=100: 0.8270 0.1458 0.0181 0.0061 0.0018 
+    Largest link dim during sweep 9/26 was 40
+    Largest truncation error: 4.66327e-08
+    Energy after sweep 9/26 is -100.241882909005
+    Sweep 9/26 CPU time = 7.879s (Wall time = 7.879s)
+
+    vN Entropy at center bond b=100 = 0.562895952730
+    Eigs at center bond b=100: 0.8270 0.1458 0.0181 0.0061 0.0018 
+    Largest link dim during sweep 10/26 was 40
+    Largest truncation error: 4.71898e-08
+    Energy after sweep 10/26 is -100.241882937392
+    Sweep 10/26 CPU time = 7.674s (Wall time = 7.676s)
+    Energy error dE = 2.839E-08 after 10 sweeps;
+
+    vN Entropy at center bond b=100 = 0.558624105711
+    Eigs at center bond b=100: 0.8279 0.1456 0.0180 0.0057 0.0017 
+    Largest link dim during sweep 11/26 was 49
+    Largest truncation error: 9.90612e-10
+    Energy after sweep 11/26 is -100.241884889477
+    Sweep 11/26 CPU time = 8.261s (Wall time = 8.261s)
+
+    vN Entropy at center bond b=100 = 0.558661207112
+    Eigs at center bond b=100: 0.8279 0.1456 0.0180 0.0057 0.0017 
+    Largest link dim during sweep 12/26 was 54
+    Largest truncation error: 9.84282e-10
+    Energy after sweep 12/26 is -100.241884955373
+    Sweep 12/26 CPU time = 12.97s (Wall time = 12.97s)
+    Energy error dE = 6.590E-08 after 12 sweeps;
+
+    vN Entropy at center bond b=100 = 0.558665746828
+    Eigs at center bond b=100: 0.8279 0.1456 0.0180 0.0057 0.0017 
+    Largest link dim during sweep 13/26 was 57
+    Largest truncation error: 9.86676e-10
+    Energy after sweep 13/26 is -100.241884964370
+    Sweep 13/26 CPU time = 13.67s (Wall time = 13.67s)
+
+    vN Entropy at center bond b=100 = 0.558159728487
+    Eigs at center bond b=100: 0.8280 0.1456 0.0179 0.0057 0.0017 
+    Largest link dim during sweep 14/26 was 45
+    Largest truncation error: 9.84262e-10
+    Energy after sweep 14/26 is -100.241884791015
+    Sweep 14/26 CPU time = 7.884s (Wall time = 7.885s)
+    Energy error dE = 1.734E-07 after 14 sweeps;
+
+    vN Entropy at center bond b=100 = 0.558157258873
+    Eigs at center bond b=100: 0.8280 0.1456 0.0179 0.0057 0.0017 
+    Largest link dim during sweep 15/26 was 44
+    Largest truncation error: 9.84201e-10
+    Energy after sweep 15/26 is -100.241884772144
+    Sweep 15/26 CPU time = 7.791s (Wall time = 7.795s)
+
+    vN Entropy at center bond b=100 = 0.558156927579
+    Eigs at center bond b=100: 0.8280 0.1456 0.0179 0.0057 0.0017 
+    Largest link dim during sweep 16/26 was 44
+    Largest truncation error: 9.83903e-10
+    Energy after sweep 16/26 is -100.241884766952
+    Sweep 16/26 CPU time = 7.307s (Wall time = 7.307s)
+    Energy error dE = 5.192E-09 after 16 sweeps;
+
+    vN Entropy at center bond b=100 = 0.558157109003
+    Eigs at center bond b=100: 0.8280 0.1456 0.0179 0.0057 0.0017 
+    Largest link dim during sweep 17/26 was 44
+    Largest truncation error: 9.83903e-10
+    Energy after sweep 17/26 is -100.241884772185
+    Sweep 17/26 CPU time = 7.233s (Wall time = 7.233s)
+
+    vN Entropy at center bond b=100 = 0.558156923410
+    Eigs at center bond b=100: 0.8280 0.1456 0.0179 0.0057 0.0017 
+    Largest link dim during sweep 18/26 was 44
+    Largest truncation error: 9.83903e-10
+    Energy after sweep 18/26 is -100.241884766951
+    Sweep 18/26 CPU time = 7.240s (Wall time = 7.241s)
+    Energy error dE = 5.234E-09 after 18 sweeps;
+
+    vN Entropy at center bond b=100 = 0.558167355357
+    Eigs at center bond b=100: 0.8280 0.1456 0.0179 0.0057 0.0017 
+    Largest link dim during sweep 19/26 was 44
+    Largest truncation error: 9.74018e-11
+    Energy after sweep 19/26 is -100.241885288918
+    Sweep 19/26 CPU time = 8.060s (Wall time = 8.060s)
+
+    vN Entropy at center bond b=100 = 0.558175507461
+    Eigs at center bond b=100: 0.8280 0.1456 0.0179 0.0057 0.0017 
+    Largest link dim during sweep 20/26 was 44
+    Largest truncation error: 9.79836e-11
+    Energy after sweep 20/26 is -100.241885294325
+    Sweep 20/26 CPU time = 9.008s (Wall time = 9.011s)
+    Energy error dE = 5.407E-09 after 20 sweeps;
+
+    vN Entropy at center bond b=100 = 0.558176080519
+    Eigs at center bond b=100: 0.8280 0.1456 0.0179 0.0057 0.0017 
+    Largest link dim during sweep 21/26 was 44
+    Largest truncation error: 9.79918e-11
+    Energy after sweep 21/26 is -100.241885294897
+    Sweep 21/26 CPU time = 8.477s (Wall time = 8.480s)
+
+    vN Entropy at center bond b=100 = 0.558176232572
+    Eigs at center bond b=100: 0.8280 0.1456 0.0179 0.0057 0.0017 
+    Largest link dim during sweep 22/26 was 44
+    Largest truncation error: 9.80015e-11
+    Energy after sweep 22/26 is -100.241885294670
+    Sweep 22/26 CPU time = 8.715s (Wall time = 8.715s)
+    Energy error dE = 2.264E-10 after 22 sweeps;
+
+    vN Entropy at center bond b=100 = 0.558176260588
+    Eigs at center bond b=100: 0.8280 0.1456 0.0179 0.0057 0.0017 
+    Largest link dim during sweep 23/26 was 44
+    Largest truncation error: 9.80016e-11
+    Energy after sweep 23/26 is -100.241885294910
+    Sweep 23/26 CPU time = 8.562s (Wall time = 8.561s)
+
+    vN Entropy at center bond b=100 = 0.558176285852
+    Eigs at center bond b=100: 0.8280 0.1456 0.0179 0.0057 0.0017 
+    Largest link dim during sweep 24/26 was 44
+    Largest truncation error: 9.80018e-11
+    Energy after sweep 24/26 is -100.241885294674
+    Sweep 24/26 CPU time = 8.223s (Wall time = 8.223s)
+    Energy error dE = 2.353E-10 after 24 sweeps;
+
+    vN Entropy at center bond b=100 = 0.558176276421
+    Eigs at center bond b=100: 0.8280 0.1456 0.0179 0.0057 0.0017 
+    Largest link dim during sweep 25/26 was 44
+    Largest truncation error: 9.80019e-11
+    Energy after sweep 25/26 is -100.241885294911
+    Sweep 25/26 CPU time = 8.252s (Wall time = 8.251s)
+
+    vN Entropy at center bond b=100 = 0.558176290635
+    Eigs at center bond b=100: 0.8280 0.1456 0.0179 0.0057 0.0017 
+    Largest link dim during sweep 26/26 was 44
+    Largest truncation error: 9.80018e-11
+    Energy after sweep 26/26 is -100.241885294675
+    Sweep 26/26 CPU time = 8.661s (Wall time = 8.662s)
+    Energy error dE = 2.358E-10 after 26 sweeps;
+
+Sweeping in the sector with 199 particles, Sz = 0.5
+eps=-0.995 -0.985 -0.975 -0.965 -0.955 -0.945 -0.935 -0.925 -0.915 -0.905 -0.895 -0.885 -0.875 -0.865 -0.855 -0.845 -0.835 -0.825 -0.815 -0.805 -0.795 -0.785 -0.775 -0.765 -0.755 -0.745 -0.735 -0.725 -0.715 -0.705 -0.695 -0.685 -0.675 -0.665 -0.655 -0.645 -0.635 -0.625 -0.615 -0.605 -0.595 -0.585 -0.575 -0.565 -0.555 -0.545 -0.535 -0.525 -0.515 -0.505 -0.495 -0.485 -0.475 -0.465 -0.455 -0.445 -0.435 -0.425 -0.415 -0.405 -0.395 -0.385 -0.375 -0.365 -0.355 -0.345 -0.335 -0.325 -0.315 -0.305 -0.295 -0.285 -0.275 -0.265 -0.255 -0.245 -0.235 -0.225 -0.215 -0.205 -0.195 -0.185 -0.175 -0.165 -0.155 -0.145 -0.135 -0.125 -0.115 -0.105 -0.095 -0.085 -0.075 -0.065 -0.055 -0.045 -0.035 -0.025 -0.015 -0.005 0.005 0.015 0.025 0.035 0.045 0.055 0.065 0.075 0.085 0.095 0.105 0.115 0.125 0.135 0.145 0.155 0.165 0.175 0.185 0.195 0.205 0.215 0.225 0.235 0.245 0.255 0.265 0.275 0.285 0.295 0.305 0.315 0.325 0.335 0.345 0.355 0.365 0.375 0.385 0.395 0.405 0.415 0.425 0.435 0.445 0.455 0.465 0.475 0.485 0.495 0.505 0.515 0.525 0.535 0.545 0.555 0.565 0.575 0.585 0.595 0.605 0.615 0.625 0.635 0.645 0.655 0.665 0.675 0.685 0.695 0.705 0.715 0.725 0.735 0.745 0.755 0.765 0.775 0.785 0.795 0.805 0.815 0.825 0.835 0.845 0.855 0.865 0.875 0.885 0.895 0.905 0.915 0.925 0.935 0.945 0.955 0.965 0.975 0.985 0.995 
+V=0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+tot=199 Sztot=0.5
+ntot=199 SZ=0.5
+
+    vN Entropy at center bond b=100 = 0.462837597444
+    Eigs at center bond b=100: 0.8674 0.1144 0.0099 0.0068 
+    Largest link dim during sweep 1/26 was 20
+    Largest truncation error: 5.69537e-07
+    Energy after sweep 1/26 is -100.238796060494
+    Sweep 1/26 CPU time = 11.06s (Wall time = 11.06s)
+
+    vN Entropy at center bond b=100 = 0.669191295598
+    Eigs at center bond b=100: 0.7869 0.1717 0.0250 0.0109 0.0027 0.0015 
+    Largest link dim during sweep 2/26 was 20
+    Largest truncation error: 2.72529e-06
+    Energy after sweep 2/26 is -100.239783344035
+    Sweep 2/26 CPU time = 14.41s (Wall time = 14.41s)
+    Energy error dE = 9.873E-04 after 2 sweeps;
+
+    vN Entropy at center bond b=100 = 0.717079182617
+    Eigs at center bond b=100: 0.7665 0.1855 0.0289 0.0120 0.0034 0.0018 
+    Largest link dim during sweep 3/26 was 20
+    Largest truncation error: 3.94112e-06
+    Energy after sweep 3/26 is -100.239863564521
+    Sweep 3/26 CPU time = 13.54s (Wall time = 13.54s)
+
+    vN Entropy at center bond b=100 = 0.725503586956
+    Eigs at center bond b=100: 0.7626 0.1883 0.0296 0.0123 0.0035 0.0018 0.0010 
+    Largest link dim during sweep 4/26 was 20
+    Largest truncation error: 3.90654e-06
+    Energy after sweep 4/26 is -100.239868149295
+    Sweep 4/26 CPU time = 12.99s (Wall time = 12.99s)
+    Energy error dE = 4.585E-06 after 4 sweeps;
+
+    vN Entropy at center bond b=100 = 0.727031386186
+    Eigs at center bond b=100: 0.7619 0.1889 0.0297 0.0123 0.0035 0.0018 0.0010 
+    Largest link dim during sweep 5/26 was 20
+    Largest truncation error: 3.8526e-06
+    Energy after sweep 5/26 is -100.239868515468
+    Sweep 5/26 CPU time = 14.07s (Wall time = 14.07s)
+
+    vN Entropy at center bond b=100 = 0.694237882418
+    Eigs at center bond b=100: 0.7691 0.1883 0.0285 0.0088 0.0032 0.0011 
+    Largest link dim during sweep 6/26 was 37
+    Largest truncation error: 9.7594e-09
+    Energy after sweep 6/26 is -100.239881804582
+    Sweep 6/26 CPU time = 8.755s (Wall time = 8.754s)
+    Energy error dE = 1.329E-05 after 6 sweeps;
+
+    vN Entropy at center bond b=100 = 0.695793842071
+    Eigs at center bond b=100: 0.7685 0.1886 0.0286 0.0089 0.0032 0.0012 
+    Largest link dim during sweep 7/26 was 40
+    Largest truncation error: 2.01198e-08
+    Energy after sweep 7/26 is -100.239882872180
+    Sweep 7/26 CPU time = 8.208s (Wall time = 8.207s)
+
+    vN Entropy at center bond b=100 = 0.696060376940
+    Eigs at center bond b=100: 0.7684 0.1887 0.0286 0.0089 0.0032 0.0012 
+    Largest link dim during sweep 8/26 was 40
+    Largest truncation error: 5.20612e-08
+    Energy after sweep 8/26 is -100.239882946239
+    Sweep 8/26 CPU time = 7.867s (Wall time = 7.867s)
+    Energy error dE = 7.406E-08 after 8 sweeps;
+
+    vN Entropy at center bond b=100 = 0.696140440261
+    Eigs at center bond b=100: 0.7684 0.1887 0.0286 0.0089 0.0032 0.0012 
+    Largest link dim during sweep 9/26 was 40
+    Largest truncation error: 4.63632e-08
+    Energy after sweep 9/26 is -100.239882938464
+    Sweep 9/26 CPU time = 7.956s (Wall time = 7.956s)
+
+    vN Entropy at center bond b=100 = 0.696174497104
+    Eigs at center bond b=100: 0.7684 0.1887 0.0286 0.0089 0.0032 0.0012 
+    Largest link dim during sweep 10/26 was 40
+    Largest truncation error: 4.68287e-08
+    Energy after sweep 10/26 is -100.239882939007
+    Sweep 10/26 CPU time = 7.692s (Wall time = 7.691s)
+    Energy error dE = 5.426E-10 after 10 sweeps;
+
+    vN Entropy at center bond b=100 = 0.692417216703
+    Eigs at center bond b=100: 0.7691 0.1886 0.0285 0.0085 0.0032 0.0011 
+    Largest link dim during sweep 11/26 was 49
+    Largest truncation error: 9.96561e-10
+    Energy after sweep 11/26 is -100.239884888828
+    Sweep 11/26 CPU time = 8.415s (Wall time = 8.415s)
+
+    vN Entropy at center bond b=100 = 0.692483876942
+    Eigs at center bond b=100: 0.7691 0.1886 0.0285 0.0085 0.0032 0.0011 
+    Largest link dim during sweep 12/26 was 54
+    Largest truncation error: 9.93997e-10
+    Energy after sweep 12/26 is -100.239884958787
+    Sweep 12/26 CPU time = 13.51s (Wall time = 13.51s)
+    Energy error dE = 6.996E-08 after 12 sweeps;
+
+    vN Entropy at center bond b=100 = 0.692498687114
+    Eigs at center bond b=100: 0.7691 0.1886 0.0285 0.0085 0.0032 0.0011 
+    Largest link dim during sweep 13/26 was 57
+    Largest truncation error: 9.95708e-10
+    Energy after sweep 13/26 is -100.239884969681
+    Sweep 13/26 CPU time = 13.29s (Wall time = 13.29s)
+
+    vN Entropy at center bond b=100 = 0.692062950159
+    Eigs at center bond b=100: 0.7692 0.1886 0.0285 0.0085 0.0032 0.0011 
+    Largest link dim during sweep 14/26 was 45
+    Largest truncation error: 9.84228e-10
+    Energy after sweep 14/26 is -100.239884792342
+    Sweep 14/26 CPU time = 7.343s (Wall time = 7.346s)
+    Energy error dE = 1.773E-07 after 14 sweeps;
+
+    vN Entropy at center bond b=100 = 0.692061518883
+    Eigs at center bond b=100: 0.7692 0.1886 0.0285 0.0085 0.0032 0.0011 
+    Largest link dim during sweep 15/26 was 44
+    Largest truncation error: 9.83872e-10
+    Energy after sweep 15/26 is -100.239884772197
+    Sweep 15/26 CPU time = 7.313s (Wall time = 7.316s)
+
+    vN Entropy at center bond b=100 = 0.692061438540
+    Eigs at center bond b=100: 0.7692 0.1886 0.0285 0.0085 0.0032 0.0011 
+    Largest link dim during sweep 16/26 was 44
+    Largest truncation error: 9.83843e-10
+    Energy after sweep 16/26 is -100.239884766988
+    Sweep 16/26 CPU time = 7.290s (Wall time = 7.289s)
+    Energy error dE = 5.209E-09 after 16 sweeps;
+
+    vN Entropy at center bond b=100 = 0.692061613032
+    Eigs at center bond b=100: 0.7692 0.1886 0.0285 0.0085 0.0032 0.0011 
+    Largest link dim during sweep 17/26 was 44
+    Largest truncation error: 9.83899e-10
+    Energy after sweep 17/26 is -100.239884772210
+    Sweep 17/26 CPU time = 7.586s (Wall time = 7.587s)
+
+    vN Entropy at center bond b=100 = 0.692061552410
+    Eigs at center bond b=100: 0.7692 0.1886 0.0285 0.0085 0.0032 0.0011 
+    Largest link dim during sweep 18/26 was 44
+    Largest truncation error: 9.83846e-10
+    Energy after sweep 18/26 is -100.239884767004
+    Sweep 18/26 CPU time = 8.158s (Wall time = 8.161s)
+    Energy error dE = 5.206E-09 after 18 sweeps;
+
+    vN Entropy at center bond b=100 = 0.692072800840
+    Eigs at center bond b=100: 0.7692 0.1886 0.0285 0.0085 0.0032 0.0011 
+    Largest link dim during sweep 19/26 was 44
+    Largest truncation error: 9.76207e-11
+    Energy after sweep 19/26 is -100.239885290118
+    Sweep 19/26 CPU time = 8.578s (Wall time = 8.581s)
+
+    vN Entropy at center bond b=100 = 0.692081440275
+    Eigs at center bond b=100: 0.7692 0.1886 0.0285 0.0085 0.0032 0.0011 
+    Largest link dim during sweep 20/26 was 44
+    Largest truncation error: 9.79083e-11
+    Energy after sweep 20/26 is -100.239885294343
+    Sweep 20/26 CPU time = 8.782s (Wall time = 8.783s)
+    Energy error dE = 4.225E-09 after 20 sweeps;
+
+    vN Entropy at center bond b=100 = 0.692082364643
+    Eigs at center bond b=100: 0.7692 0.1886 0.0285 0.0085 0.0032 0.0011 
+    Largest link dim during sweep 21/26 was 44
+    Largest truncation error: 9.79958e-11
+    Energy after sweep 21/26 is -100.239885294667
+    Sweep 21/26 CPU time = 8.477s (Wall time = 8.477s)
+
+    vN Entropy at center bond b=100 = 0.692082632700
+    Eigs at center bond b=100: 0.7692 0.1886 0.0285 0.0085 0.0032 0.0011 
+    Largest link dim during sweep 22/26 was 44
+    Largest truncation error: 9.79927e-11
+    Energy after sweep 22/26 is -100.239885294806
+    Sweep 22/26 CPU time = 8.348s (Wall time = 8.348s)
+    Energy error dE = 1.391E-10 after 22 sweeps;
+
+    vN Entropy at center bond b=100 = 0.692082702647
+    Eigs at center bond b=100: 0.7692 0.1886 0.0285 0.0085 0.0032 0.0011 
+    Largest link dim during sweep 23/26 was 44
+    Largest truncation error: 9.80018e-11
+    Energy after sweep 23/26 is -100.239885294675
+    Sweep 23/26 CPU time = 8.208s (Wall time = 8.212s)
+
+    vN Entropy at center bond b=100 = 0.692082739330
+    Eigs at center bond b=100: 0.7692 0.1886 0.0285 0.0085 0.0032 0.0011 
+    Largest link dim during sweep 24/26 was 44
+    Largest truncation error: 9.79933e-11
+    Energy after sweep 24/26 is -100.239885294808
+    Sweep 24/26 CPU time = 8.469s (Wall time = 8.473s)
+    Energy error dE = 1.336E-10 after 24 sweeps;
+
+    vN Entropy at center bond b=100 = 0.692082736325
+    Eigs at center bond b=100: 0.7692 0.1886 0.0285 0.0085 0.0032 0.0011 
+    Largest link dim during sweep 25/26 was 44
+    Largest truncation error: 9.80019e-11
+    Energy after sweep 25/26 is -100.239885294675
+    Sweep 25/26 CPU time = 8.799s (Wall time = 8.804s)
+
+    vN Entropy at center bond b=100 = 0.692082750053
+    Eigs at center bond b=100: 0.7692 0.1886 0.0285 0.0085 0.0032 0.0011 
+    Largest link dim during sweep 26/26 was 44
+    Largest truncation error: 9.79932e-11
+    Energy after sweep 26/26 is -100.239885294809
+    Sweep 26/26 CPU time = 9.009s (Wall time = 9.010s)
+    Energy error dE = 1.336E-10 after 26 sweeps;
+
+
+RESULTS FOR THE SECTOR WITH 200 PARTICLES, Sz 0.0:
+Ground state energy = -100.2551135097183
+norm = 1.0000000000000002
+site occupancies = 0 1.9997124548289131 1.9997073905074336 1.9997021912430297 1.9996968521998224 1.9996909437407249 1.9996851144682435 1.9996791145569002 1.9996729371577384 1.9996665750675513 1.999660020708923 1.9996532661063182 1.9996462939940918 1.9996391130660496 1.9996317052833947 1.9996240608279974 1.999616169309453 1.9996080197527946 1.9995996005585366 1.9995908994587548 1.9995819034698301 1.9995725988424626 1.9995629710049236 1.9995530045029846 1.9995426829351546 1.9995319888809304 1.9995209038232988 1.999509408064174 1.9994974806320354 1.9994850989629074 1.999472182279179 1.9994588121836603 1.9994449109324355 1.9994304494078781 1.9994153964352945 1.9993997186114534 1.9993833801092367 1.999366342461582 1.9993485643227007 1.9993300012036028 1.9993106051788905 1.9992903245603473 1.9992691035344641 1.9992468817578313 1.9992235939055671 1.9991991691624589 1.9991735304832046 1.9991465751961852 1.9991181831268208 1.9990883470894849 1.9990569092351111 1.9990237498149797 1.9989887374645843 1.9989517278285203 1.9989125619696602 1.9988710645445085 1.9988270417043337 1.9987802786730073 1.9987305369329154 1.9986775458834287 1.9986209824751027 1.9985605788848098 1.9984959308022898 1.9984266197603555 1.9983521734744736 1.9982720572622465 1.9981856637704123 1.9980923006452751 1.9979911646252007 1.9978813164209754 1.9977617593137775 1.9976312231892968 1.9974883586123866 1.9973314524876613 1.9971585890520864 1.9969674383715372 1.9967552517622587 1.9965186821402086 1.9962538021507534 1.9959557044065472 1.9956185025985904 1.9952347884638657 1.9947953178925317 1.9942883598560015 1.9936990257387959 1.9930079136469783 1.9921893528909409 1.9912090099657327 1.990019994316458 1.9885568042283235 1.9867256261802317 1.9843880638269158 1.9813332670719286 1.9772264252619425 1.9715089090838798 1.9631916700586209 1.9503841738025824 1.9290954991525986 1.8896867555867691 1.8039175752315408 1.5603263662497027 0.43967413522628063 0.1960828655721123 0.11031326768026277 0.070904454873591732 0.049615762485883716 0.036808261528893056 0.028491037547365625 0.022773528105814046 0.018666693963427117 0.015611905666461687 0.01327435159412322 0.01144315753798918 0.0099799865796193696 0.0087909479594159793 0.0078106374560061092 0.0069920851036838804 0.0063009635473115942 0.0057116007004680905 0.0052046714086789727 0.0047651984645613009 0.0043814850299090961 0.0040442847040198845 0.0037462062341228758 0.003481236005038405 0.0032447539610254016 0.0030325652795303226 0.0028414142394989923 0.0026685502068415838 0.00251165301907749 0.0023687782684362747 0.0022382268347016995 0.0021186795666873984 0.0020088490965079028 0.0019076962084292625 0.0018143334865792966 0.0017279402352576984 0.001647824148283141 0.0015733779004360989 0.0015040668303011428 0.0014394186716817988 0.0013790150406889664 0.0013224716073348939 0.0012694633653192063 0.001219720915558649 0.0011729572273351328 0.0011289337883630755 0.0010874358183608605 0.0010482694641047842 0.0010112593779230902 0.00097624661878564388 0.00094308682780363271 0.00091164863703176483 0.00088181226737613961 0.00085345982194545494 0.00082647035703079007 0.00080082167886154538 0.00077639722392323105 0.00075310961757788007 0.0007308880525749719 0.00070966720774586682 0.00068938674355801502 0.00066999084950092411 0.0006514278403850402 0.00063364979317426576 0.00061661222124030743 0.0006002737807215946 0.00058459600639863113 0.00056954307262356931 0.0005550815776092996 0.00054118034792286222 0.00052781025778243459 0.0005149409434528153 0.00050251209327508719 0.00049058446581971924 0.0004790885179220495 0.00046800327739231906 0.00045730904629462317 0.00044698730770908644 0.00043702064117437991 0.00042739264511675853 0.00041808786549792424 0.00040909173076431494 0.00040039049084341098 0.00039197116249990906 0.00038382147775545348 0.00037592983694482133 0.00036828526502187173 0.00036087737139689702 0.00035369630961419948 0.00034672913043960464 0.00033996892937638483 0.00033341448903621298 0.00032705232201861196 0.00032087485043021368 0.00031487487129795564 0.00030904553327778004 0.00030337773896940386 0.00029771624698831793 0.00029251859631346288 0.00028745584710258566 
+tot = 199.99999999999997
+site pairing = (-0,-0) (-2.3979317336696903e-05,-0) (-2.4189530065779672e-05,-0) (-2.4403459260330178e-05,-0) (-2.4621204311555338e-05,-0) (-2.4859947762676066e-05,-0) (-2.5093264247558898e-05,-0) (-2.5331164969539126e-05,-0) (-2.5573789598010162e-05,-0) (-2.5821283715075087e-05,-0) (-2.6073799036935192e-05,-0) (-2.633149374710876e-05,-0) (-2.6594866118507691e-05,-0) (-2.6863425479682709e-05,-0) (-2.713768214483123e-05,-0) (-2.7417822920963813e-05,-0) (-2.7704044020267369e-05,-0) (-2.799655060680151e-05,-0) (-2.8295557304967057e-05,-0) (-2.8601288768555318e-05,-0) (-2.8913980279691909e-05,-0) (-2.9233878348718732e-05,-0) (-2.9561241445370757e-05,-0) (-2.9896340729922951e-05,-0) (-3.0239460821475366e-05,-0) (-3.0590900668548542e-05,-0) (-3.0950974463490369e-05,-0) (-3.1320012630734266e-05,-0) (-3.1698362894636359e-05,-0) (-3.2086398225582254e-05,-0) (-3.2486256326011035e-05,-0) (-3.2895026195627809e-05,-0) (-3.3314711633757401e-05,-0) (-3.3745767087907872e-05,-0) (-3.4188673096037327e-05,-0) (-3.4643937988203649e-05,-0) (-3.5112099928950523e-05,-0) (-3.5593729151952775e-05,-0) (-3.6089430393670267e-05,-0) (-3.6599845551463915e-05,-0) (-3.7125656586575333e-05,-0) (-3.7667588721086418e-05,-0) (-3.822641392301351e-05,-0) (-3.8802954748766692e-05,-0) (-3.9398088563093963e-05,-0) (-4.0012752280212098e-05,-0) (-4.0647951752970461e-05,-0) (-4.1305220901451677e-05,-0) (-4.1986380474421507e-05,-0) (-4.2690452211050411e-05,-0) (-4.3419950593843135e-05,-0) (-4.4176320643530145e-05,-0) (-4.4961121192651677e-05,-0) (-4.5776035962073146e-05,-0) (-4.6622886431430349e-05,-0) (-4.7503646341175997e-05,-0) (-4.8420458074607042e-05,-0) (-4.9375651224627027e-05,-0) (-5.0371763892867685e-05,-0) (-5.1411665487897231e-05,-0) (-5.2498889135356424e-05,-0) (-5.3635532040039579e-05,-0) (-5.4825871367909764e-05,-0) (-5.6073924010108367e-05,-0) (-5.7384124274696516e-05,-0) (-5.8761379233140925e-05,-0) (-6.0211133880718743e-05,-0) (-6.1739447621454835e-05,-0) (-6.3353258243111833e-05,-0) (-6.5060574374355753e-05,-0) (-6.686906348271385e-05,-0) (-6.878911627433724e-05,-0) (-7.0830603786390417e-05,-0) (-7.300667009821582e-05,-0) (-7.533092512128951e-05,-0) (-7.7819835690349219e-05,-0) (-8.0492037397097803e-05,-0) (-8.3369755580321543e-05,-0) (-8.6477521357569088e-05,-0) (-8.9845616810386639e-05,-0) (-9.3508273876285501e-05,-0) (-9.7507516793655884e-05,-0) (-0.00010189345169870938,-0) (-0.00010672702307684216,-0) (-0.00011208142685454565,-0) (-0.00011804780148083675,-0) (-0.00012474088347386262,-0) (-0.00013230532325925288,-0) (-0.00014092696992990534,-0) (-0.00015084907959238099,-0) (-0.00016239623960921757,-0) (-0.00017601176038856408,-0) (-0.00019231489525754181,-0) (-0.00021219923131281845,-0) (-0.00023700303704939627,-0) (-0.00026881556266271172,-0) (-0.00031107864308815831,-0) (-0.00036983990246371699,-0) (-0.00045657143683489146,-0) (-0.00059474072690024406,-0) (-0.00082827191385764071,-0) (-0.00082827225310617883,-0) (-0.00059474132273893234,-0) (-0.00045657148217363383,-0) (-0.00036983978697033515,-0) (-0.00031107844844140511,-0) (-0.0002688153175341892,-0) (-0.00023700281828325595,-0) (-0.00021219901656049651,-0) (-0.0001923146964309547,-0) (-0.00017601158977290389,-0) (-0.00016239610456535673,-0) (-0.00015084882903602302,-0) (-0.00014092683572375291,-0) (-0.0001323050080412948,-0) (-0.00012474080669349269,-0) (-0.00011804779097158408,-0) (-0.00011208133186663525,-0) (-0.0001067266556131822,-0) (-0.00010189334724546933,-0) (-9.7507383375394121e-05,-0) (-9.3508142152172899e-05,-0) (-8.9845496098985044e-05,-0) (-8.6477617954574358e-05,-0) (-8.3368777164800429e-05,-0) (-8.0492108270210371e-05,-0) (-7.7819882465126873e-05,-0) (-7.5330968692282488e-05,-0) (-7.3006706907494467e-05,-0) (-7.0830767589140332e-05,-0) (-6.8789137415638623e-05,-0) (-6.6868856802250457e-05,-0) (-6.5060512834349223e-05,-0) (-6.3353474398199707e-05,-0) (-6.1739396757944844e-05,-0) (-6.0211088407021534e-05,-0) (-5.8761336719469272e-05,-0) (-5.7384082916281464e-05,-0) (-5.6073882359389733e-05,-0) (-5.482582825249717e-05,-0) (-5.3635486548098608e-05,-0) (-5.2498841881469497e-05,-0) (-5.141200524700059e-05,-0) (-5.0371769806138149e-05,-0) (-4.9375642902199034e-05,-0) (-4.8420436036999355e-05,-0) (-4.7503611286171755e-05,-0) (-4.6622839039066058e-05,-0) (-4.577597688023976e-05,-0) (-4.4961051036611161e-05,-0) (-4.4176239995167272e-05,-0) (-4.3419860004869834e-05,-0) (-4.2690352198431816e-05,-0) (-4.1986270873672919e-05,-0) (-4.13060679588755e-05,-0) (-4.0647972407127095e-05,-0) (-4.0012523569024774e-05,-0) (-3.9397863586712085e-05,-0) (-3.8802732649385603e-05,-0) (-3.82261940010321e-05,-0) (-3.7667370334893208e-05,-0) (-3.7125439162841531e-05,-0) (-3.659962856728811e-05,-0) (-3.6089213382101593e-05,-0) (-3.5593511688061344e-05,-0) (-3.5111881633561325e-05,-0) (-3.4643718519110916e-05,-0) (-3.4188452148445853e-05,-0) (-3.3745544386416164e-05,-0) (-3.3314486933777059e-05,-0) (-3.2894799280080029e-05,-0) (-3.2486026717600456e-05,-0) (-3.2087641277140025e-05,-0) (-3.1698133512027342e-05,-0) (-3.1319774241225639e-05,-0) (-3.0950727132591138e-05,-0) (-3.059064444755938e-05,-0) (-3.0239195773456402e-05,-0) (-2.9896066928024707e-05,-0) (-2.956095897138588e-05,-0) (-2.9233587288603992e-05,-0) (-2.8913680733047042e-05,-0) (-2.8600980848293584e-05,-0) (-2.8295241104144868e-05,-0) (-2.7996226238684356e-05,-0) (-2.7703711603034699e-05,-0) (-2.7417482573120036e-05,-0) (-2.7137333988572406e-05,-0) (-2.6863069636894148e-05,-0) (-2.6594501652577866e-05,-0) (-2.6331312914272255e-05,-0) (-2.6073401770383855e-05,-0) (-2.5820879397320046e-05,-0) (-2.5573378361411416e-05,-0) (-2.5330746933140088e-05,-0) (-2.5092839544606069e-05,-0) (-2.4859516435641647e-05,-0) (-2.4630538765652073e-05,-0) (-2.4399669239826413e-05,-0) (-2.4185773204463732e-05,-0) (-2.3975593075899958e-05,-0) 
+tot = (-0.016720305166083454,0)
+[v=(0,0) u=(1.0000000000000011,0) pdt=(0,0)] [v=(0.99992811112322388,0) u=(0.011990520653562008,0) pdt=(0.011989658668500262,0)] [v=(0.99992684495102879,0) u=(0.012095649890895031,0) pdt=(0.012094765033034924,0)] [v=(0.99992554503898767,0) u=(0.012202638177260696,0) pdt=(0.012201729630310961,0)] [v=(0.999924210177908,0) u=(0.012311535245000236,0) pdt=(0.012310602155934337,0)] [v=(0.99992273295008383,0) u=(0.012430934383127772,0) pdt=(0.012429973881500286,0)] [v=(0.99992127551829013,0) u=(0.012547619928826867,0) pdt=(0.012546632123951278,0)] [v=(0.99991977542123489,0) u=(0.012666598657494298,0) pdt=(0.012665582484952614,0)] [v=(0.9999182309463468,0) u=(0.012787940456972556,0) pdt=(0.012786894799183216,0)] [v=(0.99991664029246863,0) u=(0.012911718174760731,0) pdt=(0.012910641857709956,0)] [v=(0.99991500156486501,0) u=(0.013038007728895054,0) pdt=(0.013036899518640821,0)] [v=(0.99991331276924278,0) u=(0.013166888274799393,0) pdt=(0.013165746873717162,0)] [v=(0.99991156958855532,0) u=(0.013298609060887114,0) pdt=(0.013297433059416218,0)] [v=(0.999909774196166,0) u=(0.013432924736458237,0) pdt=(0.013431712740026049,0)] [v=(0.99990792208167856,0) u=(0.013570090578278331,0) pdt=(0.013568841072586451,0)] [v=(0.99990601079001507,0) u=(0.013710200071522762,0) pdt=(0.013708911460649304,0)] [v=(0.99990403772298531,0) u=(0.01385335140944071,0) pdt=(0.013852022010295176,0)] [v=(0.99990200013621322,0) u=(0.013999647267080969,0) pdt=(0.013998275303555732,0)] [v=(0.99989989512914268,0) u=(0.014149195055960241,0) pdt=(0.014147778652616429,0)] [v=(0.99989771963405305,0) u=(0.014302107209159681,0) pdt=(0.014300644384400514,0)] [v=(0.99989547040424032,0) u=(0.014458501481294069,0) pdt=(0.014456990139978939,0)] [v=(0.99989314400151452,0) u=(0.014618501249040456,0) pdt=(0.014616939174493129,0)] [v=(0.99989073678200668,0) u=(0.014782235877492044,0) pdt=(0.014780620722830934,0)] [v=(0.99988824488114381,0) u=(0.014949841086361078,0) pdt=(0.014948170365093591,0)] [v=(0.99988566419745206,0) u=(0.015121459335076349,0) pdt=(0.015119730410887577,0)] [v=(0.99988299037460759,0) u=(0.015297240258764194,0) pdt=(0.015295450334411979,0)] [v=(0.99988021878205546,0) u=(0.015477341126637654,0) pdt=(0.015475487231866963,0)] [v=(0.99987734449385779,0) u=(0.015661927337102855,0) pdt=(0.015660006315478162,0)] [v=(0.99987436226558934,0) u=(0.015851172952879595,0) pdt=(0.015849181447422044,0)] [v=(0.99987126645456492,0) u=(0.016045264676720898,0) pdt=(0.016043199112911619,0)] [v=(0.9998680368626609,0) u=(0.01624527194017154,0) pdt=(0.016243128163119389,0)] [v=(0.99986469389204458,0) u=(0.016449738848068673,0) pdt=(0.016447513097928256,0)] [v=(0.99986121810290218,0) u=(0.016659667877299684,0) pdt=(0.016657355816986654,0)] [v=(0.99985760221340558,0) u=(0.016875286547506953,0) pdt=(0.016872883544054442,0)] [v=(0.99985383842722175,0) u=(0.017096835448470953,0) pdt=(0.017094336548112272,0)] [v=(0.99984991839061965,0) u=(0.017324569093417723,0) pdt=(0.017321968994206363,0)] [v=(0.99984583314360032,0) u=(0.017558756942938254,0) pdt=(0.017556049964578074,0)] [v=(0.99984157306584986,0) u=(0.017799684525534654,0) pdt=(0.017796864576086435,0)] [v=(0.99983712781700229,0) u=(0.018047654657859357,0) pdt=(0.018044715196947243,0)] [v=(0.99983248627047683,0) u=(0.018302988777747758,0) pdt=(0.018299922775836176,0)] [v=(0.99982763644012507,0) u=(0.018566028400134243,0) pdt=(0.018562828293386457,0)] [v=(0.99982256539856873,0) u=(0.018837136720476731,0) pdt=(0.018833794360630627,0)] [v=(0.99981725918651432,0) u=(0.019116700362960835,0) pdt=(0.019113206961585347,0)] [v=(0.99981170271152431,0) u=(0.01940513130807333,0) pdt=(0.019401477374465504,0)] [v=(0.99980587963503476,0) u=(0.019702869009758379,0) pdt=(0.019699044281635342,0)] [v=(0.99979977224503847,0) u=(0.020010382774195902,0) pdt=(0.020006376140177105,0)] [v=(0.99979336127102003,0) u=(0.020328176465121136,0) pdt=(0.020323975876573901,0)] [v=(0.9997866210337556,0) u=(0.020657018224002715,0) pdt=(0.020652610450808385,0)] [v=(0.99977952147631666,0) u=(0.020997819805612279,0) pdt=(0.020993190237300969,0)] [v=(0.99977206079423142,0) u=(0.021350092628767921,0) pdt=(0.021345226105611032,0)] [v=(0.99976419950784257,0) u=(0.021715095727256415,0) pdt=(0.021709975296996684,0)] [v=(0.99975590766321143,0) u=(0.022093553188878456,0) pdt=(0.02208816032185262,0)] [v=(0.99974715240019252,0) u=(0.022486246189782053,0) pdt=(0.022480560596404287,0)] [v=(0.99973789760829868,0) u=(0.022894018558122262,0) pdt=(0.022888017981102522,0)] [v=(0.99972810352856978,0) u=(0.023317783238759191,0) pdt=(0.023311443215774996,0)] [v=(0.99971772629690581,0) u=(0.023758529578773703,0) pdt=(0.02375182317064943,0)] [v=(0.99970671741874784,0) u=(0.02421733155888248,0) pdt=(0.024210229037371852,0)] [v=(0.99969502316281689,0) u=(0.024695357124287311,0) pdt=(0.02468782561237844,0)] [v=(0.99968258385672526,0) u=(0.025193878890361433,0) pdt=(0.025185881946489925,0)] [v=(0.99966933180012851,0) u=(0.02571433565708885,0) pdt=(0.02570583274400623,0)] [v=(0.99965518617048776,0) u=(0.026258498861295491,0) pdt=(0.026249444567745885,0)] [v=(0.99964007994998205,0) u=(0.026827421747066323,0) pdt=(0.026817766020089267,0)] [v=(0.99962391197947398,0) u=(0.027423249239558821,0) pdt=(0.027412935684035925,0)] [v=(0.9996065775494779,0) u=(0.028047996716735007,0) pdt=(0.028036962005134475,0)] [v=(0.99958795847951254,0) u=(0.028703889331638501,0) pdt=(0.028692062137434388,0)] [v=(0.99956792096941882,0) u=(0.029393389884061552,0) pdt=(0.029380689616654951,0)] [v=(0.99954631302666952,0) u=(0.030119231643479124,0) pdt=(0.030105566940435754,0)] [v=(0.9995229613783968,0) u=(0.030884456889541622,0) pdt=(0.030869723810798073,0)] [v=(0.99949766498606807,0) u=(0.031692549398861194,0) pdt=(0.031676629121617381,0)] [v=(0.99947018875526772,0) u=(0.032547531235282555,0) pdt=(0.032530287187245828,0)] [v=(0.99944028318699041,0) u=(0.033453256091303278,0) pdt=(0.033434531741419062,0)] [v=(0.99940763034642277,0) u=(0.03441494450599103,0) pdt=(0.034394558137236138,0)] [v=(0.99937189239351565,0) u=(0.035437560494557728,0) pdt=(0.035415301893255847,0)] [v=(0.99933264043752412,0) u=(0.036527712167178206,0) pdt=(0.03650333504916807,0)] [v=(0.99928939478313628,0) u=(0.037692246867965434,0) pdt=(0.037665462560705743,0)] [v=(0.99924157198635999,0) u=(0.03893945061541481,0) pdt=(0.038909917845232331,0)] [v=(0.99918848366118196,0) u=(0.04027870552624066,0) pdt=(0.040246018698599673,0)] [v=(0.99912929146837992,0) u=(0.041721204799175099,0) pdt=(0.041684877790206985,0)] [v=(0.99906301156402499,0) u=(0.043279312894526765,0) pdt=(0.043238760678827648,0)] [v=(0.99898841444897457,0) u=(0.044968297685428225,0) pdt=(0.044922808405235437,0)] [v=(0.99890402506912424,0) u=(0.046805434521043243,0) pdt=(0.046754136938179432,0)] [v=(0.99880798666807558,0) u=(0.048811942883540217,0) pdt=(0.048753758396865902,0)] [v=(0.99869798184749914,0) u=(0.051013145891359309,0) pdt=(0.050946725849392582,0)] [v=(0.99857106904215998,0) u=(0.053439873427976833,0) pdt=(0.053363511538452542,0)] [v=(0.99842351378029914,0) u=(0.056129200338157964,0) pdt=(0.056040713427302026,0)] [v=(0.9982504479455494,0) u=(0.059127347112060184,0) pdt=(0.059023900740446063,0)] [v=(0.99804542804697594,0) u=(0.062492587996728882,0) pdt=(0.06237044173695859,0)] [v=(0.99779983212208823,0) u=(0.066298529524665625,0) pdt=(0.066152661629652665,0)] [v=(0.9975018782730336,0) u=(0.070639952164271186,0) pdt=(0.070463484964977757,0)] [v=(0.99713509722312077,0) u=(0.075641244607934949,0) pdt=(0.075424539796211068,0)] [v=(0.99667588166370147,0) u=(0.081468932175911932,0) pdt=(0.081198119804627322,0)] [v=(0.99608936944104487,0) u=(0.088351389839331149,0) pdt=(0.088005880194299307,0)] [v=(0.99532237668805801,0) u=(0.096609349775449369,0) pdt=(0.096157447628788167,0)] [v=(0.99429030601277169,0) u=(0.10670889076842881,0) pdt=(0.10609961565642451,0)] [v=(0.99285167801738627,0) u=(0.1193547043817707,0) pdt=(0.11850151852471014,0)] [v=(0.99075518420511444,0) u=(0.13566195107947257,0) pdt=(0.13440778133136808,0)] [v=(0.98751814509977009,0) u=(0.15750527958994964,0) pdt=(0.15553932154408776,0)] [v=(0.9821139188384912,0) u=(0.18828767995729384,0) pdt=(0.1849199512318655,0)] [v=(0.97203054365250485,0) u=(0.23485447027172948,0) pdt=(0.22828571841745024,0)] [v=(0.94971510865931263,0) u=(0.31311533399728086,0) pdt=(0.29737036345012458,0)] [v=(0.88326846605369724,0) u=(0.46886758991760985,0) pdt=(0.41413595692882121,0)] [v=(0.46886785730431568,0) u=(0.8832683241160969,0) pdt=(0.41413612655308818,0)] [v=(0.31311568594699352,0) u=(0.94971499262354642,0) pdt=(0.29737066136946561,0)] [v=(0.23485449503922939,0) u=(0.97203053766837366,0) pdt=(0.22828574108681654,0)] [v=(0.18828761891530743,0) u=(0.98211393054126017,0) pdt=(0.18491989348516752,0)] [v=(0.15750517846389006,0) u=(0.98751816122897595,0) pdt=(0.1555392242207024,0)] [v=(0.13566182500779869,0) u=(0.99075520146782625,0) pdt=(0.1344076587670946,0)] [v=(0.1193545925956889,0) u=(0.99285169145563557,0) pdt=(0.118501409141628,0)] [v=(0.10670878151730082,0) u=(0.99429031773777843,0) pdt=(0.10609950828024821,0)] [v=(0.096609248944982878,0) u=(0.99532238647499838,0) pdt=(0.096157348215477584,0)] [v=(0.088351303517440444,0) u=(0.99608937709764223,0) pdt=(0.08800579488645198,0)] [v=(0.081468863973064215,0) u=(0.99667588723864398,0) pdt=(0.081198052282678179,0)] [v=(0.075641118242623845,0) u=(0.99713510680900452,0) pdt=(0.075424414518011268,0)] [v=(0.070639884554051402,0) u=(0.99750188306097443,0) pdt=(0.070463417861876113,0)] [v=(0.06629837086767694,0) u=(0.99779984266399402,0) pdt=(0.066152504020647179,0)] [v=(0.06249254937993088,0) u=(0.99804543046496441,0) pdt=(0.062370403346746157,0)] [v=(0.059127341829664351,0) u=(0.99825044825843046,0) pdt=(0.059023895485791886,0)] [v=(0.056129152618366047,0) u=(0.99842351646300043,0) pdt=(0.056040665933317454,0)] [v=(0.053439688904727715,0) u=(0.9985710789171518,0) pdt=(0.0533633278065909,0)] [v=(0.051013093459811955,0) u=(0.99869798452568204,0) pdt=(0.050946673622734452,0)] [v=(0.048811875934865176,0) u=(0.99880798993986741,0) pdt=(0.048753691687696873,0)] [v=(0.046805368441606779,0) u=(0.99890402816539103,0) pdt=(0.046754071076086284,0)] [v=(0.044968237145900508,0) u=(0.99898841717408771,0) pdt=(0.044922748049492166,0)] [v=(0.043279361329176751,0) u=(0.99906300946583815,0) pdt=(0.043238808977286741,0)] [v=(0.041720714309791081,0) u=(0.99912931194989929,0) pdt=(0.041684388582399881,0)] [v=(0.040278741049251929,0) u=(0.99918848222919654,0) pdt=(0.040246054135104868,0)] [v=(0.038939474056093396,0) u=(0.99924157107289768,0) pdt=(0.038909941232563104,0)] [v=(0.037692268699953575,0) u=(0.99928939395965222,0) pdt=(0.037665484346140976,0)] [v=(0.036527730608686748,0) u=(0.999332639763446,0) pdt=(0.036503353453746952,0)] [v=(0.035437642550524506,0) u=(0.99937188948381928,0) pdt=(0.03541538379456987,0)] [v=(0.03441495509539625,0) u=(0.99940762998177057,0) pdt=(0.034394568707819026,0)] [v=(0.033453152577161506,0) u=(0.9994402866518074,0) pdt=(0.033434428401124948,0)] [v=(0.032547500416217637,0) u=(0.99947018975888113,0) pdt=(0.032530256417174302,0)] [v=(0.031692657639490328,0) u=(0.99949766155391462,0) pdt=(0.031676737199099393,0)] [v=(0.030884431421261758,0) u=(0.99952296216534364,0) pdt=(0.030869698378971966,0)] [v=(0.030119208875560761,0) u=(0.99954631371273028,0) pdt=(0.030105544203510505,0)] [v=(0.029393368599547311,0) u=(0.99956792159531049,0) pdt=(0.029380668359734366,0)] [v=(0.028703868626747332,0) u=(0.9995879590740655,0) pdt=(0.028692041458140465,0)] [v=(0.028047975866683401,0) u=(0.99960657813450748,0) pdt=(0.02803694117969464,0)] [v=(0.027423227657417986,0) u=(0.99962391257154637,0) pdt=(0.027412914126248408,0)] [v=(0.026827398976436462,0) u=(0.99964008056107678,0) pdt=(0.026817743274049094,0)] [v=(0.026258475209815103,0) u=(0.9996551867917518,0) pdt=(0.026249420940734302,0)] [v=(0.02571450570529106,0) u=(0.99966932742598913,0) pdt=(0.025706002623500073,0)] [v=(0.025193881849758855,0) u=(0.99968258378214103,0) pdt=(0.02518588490306892,0)] [v=(0.024695352959197069,0) u=(0.99969502326570447,0) pdt=(0.024687821451099299,0)] [v=(0.024217320530305536,0) u=(0.99970671768590669,0) pdt=(0.02421021801849927,0)] [v=(0.023758512036353124,0) u=(0.99971772671380355,0) pdt=(0.023751805643085485,0)] [v=(0.023317759523170625,0) u=(0.99972810408171298,0) pdt=(0.023311419519532677,0)] [v=(0.022893988993890939,0) u=(0.99973789828531778,0) pdt=(0.022887988440119723,0)] [v=(0.022486211085052443,0) u=(0.99974715318976293,0) pdt=(0.022480525518305271,0)] [v=(0.022093512835056658,0) u=(0.9997559085549852,0) pdt=(0.022088119997583297,0)] [v=(0.021715050400628055,0) u=(0.99976420049234349,0) pdt=(0.02170993000243485,0)] [v=(0.021350042588151628,0) u=(0.99977206186284318,0) pdt=(0.021345176099215865,0)] [v=(0.020997764968874039,0) u=(0.9997795226280185,0) pdt=(0.020993135436836216,0)] [v=(0.020657442023946763,0) u=(0.99978661227735177,0) pdt=(0.020653033979437536,0)] [v=(0.020328186798517112,0) u=(0.99979336106091476,0) pdt=(0.02032398620356354,0)] [v=(0.020010268349794212,0) u=(0.99979977453516422,0) pdt=(0.020006261784512386,0)] [v=(0.019702756455928092,0) u=(0.99980588185308972,0) pdt=(0.019698931793355842,0)] [v=(0.019405020195530306,0) u=(0.99981170486807514,0) pdt=(0.019401366324692585,0)] [v=(0.019116590341571881,0) u=(0.99981726129013626,0) pdt=(0.019113097000515868,0)] [v=(0.018837027469134578,0) u=(0.99982256745690778,0) pdt=(0.018833685167446431,0)] [v=(0.018565919631922504,0) u=(0.99982763845985834,0) pdt=(0.018562719581420601,0)] [v=(0.018302880231003821,0) u=(0.9998324882575309,0) pdt=(0.018299814283644123,0)] [v=(0.018047546098916754,0) u=(0.99983712977654693,0) pdt=(0.018044606691050843,0)] [v=(0.017799575741773554,0) u=(0.99984157500246451,0) pdt=(0.01779675584403053,0)] [v=(0.017558647744634195,0) u=(0.99984583506127378,0) pdt=(0.017555940816780528,0)] [v=(0.017324459309335072,0) u=(0.99984992029285835,0) pdt=(0.017321859259555539,0)] [v=(0.017096724926117118,0) u=(0.99985384031707203,0) pdt=(0.017094226074222809,0)] [v=(0.016875175149069881,0) u=(0.99985760409354507,0) pdt=(0.016872772193207944,0)] [v=(0.016659555480403668,0) u=(0.99986121997564814,0) pdt=(0.016657243466888405,0)] [v=(0.016449625344105254,0) u=(0.99986469575939863,0) pdt=(0.016447399640039894,0)] [v=(0.016245157090382833,0) u=(0.99986803872866381,0) pdt=(0.016243013358800129,0)] [v=(0.01604588644252521,0) u=(0.99987125647668751,0) pdt=(0.016043820638569926,0)] [v=(0.015851058218224891,0) u=(0.99987436408448771,0) pdt=(0.015849066756013806,0)] [v=(0.015661808098360156,0) u=(0.99987734636158565,0) pdt=(0.015659887120612746,0)] [v=(0.015477217416610404,0) u=(0.99988022069697691,0) pdt=(0.015475363566295506,0)] [v=(0.015297112103144384,0) u=(0.99988299233525346,0) pdt=(0.015295322223779828,0)] [v=(0.015121326765443241,0) u=(0.99988566620231623,0) pdt=(0.01511959788672813,0)] [v=(0.014949704139365161,0) u=(0.99988824692869682,0) pdt=(0.014948033464012514,0)] [v=(0.01478209459404153,0) u=(0.99989073887070778,0) pdt=(0.014780479485692881,0)] [v=(0.014618355672180823,0) u=(0.9998931461298447,0) pdt=(0.014616793644301943,0)] [v=(0.014458351660855698,0) u=(0.99989547257063238,0) pdt=(0.014456840366523695,0)] [v=(0.014301953201649016,0) u=(0.99989772183689618,0) pdt=(0.014300490424146755,0)] [v=(0.014149036907921242,0) u=(0.99989989736701923,0) pdt=(0.014147620552072616,0)] [v=(0.013999485035170296,0) u=(0.99990200240760974,0) pdt=(0.013998113119342147,0)] [v=(0.013853185152798837,0) u=(0.99990404002640176,0) pdt=(0.013851855801517323,0)] [v=(0.013710029849435456,0) u=(0.99990601312399618,0) pdt=(0.013708741286559989,0)] [v=(0.013569916451877651,0) u=(0.99990792444478926,0) pdt=(0.013568666994286181,0)] [v=(0.013432746766706095,0) u=(0.9999097765870173,0) pdt=(0.013431534818447071,0)] [v=(0.013298426779401412,0) u=(0.99991157201284075,0) pdt=(0.013297250826288924,0)] [v=(0.013166797834697866,0) u=(0.99991331396015404,0) pdt=(0.013165656457136124,0)] [v=(0.013037809044782016,0) u=(0.99991500415550794,0) pdt=(0.013036700885191928,0)] [v=(0.012911515965141819,0) u=(0.99991664290353677,0) pdt=(0.012910439698660027,0)] [v=(0.012787734788042689,0) u=(0.99991823357661991,0) pdt=(0.012786689180705937,0)] [v=(0.012666389588793917,0) u=(0.99991977806961196,0) pdt=(0.012665373466570056,0)] [v=(0.012547407527014538,0) u=(0.99992127818361165,0) pdt=(0.012546419772303046,0)] [v=(0.012430718669445485,0) u=(0.99992273563178757,0) pdt=(0.012429758217821064,0)] [v=(0.012316203533747695,0) u=(0.99992415268884849,0) pdt=(0.012315269382826066,0)] [v=(0.012200742743544934,0) u=(0.99992556816820211,0) pdt=(0.012199834619913237,0)] [v=(0.012093771047805462,0) u=(0.99992686767675132,0) pdt=(0.012092886602231899,0)] [v=(0.011988658121378547,0) u=(0.99992813345582232,0) pdt=(0.011987796537950035,0)] amplitudes vu = 
+tot = (-0.016720305166100728,0)
+Eigenvalue(bis): <GS|H|GS> = -100.2551135097185
+diff: E_GS - <GS|H|GS> = 1.9895196601282805e-13
+deltaE: sqrt(<GS|H^2|GS> - <GS|H|GS>^2) = 0.001760042058925187
+residuum: <GS|H|GS> - E_GS*<GS|GS> = -1.7053025658242404e-13
+
+
+RESULTS FOR THE SECTOR WITH 201 PARTICLES, Sz 0.5:
+Ground state energy = -100.24188529467484
+norm = 1.0000000000000018
+site occupancies = 0 1.9997639979838251 1.9997598441090028 1.9997555767076609 1.9997511915203043 1.9997466840829137 1.9997420497143321 1.9997372824872661 1.9997323792653836 1.999727333633107 1.99972213990704 1.999716792109983 1.9997112839556042 1.9997056088283707 1.9996997597628823 1.9996937294210702 1.999687510067514 1.999681093543386 1.9996744712125674 1.9996676254380732 1.999660562384229 1.9996532645699978 1.9996457212349277 1.9996379209848172 1.9996298517461013 1.9996215007164044 1.9996128543103551 1.999603898100863 1.9995946167553171 1.9995849939654491 1.9995750123713281 1.9995646534783085 1.9995538975654639 1.9995427235852512 1.9995311090462635 1.9995190280044546 1.9995064485905194 1.9994933573738665 1.9994797177324926 1.9994654977410917 1.9994506630691906 1.9994351767587681 1.9994189989756885 1.9994020867329967 1.9993843935823075 1.9993658692689928 1.9993464593461174 1.999326104740446 1.9993047407009521 1.9992822944025714 1.9992586968485533 1.9992338613056253 1.9992076968990322 1.9991801040793464 1.999150973596769 1.9991201853275247 1.9990876069293517 1.9990530922953442 1.9990164788741134 1.9989775844171989 1.9989362176286622 1.9988921488168492 1.9988451294950471 1.9987948897418264 1.9987411126475387 1.9986834459759777 1.9986214905548625 1.9985547994686557 1.9984828573389768 1.9984050781664167 1.9983207802565546 1.9982292045878167 1.9981294414036168 1.9980204582495329 1.9979010350331492 1.9977697428461774 1.9976248921520747 1.9974644758304734 1.9972860946483084 1.9970868544906155 1.9968632473627508 1.9966109629237685 1.9963246795589269 1.9959977499578743 1.9956217815667849 1.995186050054766 1.9946766422232101 1.9940752605169036 1.9933574090236679 1.9924896576991242 1.9914253634618011 1.9900977609024466 1.9884084196733891 1.9862070760461867 1.9832545204282721 1.9791500893401681 1.9731787930465265 1.9639569176029754 1.9485027026334756 1.9193510385559605 1.8530989909234881 1.0000000000000011 0.14692864790247998 0.080666491906206145 0.051509985992480682 0.036053047080940752 0.026829454400902047 0.020856985586428851 0.016751708829313143 0.013798514342656111 0.011596668030924621 0.0099069172013824328 0.0085789786846077049 0.0075143995385566079 0.006646404361334686 0.005928339071003404 0.0053267724698120569 0.0048172017309246118 0.0043813200771407124 0.0040052159507724004 0.003678169067366106 0.0033917736368144638 0.0031393884967230385 0.0029156869931196896 0.0027163563329309893 0.0025378976094458912 0.0023774063759868839 0.00223248488074251 0.0021011264271291901 0.0019816408812327498 0.0018725990034411668 0.0017727825553561375 0.0016811354877516551 0.0015968068290166666 0.001518979590927371 0.0014469918947767251 0.0013802573572780526 0.0013182616015246452 0.0012605542885077989 0.0012067392052885384 0.0011564628244958171 0.0011094064516915683 0.0010653063031174246 0.00102390722581005 0.00098498360793707073 0.00094833860605947513 0.00091379527359319022 0.00088118918149210845 0.00085037417099445589 0.00082121785007771119 0.00079360004859212315 0.00076741147350324482 0.00074255253446333725 0.00071893232050862228 0.00069646644258458451 0.00067507922488374084 0.00065470389349448898 0.00063527386060665235 0.00061673002631020305 0.00059901791768492011 0.00058208725562630442 0.00056589156873783765 0.00055038784840930445 0.0005355362401027134 0.00052129976656248897 0.00050764407912360407 0.00049453723310702833 0.00048194848057366132 0.00046984720829153963 0.00045821739790006811 0.00044702934730565601 0.00043625970441385167 0.00042588741090875668 0.00041589273477962013 0.00040625717054656709 0.00039696334805911589 0.00038799494928414696 0.00037933663208120164 0.00037097396035632455 0.00036289334001441878 0.00035508196048535806 0.00034752774022769097 0.0003402192753970731 0.00033314547602866773 0.00032629058412991395 0.00031965821566518515 0.00031323183980257511 0.00030700283945066562 0.00030096304970748142 0.00029510472940478985 0.00028942053493673307 0.00028390349539344589 0.00027854699024450804 0.00027334472808836137 0.00026829072698087352 0.00026337929608973048 0.00025860460098102168 0.00025396208871574904 0.00024944689945548325 0.00024505410622405215 0.00024077924101128978 
+tot = 200.99999999999994
+site pairing = (-0,-0) (-2.172437192144907e-05,-0) (-2.1914700708079752e-05,-0) (-2.2108524191238023e-05,-0) (-2.2305942116686338e-05,-0) (-2.2507058119617788e-05,-0) (-2.2711979943791277e-05,-0) (-2.2920863966201567e-05,-0) (-2.3133738313467597e-05,-0) (-2.3350768441729958e-05,-0) (-2.3572080512128256e-05,-0) (-2.3797806060734293e-05,-0) (-2.4028082150159394e-05,-0) (-2.4263051685107594e-05,-0) (-2.4502863710455032e-05,-0) (-2.474767375271076e-05,-0) (-2.4997644188858968e-05,-0) (-2.5252944617965959e-05,-0) (-2.5513753268605323e-05,-0) (-2.5780586707453776e-05,-0) (-2.6053023118713371e-05,-0) (-2.6331552072070055e-05,-0) (-2.6616386243793616e-05,-0) (-2.6907748496103122e-05,-0) (-2.7205872491856979e-05,-0) (-2.7511003352440512e-05,-0) (-2.7823398381190847e-05,-0) (-2.8143327833330904e-05,-0) (-2.8471075739504572e-05,-0) (-2.8806940814109227e-05,-0) (-2.9151237415139973e-05,-0) (-2.9504296581424435e-05,-0) (-2.9866467177532071e-05,-0) (-3.0238117133120895e-05,-0) (-3.0619635019473182e-05,-0) (-3.1011492337674059e-05,-0) (-3.141431562116389e-05,-0) (-3.1828109675165204e-05,-0) (-3.2253586488235192e-05,-0) (-3.269126527271533e-05,-0) (-3.3141697158352972e-05,-0) (-3.3605467667505749e-05,-0) (-3.4083199474453901e-05,-0) (-3.4575555436096632e-05,-0) (-3.5083241926982194e-05,-0) (-3.5607012514575239e-05,-0) (-3.6147672018557445e-05,-0) (-3.6706081025773477e-05,-0) (-3.7283175999181736e-05,-0) (-3.7880022353665729e-05,-0) (-3.8497490470306534e-05,-0) (-3.9136816684918781e-05,-0) (-3.979922684816697e-05,-0) (-4.0486042187014527e-05,-0) (-4.1198688821535619e-05,-0) (-4.1938708505112263e-05,-0) (-4.2707770723423684e-05,-0) (-4.3507686390943359e-05,-0) (-4.4340443592170163e-05,-0) (-4.5208249600723301e-05,-0) (-4.6113263924010946e-05,-0) (-4.7058208976154383e-05,-0) (-4.8045887274655879e-05,-0) (-4.9079203595829434e-05,-0) (-5.0161637807639056e-05,-0) (-5.1296927135403733e-05,-0) (-5.2489223674679451e-05,-0) (-5.3743022413132917e-05,-0) (-5.5063450674455563e-05,-0) (-5.6456176734668563e-05,-0) (-5.792771105375383e-05,-0) (-5.9484914961354547e-05,-0) (-6.1136063033940893e-05,-0) (-6.2890101887180539e-05,-0) (-6.4757426444824321e-05,-0) (-6.6749833412981267e-05,-0) (-6.8880872225526185e-05,-0) (-7.1166139815408508e-05,-0) (-7.3623674325009632e-05,-0) (-7.6274534426641933e-05,-0) (-7.9143326044470595e-05,-0) (-8.2259276559852045e-05,-0) (-8.5657065685158156e-05,-0) (-8.9378308771416866e-05,-0) (-9.3473354865264741e-05,-0) (-9.8003702870751269e-05,-0) (-0.00010304551137990409,-0) (-0.0001086939576436372,-0) (-0.0001150697959404184,-0) (-0.00012232857131618842,-0) (-0.0001306742081843928,-0) (-0.00014037957065023509,-0) (-0.00015181829902464618,-0) (-0.00016551617188786849,-0) (-0.0001822376142769468,-0) (-0.00020313813660936586,-0) (-0.0002300500744718239,-0) (-0.00026605837894220726,-0) (-0.00031676903746575175,-0) (-0.00039343826441522433,-0) (-0.00052174908882078033,-0) (-0,-0) (-0.00052179427769046113,-0) (-0.00039347922549476356,-0) (-0.00031680702853316927,-0) (-0.00026609447938290889,-0) (-0.00023008496078265182,-0) (-0.00020317223561575916,-0) (-0.0001822712207396559,-0) (-0.0001655494780639545,-0) (-0.00015185141867111326,-0) (-0.00014041256138369476,-0) (-0.00013070714783034796,-0) (-0.00012236148444951206,-0) (-0.00011510271079229642,-0) (-0.00010872687311730291,-0) (-0.00010307846736675422,-0) (-9.8036717760912359e-05,-0) (-9.3506385817563833e-05,-0) (-8.9411353567276437e-05,-0) (-8.569019317894047e-05,-0) (-8.2292424591973184e-05,-0) (-7.9176519456924743e-05,-0) (-7.630775029836467e-05,-0) (-7.3656867121365922e-05,-0) (-7.1199398133802843e-05,-0) (-6.8914154503245482e-05,-0) (-6.6783124909982247e-05,-0) (-6.4790725586271833e-05,-0) (-6.2923404722593893e-05,-0) (-6.1169366351587084e-05,-0) (-5.9518252265365655e-05,-0) (-5.7960717378023834e-05,-0) (-5.6489502263554648e-05,-0) (-5.5096750202322053e-05,-0) (-5.3776295930548331e-05,-0) (-5.2522467613239034e-05,-0) (-5.133016062121028e-05,-0) (-5.0194816265240852e-05,-0) (-4.9112342553246965e-05,-0) (-4.8078979218855594e-05,-0) (-4.709121065239316e-05,-0) (-4.6146264515292945e-05,-0) (-4.5241198764102117e-05,-0) (-4.437338192166836e-05,-0) (-4.3540531301388626e-05,-0) (-4.2740560658282774e-05,-0) (-4.1971441107145787e-05,-0) (-4.1231361919759792e-05,-0) (-4.0518653746121901e-05,-0) (-3.9831774956021187e-05,-0) (-3.9169299542330363e-05,-0) (-3.8529906367135523e-05,-0) (-3.7912369714062505e-05,-0) (-3.731551714318732e-05,-0) (-3.6738300420781608e-05,-0) (-3.617981688456705e-05,-0) (-3.5639081754940744e-05,-0) (-3.5115234538516902e-05,-0) (-3.4607470478266984e-05,-0) (-3.4115036064460616e-05,-0) (-3.3637224977814546e-05,-0) (-3.3173374414354388e-05,-0) (-3.2722861750479002e-05,-0) (-3.2285101512592027e-05,-0) (-3.1859542616555693e-05,-0) (-3.144566582438841e-05,-0) (-3.1042949067532332e-05,-0) (-3.0650834575651005e-05,-0) (-3.0269206012321776e-05,-0) (-2.9897472457951375e-05,-0) (-2.9535217728975705e-05,-0) (-2.9182073979255653e-05,-0) (-2.8837692397145765e-05,-0) (-2.850174198543865e-05,-0) (-2.8173908429937691e-05,-0) (-2.7853893058020292e-05,-0) (-2.7541411871615548e-05,-0) (-2.7236194650380227e-05,-0) (-2.6937984120060034e-05,-0) (-2.6646535192629826e-05,-0) (-2.6361614232159127e-05,-0) (-2.6082998325322962e-05,-0) (-2.5810462338926484e-05,-0) (-2.5543584374839848e-05,-0) (-2.5282686762991239e-05,-0) (-2.5027296406517731e-05,-0) (-2.4777236087948158e-05,-0) (-2.453233622502503e-05,-0) (-2.429243446030628e-05,-0) (-2.4057375285500806e-05,-0) (-2.3827009665340171e-05,-0) (-2.3601194716862314e-05,-0) (-2.337979338737537e-05,-0) (-2.3162674155796156e-05,-0) (-2.2949710750374581e-05,-0) (-2.2740763523294972e-05,-0) (-2.2535742292833391e-05,-0) (-2.233453771975909e-05,-0) (-2.2137031439042242e-05,-0) (-2.1943119818742594e-05,-0) 
+tot = (-0.013289048665933455,0)
+[v=(0,0) u=(1.0000000000000064,0) pdt=(0,0)] [v=(0.99994099775533019,0) u=(0.010862826892082084,0) pdt=(0.010862185960911992,0)] [v=(0.99993995922480983,0) u=(0.010958008281556991,0) pdt=(0.010957350354245226,0)] [v=(0.99993889230984678,0) u=(0.011054937637523231,0) pdt=(0.011054262095819414,0)] [v=(0.99993779594541043,0) u=(0.011153664861727582,0) pdt=(0.011152971058549649,0)] [v=(0.99993666901532818,0) u=(0.011254241802220687,0) pdt=(0.011253529060005618,0)] [v=(0.99993551034913208,0) u=(0.011356722363152447,0) pdt=(0.011355989972092244,0)] [v=(0.99993431846479108,0) u=(0.011461184771512499,0) pdt=(0.011460431983301394,0)] [v=(0.99993309257805096,0) u=(0.01156764311810991,0) pdt=(0.011566869156930851,0)] [v=(0.9999318310847829,0) u=(0.011676180173585095,0) pdt=(0.011675384221048782,0)] [v=(0.99993053256390418,0) u=(0.011786859059126003,0) pdt=(0.011786040256247543,0)] [v=(0.99992919552086545,0) u=(0.011899745585864964,0) pdt=(0.011898903030576924,0)] [v=(0.99992781838381528,0) u=(0.012014908330813043,0) pdt=(0.012014041075311413,0)] [v=(0.99992639949858286,0) u=(0.01213241879488049,0) pdt=(0.012131525842773784,0)] [v=(0.99992493712350983,0) u=(0.012252351552193142,0) pdt=(0.012251431855441865,0)] [v=(0.9999234294237479,0) u=(0.012374784420937628,0) pdt=(0.012373836876563522,0)] [v=(0.99992187446508574,0) u=(0.012499798648097769,0) pdt=(0.012498822094642066,0)] [v=(0.99992027020743357,0) u=(0.01262747909548082,0) pdt=(0.012626472309191901,0)] [v=(0.99991861449134833,0) u=(0.012757914943917793,0) pdt=(0.012756876634520747,0)] [v=(0.999916902906962,0) u=(0.012891364588880055,0) pdt=(0.012890293353957426,0)] [v=(0.99991513699519952,0) u=(0.013027617122314728,0) pdt=(0.013026511559580338,0)] [v=(0.99991331238513514,0) u=(0.013166917444921546,0) pdt=(0.013165776036253123,0)] [v=(0.99991142638609642,0) u=(0.013309371981288193,0) pdt=(0.013308193122113024,0)] [v=(0.99990947614892756,0) u=(0.013455092255030814,0) pdt=(0.013453874248263354,0)] [v=(0.9999074586545823,0) u=(0.01360419519667376,0) pdt=(0.013602936246146936,0)] [v=(0.99990537070175645,0) u=(0.013756803473099167,0) pdt=(0.013755501676440433,0)] [v=(0.99990320889333706,0) u=(0.013913045849930963,0) pdt=(0.013911699190826096,0)] [v=(0.99990096962171526,0) u=(0.014073057577098251,0) pdt=(0.014071663916882768,0)] [v=(0.99989864905282955,0) u=(0.014236980801461813,0) pdt=(0.014235537869972737,0)] [v=(0.99989624310862335,0) u=(0.014404965021660368,0) pdt=(0.014403470407269331,0)] [v=(0.99989374744803705,0) u=(0.014577167569041193,0) pdt=(0.01457561870778659,0)] [v=(0.99989115744623369,0) u=(0.01475375412719099,0) pdt=(0.014752148290914147,0)] [v=(0.99988846817169885,0) u=(0.014934899305583392,0) pdt=(0.014933233588958346,0)] [v=(0.99988567436114384,0) u=(0.015120787260397504,0) pdt=(0.015119058566733951,0)] [v=(0.99988277039018203,0) u=(0.015311612484253593,0) pdt=(0.01530981750989638,0)] [v=(0.99987974977106164,0) u=(0.015507610962764002,0) pdt=(0.015505746168995443,0)] [v=(0.99987660453441629,0) u=(0.015709096241984969,0) pdt=(0.01570715781074029,0)] [v=(0.99987333132099654,0) u=(0.015916070905420413,0) pdt=(0.015914054837743899,0)] [v=(0.99986992097285354,0) u=(0.016128891274760655,0) pdt=(0.016126793244274684,0)] [v=(0.9998663655061909,0) u=(0.016347817268786716,0) pdt=(0.016345632636501118,0)] [v=(0.99986265633566318,0) u=(0.016573124792999768,0) pdt=(0.016570848579311185,0)] [v=(0.99985878421875019,0) u=(0.016805106980188386,0) pdt=(0.016802733833877193,0)] [v=(0.99985473919357759,0) u=(0.017044075573509669,0) pdt=(0.017041599737347136,0)] [v=(0.99985051050970175,0) u=(0.017290362445634175,0) pdt=(0.017287777718165104,0)] [v=(0.99984608655090834,0) u=(0.017544321270605411,0) pdt=(0.017541620963606681,0)] [v=(0.99984145474895636,0) u=(0.017806329366364865,0) pdt=(0.017803506257405309,0)] [v=(0.99983660148699882,0) u=(0.018076789729959779,0) pdt=(0.018073836009398069,0)] [v=(0.99983151199101328,0) u=(0.018356133301348748,0) pdt=(0.018353040512996108,0)] [v=(0.99982617006682162,0) u=(0.018644829029085031,0) pdt=(0.018641587999700782,0)] [v=(0.99982055750084409,0) u=(0.0189434104298636,0) pdt=(0.018940011176953528,0)] [v=(0.99981465703613792,0) u=(0.019252313516127693,0) pdt=(0.019248745235279412,0)] [v=(0.9998084469801336,0) u=(0.019572157448460005,0) pdt=(0.019568408342595451,0)] [v=(0.99980190460387175,0) u=(0.019903556227061574,0) pdt=(0.019899613424206413,0)] [v=(0.99979500500836982,0) u=(0.020247171662402697,0) pdt=(0.020243021093617228,0)] [v=(0.99978772086798351,0) u=(0.02060371815026163,0) pdt=(0.020599344410856379,0)] [v=(0.99978002213675732,0) u=(0.020973968061324622,0) pdt=(0.020969354252646771,0)] [v=(0.99977187571199888,0) u=(0.021358757813225389,0) pdt=(0.021353885361806657,0)] [v=(0.99976324504738878,0) u=(0.021758994745342822,0) pdt=(0.021753843195573021,0)] [v=(0.99975408948254352,0) u=(0.022175675027905486,0) pdt=(0.022170221796184428,0)] [v=(0.99974436342927797,0) u=(0.022609904718963167,0) pdt=(0.022604124800456458,0)] [v=(0.99973401903423476,0) u=(0.023062766218925113,0) pdt=(0.023056631962092986,0)] [v=(0.99972299883939675,0) u=(0.023535623883283525,0) pdt=(0.023529104488152333,0)] [v=(0.99971124068279604,0) u=(0.024029882489858448,0) pdt=(0.024022943637398184,0)] [v=(0.99969867703769844,0) u=(0.024546998372242456,0) pdt=(0.024539601797977321,0)] [v=(0.99968522862137998,0) u=(0.025088716113637683,0) pdt=(0.025080818903878786,0)] [v=(0.99967080731008651,0) u=(0.025656909634856,0) pdt=(0.025648463567758434,0)] [v=(0.99965531323423829,0) u=(0.026253661126950829,0) pdt=(0.026244611837407578,0)] [v=(0.9996386345746846,0) u=(0.026881225151988899,0) pdt=(0.02687151120662885,0)] [v=(0.99962064237864756,0) u=(0.027542173670783123,0) pdt=(0.027531725337292499,0)] [v=(0.99960119001690895,0) u=(0.02823935050229805,0) pdt=(0.028228088367401726,0)] [v=(0.99958010690904042,0) u=(0.028976022358541187,0) pdt=(0.028963855526949345,0)] [v=(0.99955720311241791,0) u=(0.029755633182502076,0) pdt=(0.029742457480740829,0)] [v=(0.9995322509563257,0) u=(0.030582336375623565,0) pdt=(0.030568031517030542,0)] [v=(0.99950499204595111,0) u=(0.031460624202862067,0) pdt=(0.031445050943642305,0)] [v=(0.99947512100931513,0) u=(0.032395717053734653,0) pdt=(0.032378713222464973,0)] [v=(0.99944228018585402,0) u=(0.033393540945990438,0) pdt=(0.033374916706540365,0)] [v=(0.99940604664773147,0) u=(0.034460904282434431,0) pdt=(0.034440436112813673,0)] [v=(0.99936591792758633,0) u=(0.035605646810075241,0) pdt=(0.035583069907756282,0)] [v=(0.9993212933407174,0) u=(0.036836838570189573,0) pdt=(0.036811837162545068,0)] [v=(0.99927144822881697,0) u=(0.038165072444484333,0) pdt=(0.038137267213357577,0)] [v=(0.99921550412380256,0) u=(0.03960273120158668,0) pdt=(0.039571663022272878,0)] [v=(0.99915238150238805,0) u=(0.041164530097116951,0) pdt=(0.041129638279961134,0)] [v=(0.99908074737704411,0) u=(0.042867939308266059,0) pdt=(0.042828532842616222,0)] [v=(0.99899893642533344,0) u=(0.044733935899530508,0) pdt=(0.044689154385750017,0)] [v=(0.9989048457102423,0) u=(0.046787917421148816,0) pdt=(0.046736677432676219,0)] [v=(0.99879578744976383,0) u=(0.049060931224527753,0) pdt=(0.0490018514354209,0)] [v=(0.99866827380848355,0) u=(0.05159146139038448,0) pdt=(0.051522755689992296,0)] [v=(0.9985177165471143,0) u=(0.054427656035776734,0) pdt=(0.054346978821855546,0)] [v=(0.99833797108586719,0) u=(0.057630681829790482,0) pdt=(0.057534897970248182,0)] [v=(0.99812064844365056,0) u=(0.061279451290285614,0) pdt=(0.061164285658130979,0)] [v=(0.99785403828962482,0) u=(0.065477616550238399,0) pdt=(0.065337104092234963,0)] [v=(0.9975213684183587,0) u=(0.070364192234241577,0) pdt=(0.070189785325153103,0)] [v=(0.99709789380817859,0) u=(0.076130087109539335,0) pdt=(0.075909149512354834,0)] [v=(0.9965458032740413,0) u=(0.08304493950209961,0) pdt=(0.082758085943964013,0)] [v=(0.99580483038301604,0) u=(0.091502676386348389,0) pdt=(0.091118807138499666,0)] [v=(0.99477386609726282,0) u=(0.10210267053273717,0) pdt=(0.10156906830470602,0)] [v=(0.9932720657117432,0) u=(0.11580416001481793,0) pdt=(0.11502503723593145,0)] [v=(0.99094826242417822,0) u=(0.13424433395310645,0) pdt=(0.13302918947112194,0)] [v=(0.9870417171106538,0) u=(0.16046385475633854,0) pdt=(0.15838451873289094,0)] [v=(0.97963029724380724,0) u=(0.20080956332311736,0) pdt=(0.1967191322076246,0)] [v=(0.96257441035057312,0) u=(0.27101753548111573,0) pdt=(0.26087454441040053,0)] [v=(0,0) u=(0,0) pdt=(0,0)] [v=(0.27104302970421718,0) u=(0.96256723196292671,0) pdt=(0.26089713884523363,0)] [v=(0.20083138687243032,0) u=(0.97962582348920757,0) pdt=(0.19673961274738419,0)] [v=(0.16048362220563442,0) u=(0.98703850330358001,0) pdt=(0.15840351426658658,0)] [v=(0.13426288966229916,0) u=(0.99094574849460926,0) pdt=(0.13304723969145618,0)] [v=(0.11582196337677603,0) u=(0.99326998988168413,0) pdt=(0.11504248039132711,0)] [v=(0.10211999213285623,0) u=(0.9947720880718347,0) pdt=(0.10158611780788072,0)] [v=(0.091519694135506729,0) u=(0.99580326650667073,0) pdt=(0.091135610369828993,0)] [v=(0.083061767205665216,0) u=(0.9965444008315355,0) pdt=(0.082774739031978128,0)] [v=(0.076146792548750078,0) u=(0.99709661817927653,0) pdt=(0.075925709335557631,0)] [v=(0.070380811310266467,0) u=(0.99752019598568564,0) pdt=(0.07020628069184856,0)] [v=(0.065494193195304681,0) u=(0.99785295041790001,0) pdt=(0.065353573915174726,0)] [v=(0.061296001250313002,0) u=(0.99811963222388012,0) pdt=(0.061180742224756911,0)] [v=(0.057647221794873971,0) u=(0.99833701615203285,0) pdt=(0.057551355396148918,0)] [v=(0.054444187343570108,0) u=(0.9985168153138485,0) pdt=(0.05436343655865216,0)] [v=(0.051608005531177871,0) u=(0.99866741899648748,0) pdt=(0.051539233683377851,0)] [v=(0.049077498565659593,0) u=(0.9987949735228695,0) pdt=(0.049018358880456636,0)] [v=(0.046804487376429747,0) u=(0.99890406944883425,0) pdt=(0.046753192908782264,0)] [v=(0.044750508101989619,0) u=(0.99899819420488722,0) pdt=(0.044705676783638806,0)] [v=(0.042884548892148745,0) u=(0.99908003456496364,0) pdt=(0.042845096589470839,0)] [v=(0.041181146395010193,0) u=(0.99915169678162719,0) pdt=(0.041146212295987021,0)] [v=(0.039619367086837123,0) u=(0.99921484464135646,0) pdt=(0.039588259728462825,0)] [v=(0.038181716783820395,0) u=(0.99927081239444382,0) pdt=(0.038153875149182774,0)] [v=(0.036853468852545174,0) u=(0.9993206801790635,0) pdt=(0.036828433560683375,0)] [v=(0.035622307683851231,0) u=(0.99936532419095303,0) pdt=(0.035599699066901865,0)] [v=(0.034477575146657932,0) u=(0.99940547167404381,0) pdt=(0.034457077251622961,0)] [v=(0.033410214611272276,0) u=(0.9994417229431839,0) pdt=(0.033391562454991502,0)] [v=(0.032412392900935297,0) u=(0.99947458036032455,0) pdt=(0.032395362793136269,0)] [v=(0.031477300402296092,0) u=(0.99950446700322204,0) pdt=(0.031461702361297264,0)] [v=(0.030599011450055086,0) u=(0.99953174061571981,0) pdt=(0.030584683175793902,0)] [v=(0.029772324022119618,0) u=(0.99955670610642855,0) pdt=(0.029759126132683181,0)] [v=(0.028992546350326557,0) u=(0.99957962777166243,0) pdt=(0.028980358689012088,0)] [v=(0.028256033240855499,0) u=(0.99960071857992505,0) pdt=(0.028244751131777403,0)] [v=(0.02755884241878969,0) u=(0.99962018297178623,0) pdt=(0.027548375101161173,0)] [v=(0.026897879979440088,0) u=(0.99963818657183279,0) pdt=(0.026888147965274296,0)] [v=(0.026270300314975951,0) u=(0.99965487610543446,0) pdt=(0.026261233806619842,0)] [v=(0.025673542816727381,0) u=(0.99967038027504251,0) pdt=(0.025665080310605447,0)] [v=(0.02510532103467095,0) u=(0.99968481175606372,0) pdt=(0.025097408132620576,0)] [v=(0.024563582854385743,0) u=(0.9996982696780895,0) pdt=(0.024556171276623816,0)] [v=(0.024046442819009754,0) u=(0.99971084248784781,0) pdt=(0.024039489609428099,0)] [v=(0.023552138455897768,0) u=(0.99972260991445272,0) pdt=(0.023545605326196664,0)] [v=(0.023079279701903811,0) u=(0.99973363794985504,0) pdt=(0.023073132257646543,0)] [v=(0.022626391955082474,0) u=(0.99974399042310114,0) pdt=(0.022620599382051305,0)] [v=(0.022192156361393427,0) u=(0.99975372377203064,0) pdt=(0.022186690960834237,0)] [v=(0.02177542888279663,0) u=(0.99976288723725915,0) pdt=(0.021770265650694363,0)] [v=(0.021375164018004499,0) u=(0.99977152508121248,0) pdt=(0.021370280329141414,0)] [v=(0.020990345179297362,0) u=(0.99977967843383575,0) pdt=(0.020985720553573131,0)] [v=(0.020620065118646613,0) u=(0.99978738385444366,0) pdt=(0.020615680959879965,0)] [v=(0.020263487484607597,0) u=(0.99979467445819648,0) pdt=(0.020259326873060993,0)] [v=(0.019919839966627717,0) u=(0.99980158030266897,0) pdt=(0.019915887478010656,0)] [v=(0.019588408224039625,0) u=(0.99980812872433589,0) pdt=(0.01958464977116545,0)] [v=(0.019268530489678359,0) u=(0.99981434463243157,0) pdt=(0.019264953183567794,0)] [v=(0.018959592829338588,0) u=(0.99982025076498426,0) pdt=(0.018956184857031304,0)] [v=(0.018661008045984182,0) u=(0.9998258682284219,0) pdt=(0.018657758571593699,0)] [v=(0.018372251153352778,0) u=(0.99983121594975632,0) pdt=(0.018369150210391021,0)] [v=(0.01809287005279276,0) u=(0.99983631062952638,0) pdt=(0.018089908442283757,0)] [v=(0.017822371623982421,0) u=(0.99984116892119757,0) pdt=(0.017819540877470567,0)] [v=(0.017560324972935359,0) u=(0.99984580560547198,0) pdt=(0.017557617269258443,0)] [v=(0.017306327133232557,0) u=(0.99985023430570252,0) pdt=(0.01730373523913371,0)] [v=(0.017060000815156771,0) u=(0.99985446759625851,0) pdt=(0.017057518032230309,0)] [v=(0.01682099237170398,0) u=(0.99985851709911533,0) pdt=(0.016818612488907474,0)] [v=(0.01658896995610816,0) u=(0.99986239357013817,0) pdt=(0.016586687207177413,0)] [v=(0.016363621850047756,0) u=(0.99986610697630884,0) pdt=(0.016361430875239714,0)] [v=(0.016144654944632401,0) u=(0.99986966656496279,0) pdt=(0.016142550756295976,0)] [v=(0.015931793356738003,0) u=(0.99987308092599902,0) pdt=(0.015929771308277992,0)] [v=(0.015724777154335505,0) u=(0.99987635804806263,0) pdt=(0.015722832912194364,0)] [v=(0.015523345009592094,0) u=(0.99987950562041428,0) pdt=(0.015521474533766068,0)] [v=(0.015327217756193272,0) u=(0.99988253129848459,0) pdt=(0.015325417287825608,0)] [v=(0.015136337038730002,0) u=(0.99988543908842931,0) pdt=(0.015134603006161004,0)] [v=(0.014950407140035659,0) u=(0.99988823641762981,0) pdt=(0.014948736228975796,0)] [v=(0.014769219756199855,0) u=(0.99989092912567412,0) pdt=(0.014767608864487934,0)] [v=(0.014592590772524928,0) u=(0.99989352247854701,0) pdt=(0.014591036989627892,0)] [v=(0.014420345605768587,0) u=(0.99989602141053724,0) pdt=(0.014418846198572935,0)] [v=(0.01425231859289159,0) u=(0.99989843054919236,0) pdt=(0.014250870992719374,0)] [v=(0.014088352424238731,0) u=(0.99990075423813041,0) pdt=(0.014086954214968901,0)] [v=(0.013928297621823002,0) u=(0.99990299655785109,0) pdt=(0.013926946529010411,0)] [v=(0.013772012054910491,0) u=(0.99990516134480045,0) pdt=(0.013770705935807811,0)] [v=(0.013619360490792896,0) u=(0.99990725220884069,0) pdt=(0.013618097325190374,0)] [v=(0.013470214178223463,0) u=(0.99990927254926731,0) pdt=(0.013468992060030249,0)] [v=(0.013324450466817697,0) u=(0.99991122556943479,0) pdt=(0.01332326759631491,0)] [v=(0.013181952439371352,0) u=(0.99991311429038565,0) pdt=(0.013180807116079555,0)] [v=(0.013042608546550101,0) u=(0.99991494156368776,0) pdt=(0.013041499162661698,0)] [v=(0.01290630613360534,0) u=(0.99991671016240002,0) pdt=(0.012905231169463457,0)] [v=(0.012772834143797582,0) u=(0.99991842402665343,0) pdt=(0.012771792187419907,0)] [v=(0.012642353729926902,0) u=(0.99992008225266638,0) pdt=(0.012641343381495812,0)] [v=(0.012514628236639217,0) u=(0.99992168897374689,0) pdt=(0.012513648203258829,0)] [v=(0.012389568988682983,0) u=(0.99992324634458118,0) pdt=(0.012388618043974038,0)] [v=(0.012267091132527863,0) u=(0.99992475640677969,0) pdt=(0.012266168112512691,0)] [v=(0.012147113430869109,0) u=(0.99992622109599127,0) pdt=(0.01214621723015331,0)] [v=(0.012029558074524988,0) u=(0.99992764224844954,0) pdt=(0.012028687642750569,0)] [v=(0.011914350494119675,0) u=(0.99992902160719122,0) pdt=(0.011913504832670242,0)] [v=(0.011801419199496841,0) u=(0.99993036082763742,0) pdt=(0.011800597358431085,0)] [v=(0.011690695618490175,0) u=(0.99993166148290713,0) pdt=(0.011689896693687822,0)] [v=(0.011582113947394898,0) u=(0.99993292506873699,0) pdt=(0.011581337077897996,0)] [v=(0.01147561100965297,0) u=(0.99993415300806976,0) pdt=(0.011474855375187422,0)] [v=(0.011371116941203248,0) u=(0.9999353467597395,0) pdt=(0.011370381761647617,0)] [v=(0.011268586617578857,0) u=(0.99993650746217522,0) pdt=(0.011267871146416808,0)] [v=(0.011167965335178505,0) u=(0.99993763633052779,0) pdt=(0.011167268859879665,0)] [v=(0.011069193878148113,0) u=(0.99993873459672433,0) pdt=(0.011068515719521232,0)] [v=(0.01097222039997597,0) u=(0.99993980337793553,0) pdt=(0.010971559909371344,0)] amplitudes vu = 
+tot = (-0.0132890486659574,0)
+Eigenvalue(bis): <GS|H|GS> = -100.24188529467499
+diff: E_GS - <GS|H|GS> = 1.4210854715202004e-13
+deltaE: sqrt(<GS|H^2|GS> - <GS|H|GS>^2) = 0.000760259690443415
+residuum: <GS|H|GS> - E_GS*<GS|GS> = 4.263256414560601e-14
+
+
+RESULTS FOR THE SECTOR WITH 199 PARTICLES, Sz 0.5:
+Ground state energy = -100.23988529480872
+norm = 0.9999999999999991
+site occupancies = 0 1.9997592186257522 1.999754943815478 1.9997505510790596 1.9997460359484478 1.9997413937388553 1.9997366189111143 1.9997317075470948 1.9997266536130478 1.9997214514199733 1.9997160949859409 1.9997105780195814 1.9997048939000313 1.9996990356568645 1.9996929959460905 1.9996867670266212 1.9996803407335528 1.9996737084496696 1.9996668610469857 1.9996597796502189 1.999652471182455 1.9996449169540476 1.999637105563123 1.9996290249278681 1.9996206622372938 1.9996120038966974 1.9996030354696122 1.9995937416132987 1.9995841060091994 1.9995741112863323 1.9995637389385068 1.9995529692329184 1.9995417811097833 1.9995301520642821 1.9995180562526771 1.9995054619538419 1.999492355139741 1.999478699485679 1.9994644630494476 1.9994496114827525 1.999434107808769 1.9994179121734159 1.9994009815685798 1.9993832695234033 1.9993647257593647 1.9993452958040878 1.9993249205572505 1.9993035352580668 1.9992810671253607 1.9992574469340563 1.9992325880178843 1.9992063994640459 1.9991787816822588 1.9991496253787158 1.9991188103821411 1.9990862042989179 1.9990516609666595 1.9990150177867174 1.9989760925150275 1.9989346936141155 1.9988905914620521 1.9988435375041562 1.9987932615511019 1.9987394466924413 1.9986817405874169 1.9986197439638276 1.9985530096918804 1.9984810222789744 1.9984031955511963 1.9983188476524134 1.99822721935931 1.9981274006184344 1.998018358659184 1.9978988731080194 1.9977675146863889 1.9976225934473675 1.9974621017784093 1.9972836398395832 1.9970843128667346 1.9968606119752377 1.9966082259047111 1.9963218318789033 1.995994781118698 1.9956186793233206 1.9951827998896625 1.9946732267642675 1.9940716588269123 1.9933535954121961 1.9924856000390516 1.9914210209123921 1.9900930804851016 1.9884033307406588 1.9862014822678717 1.9832482846640365 1.9791430031253623 1.9731705330516027 1.9639469404126786 1.9484900020741553 1.9193335135623768 1.8530714595770279 0.99999999999999811 0.14690111549145513 0.080648968864210926 0.051497287784168018 0.036043071812433033 0.026821195921516834 0.02084990173934325 0.016745475417227734 0.013792921411126237 0.011591579435673424 0.0099022371009965058 0.0085746362080786481 0.0075103418200549348 0.0066425906203003513 0.0059247372430827842 0.0053233568751344124 0.0048139513892459899 0.0043782177635208501 0.0040022470672271175 0.0036753213497250454 0.0033890365845372461 0.003136753097371828 0.0029131453788750553 0.0027139015522740649 0.0025355235923323169 0.002375107714692177 0.0022302567651186979 0.0020989645489885495 0.0019795413397954943 0.0018705582687026511 0.0017707973950289008 0.0016792029797648635 0.0015949242219217904 0.0015171445478301907 0.0014452021426781757 0.0013785107966871638 0.0013165562690740664 0.0012588883743931427 0.0012051110579803426 0.0011548708776349759 0.0011078491466411993 0.0010637823313596163 0.0010224153652081901 0.00098352261506429737 0.00094690732427053152 0.00091239268954023311 0.00087981428178588394 0.00084902599791744984 0.00081989549728188262 0.00079230265723085583 0.00076613822873934027 0.00074130266225584174 0.00071770508493507114 0.00069526109586649884 0.00067389508689575241 0.00065354039583848372 0.00063413039452708895 0.00061560601016343063 0.00059791279526497348 0.00058100049462093397 0.00056482265930550796 0.0005493363018666611 0.00053450158771131456 0.00052028155841328874 0.0005066418830558492 0.00049355063376329026 0.00048097699795503213 0.00046889030051007572 0.00045727494163009852 0.00044610103483763529 0.00043534518520439025 0.00042498634704344728 0.00041500480032095611 0.00040538205104514416 0.00039610073997620681 0.0003871445595078583 0.00037849817754789827 0.00037014716750934323 0.00036207794456792999 0.000354277706529366 0.00034673438044410582 0.00033943657225371868 0.00033237351982819672 0.00032553475059448478 0.00031890551066600685 0.00031248890777319302 0.00030626947720418818 0.00030023906000947211 0.0002943899209933193 0.00028871472198193705 0.00028320649768957546 0.00027785863251976326 0.00027266484025546416 0.00026761914355062812 0.00026271585629144396 0.00025794896631691313 0.00025331406637901679 0.00024880657290197918 0.00024442133123255374 0.00024015387734484437 0.00023599995166350725 
+tot = 198.9999999999998
+site pairing = (-0,-0) (-2.1943217011544178e-05,-0) (-2.2137125298910843e-05,-0) (-2.2334628206090368e-05,-0) (-2.2535829369052392e-05,-0) (-2.2740836507889123e-05,-0) (-2.294978884781057e-05,-0) (-2.3162748648565012e-05,-0) (-2.3379864320505905e-05,-0) (-2.3601262057993134e-05,-0) (-2.3827073384054151e-05,-0) (-2.405743535256339e-05,-0) (-2.4292490862732277e-05,-0) (-2.4532388932277658e-05,-0) (-2.4777285087737865e-05,-0) (-2.5027341685624448e-05,-0) (-2.5282728310721315e-05,-0) (-2.5543622187752772e-05,-0) (-2.5810209694087342e-05,-0) (-2.6083039501997218e-05,-0) (-2.6361655084561768e-05,-0) (-2.664657591366138e-05,-0) (-2.6938024823081706e-05,-0) (-2.7236235454755422e-05,-0) (-2.7541452907586112e-05,-0) (-2.7853934472838336e-05,-0) (-2.8173950378394048e-05,-0) (-2.8501784637313808e-05,-0) (-2.8837735933548011e-05,-0) (-2.9182118602351813e-05,-0) (-2.95352636564544e-05,-0) (-2.9897519924612578e-05,-0) (-3.0269255290910459e-05,-0) (-3.0650858296884201e-05,-0) (-3.1042796666118476e-05,-0) (-3.1445691667097987e-05,-0) (-3.1859567121956256e-05,-0) (-3.2285124661342128e-05,-0) (-3.2722883449674198e-05,-0) (-3.3173394564868722e-05,-0) (-3.3637243473112206e-05,-0) (-3.4115052790667258e-05,-0) (-3.4607485313720183e-05,-0) (-3.5115247353403254e-05,-0) (-3.5639092411105944e-05,-0) (-3.617982523754023e-05,-0) (-3.673830634671726e-05,-0) (-3.7315471599739414e-05,-0) (-3.7912384319385051e-05,-0) (-3.852992015062917e-05,-0) (-3.9169312517128648e-05,-0) (-3.9831787181588134e-05,-0) (-4.0518665278350883e-05,-0) (-4.1231372831328018e-05,-0) (-4.1971451494560599e-05,-0) (-4.2740570650926768e-05,-0) (-4.3540541105329516e-05,-0) (-4.437335052248169e-05,-0) (-4.5241204486552836e-05,-0) (-4.6146266306824562e-05,-0) (-4.7091254905520533e-05,-0) (-4.8078972390935516e-05,-0) (-4.9112327170435925e-05,-0) (-5.0194796746885015e-05,-0) (-5.1330118032898828e-05,-0) (-5.2522442494652115e-05,-0) (-5.3776266468325095e-05,-0) (-5.5096716315202753e-05,-0) (-5.648946019519719e-05,-0) (-5.7961007771976005e-05,-0) (-5.9518220152863125e-05,-0) (-6.1169372521487084e-05,-0) (-6.2923412011844679e-05,-0) (-6.4790732745731571e-05,-0) (-6.678313137708937e-05,-0) (-6.8914157060291772e-05,-0) (-7.1199406709476665e-05,-0) (-7.3656918943823638e-05,-0) (-7.6307752129498019e-05,-0) (-7.91765135146784e-05,-0) (-8.2292430144258975e-05,-0) (-8.5690182176553832e-05,-0) (-8.9411386211722774e-05,-0) (-9.3506392201123909e-05,-0) (-9.8036701310049335e-05,-0) (-0.00010307847475755603,-0) (-0.00010872689233624052,-0) (-0.00011510271274669822,-0) (-0.00012236148787551389,-0) (-0.00013070715088707061,-0) (-0.00014041257769697343,-0) (-0.00015185142666685256,-0) (-0.00016554949825546827,-0) (-0.00018227125583924556,-0) (-0.00020317229001670989,-0) (-0.00023008501385367853,-0) (-0.00026609452468816854,-0) (-0.0003168070642604964,-0) (-0.00039347921271782785,-0) (-0.00052179410197424156,-0) (-0,-0) (-0.00052174926281718659,-0) (-0.00039343828175402861,-0) (-0.00031676900877328749,-0) (-0.00026605834059316815,-0) (-0.00023005002780346193,-0) (-0.00020313809361157886,-0) (-0.0001822375918615774,-0) (-0.00016551615673764087,-0) (-0.00015181829322428062,-0) (-0.00014037955656857204,-0) (-0.00013067420567983799,-0) (-0.00012232856741520339,-0) (-0.00011506979286699003,-0) (-0.0001086939371573508,-0) (-0.0001030455026764824,-0) (-9.80037175341533e-05,-0) (-9.347334773215861e-05,-0) (-8.9378275620349945e-05,-0) (-8.5657076254250198e-05,-0) (-8.2259270602791205e-05,-0) (-7.9143331840085274e-05,-0) (-7.6274532720638241e-05,-0) (-7.3623622859193919e-05,-0) (-7.1166131725543656e-05,-0) (-6.888087029595419e-05,-0) (-6.6749827602767222e-05,-0) (-6.4757420005735869e-05,-0) (-6.2890095370218154e-05,-0) (-6.113605768422417e-05,-0) (-5.9484948236033999e-05,-0) (-5.7927422149467031e-05,-0) (-5.6456218971606583e-05,-0) (-5.5063484888639512e-05,-0) (-5.3743052352124653e-05,-0) (-5.2489249388401503e-05,-0) (-5.1296970843691712e-05,-0) (-5.0161658154880852e-05,-0) (-4.9079219872555603e-05,-0) (-4.8045895022634164e-05,-0) (-4.7058165747835395e-05,-0) (-4.6113263058156594e-05,-0) (-4.5208244792707987e-05,-0) (-4.4340477144413958e-05,-0) (-4.3507677656482004e-05,-0) (-4.2707761808137267e-05,-0) (-4.1938699197774031e-05,-0) (-4.1198678992047714e-05,-0) (-4.0486031738580261e-05,-0) (-3.9799215707863982e-05,-0) (-3.913680479667698e-05,-0) (-3.8497477772896123e-05,-0) (-3.7880008834228633e-05,-0) (-3.7283224159689063e-05,-0) (-3.6706076325363087e-05,-0) (-3.6147664884858085e-05,-0) (-3.5607003070981904e-05,-0) (-3.5083230318303657e-05,-0) (-3.4575541800804945e-05,-0) (-3.408318394262998e-05,-0) (-3.3605450361133255e-05,-0) (-3.3141678191678577e-05,-0) (-3.2691244752614961e-05,-0) (-3.2253564515051137e-05,-0) (-3.1828086340747398e-05,-0) (-3.1414290940565721e-05,-0) (-3.101165356825593e-05,-0) (-3.0619613696228485e-05,-0) (-3.0238068438442739e-05,-0) (-2.9866420333578922e-05,-0) (-2.950425130347344e-05,-0) (-2.915119346942322e-05,-0) (-2.8806897987420586e-05,-0) (-2.8471033832352656e-05,-0) (-2.81432866622968e-05,-0) (-2.7823357779135624e-05,-0) (-2.7510963164262399e-05,-0) (-2.7205832574892477e-05,-0) (-2.6907708722555898e-05,-0) (-2.6616346487927461e-05,-0) (-2.6331512226942979e-05,-0) (-2.6052983079118745e-05,-0) (-2.578054629948193e-05,-0) (-2.5513986915320173e-05,-0) (-2.5252907171398814e-05,-0) (-2.4997603209686327e-05,-0) (-2.4747629248389037e-05,-0) (-2.4502815685667729e-05,-0) (-2.4263000155814514e-05,-0) (-2.4028027130274306e-05,-0) (-2.3797747571121288e-05,-0) (-2.3572018573296994e-05,-0) (-2.3350703081402372e-05,-0) (-2.313366955533169e-05,-0) (-2.2920791717603211e-05,-0) (-2.2711921868582976e-05,-0) (-2.2506975912854598e-05,-0) (-2.2305856654547968e-05,-0) (-2.210843550950533e-05,-0) (-2.1914608844441583e-05,-0) (-2.1724276912013336e-05,-0) 
+tot = (-0.013289048755886285,0)
+[v=(0,0) u=(1.0000000000000016,0) pdt=(0,0)] [v=(0.99993980284459072,0) u=(0.010972269005269276,0) pdt=(0.010971608505886774,0)] [v=(0.99993873407711442,0) u=(0.01106924081682383,0) pdt=(0.011068562649569545,0)] [v=(0.99993763582512152,0) u=(0.011168010586941422,0) pdt=(0.011167314103176134,0)] [v=(0.99993650697143155,0) u=(0.011268630164124271,0) pdt=(0.011267914684667334,0)] [v=(0.99993534634466807,0) u=(0.011371153440712996,0) pdt=(0.011370418254077714,0)] [v=(0.99993415255983786,0) u=(0.011475650066236883,0) pdt=(0.011474894424055825,0)] [v=(0.9999329246372235,0) u=(0.011582151201407194,0) pdt=(0.011581374324413626,0)] [v=(0.99993166106815889,0) u=(0.011690731092442985,0) pdt=(0.011689932160367686,0)] [v=(0.99993036043016015,0) u=(0.011801452877210091,0) pdt=(0.011800631029108237,0)] [v=(0.99992902122749383,0) u=(0.011914382360356517,0) pdt=(0.011913536692121409,0)] [v=(0.99992764188704875,0) u=(0.01202958811467666,0) pdt=(0.0120287176763811,0)] [v=(0.99992622075332083,0) u=(0.012147141638421488,0) pdt=(0.0121462454314621,0)] [v=(0.99992475608339415,0) u=(0.012267117492189533,0) pdt=(0.012266194466223956,0)] [v=(0.99992324604093907,0) u=(0.012389593494296644,0) pdt=(0.012388642543944802,0)] [v=(0.99992168869032649,0) u=(0.012514650881608651,0) pdt=(0.012513670842908005,0)] [v=(0.99992008198994597,0) u=(0.012642374508880384,0) pdt=(0.012641364155467277,0)] [v=(0.99991842378508,0) u=(0.012772853054983168,0) pdt=(0.012771811093977212,0)] [v=(0.99991671179328567,0) u=(0.012906179779717166,0) pdt=(0.012905104847147781,0)] [v=(0.99991494129506486,0) u=(0.01304262914023384,0) pdt=(0.013041519751090223,0)] [v=(0.999913114021029,0) u=(0.013181972870997205,0) pdt=(0.01318082754237954,0)] [v=(0.99991122529803989,0) u=(0.013324470832854483,0) pdt=(0.013323287956927519,0)] [v=(0.99990927227502258,0) u=(0.01347023453536326,0) pdt=(0.013469012411628954,0)] [v=(0.99990725193086671,0) u=(0.013619380898747402,0) pdt=(0.013618117727466251,0)] [v=(0.99990516106211336,0) u=(0.013772032578822048,0) pdt=(0.013770726453879731,0)] [v=(0.99990299626931423,0) u=(0.013928318335329913,0) pdt=(0.013926967236489207,0)] [v=(0.99990075394251487,0) u=(0.014088373404792463,0) pdt=(0.014086975189275659,0)] [v=(0.99989843024511904,0) u=(0.014252339925412069,0) pdt=(0.014250892318739364,0)] [v=(0.999896021096496,0) u=(0.014420367380859037,0) pdt=(0.01441886796687065,0)] [v=(0.99989352215281946,0) u=(0.014592613091302111,0) pdt=(0.014591059301275411,0)] [v=(0.99989092878636421,0) u=(0.01476924272754584,0) pdt=(0.014767631828317064,0)] [v=(0.99988823606264265,0) u=(0.014950430881402334,0) pdt=(0.01494875996238184,0)] [v=(0.999885438715304,0) u=(0.015136361686581005,0) pdt=(0.015134627645540567,0)] [v=(0.99988253111660363,0) u=(0.015327229621095085,0) pdt=(0.015325429148545934,0)] [v=(0.99987950680386639,0) u=(0.015523268781422872,0) pdt=(0.015521398333152957,0)] [v=(0.99987635784477125,0) u=(0.015724790080560019,0) pdt=(0.01572284583362394,0)] [v=(0.99987308073068693,0) u=(0.015931805614179402,0) pdt=(0.015929783561052013,0)] [v=(0.99986966637799568,0) u=(0.016144666523625572,0) pdt=(0.016142562330761497,0)] [v=(0.99986610679866972,0) u=(0.016363632704103504,0) pdt=(0.016361441724935359,0)] [v=(0.99986239340290284,0) u=(0.016588980035622116,0) pdt=(0.016586697282530101,0)] [v=(0.99985851694346739,0) u=(0.016821001623388135,0) pdt=(0.016818621736664516,0)] [v=(0.99985446745349571,0) u=(0.017060009182021024,0) pdt=(0.017057526395441377,0)] [v=(0.99985023417724683,0) u=(0.017306334554396938,0) pdt=(0.017303742656963557,0)] [v=(0.99984580549288082,0) u=(0.01756033138346005,0) pdt=(0.017557623676817527,0)] [v=(0.99984116882617324,0) u=(0.017822376954722725,0) pdt=(0.017819546205670625,0)] [v=(0.99983631055390743,0) u=(0.018092874231437014,0) pdt=(0.018089912618875846,0)] [v=(0.99983121589527824,0) u=(0.01837225411791707,0) pdt=(0.018369153173454056,0)] [v=(0.99982586865365641,0) u=(0.018660985262442344,0) pdt=(0.018657735799954497,0)] [v=(0.9998202506264241,0) u=(0.018959600136036453,0) pdt=(0.018956192159788752,0)] [v=(0.99981434449953399,0) u=(0.019268537385351711,0) pdt=(0.019264960075400187,0)] [v=(0.99980812859715573,0) u=(0.019588414715254247,0) pdt=(0.019584656258643335,0)] [v=(0.99980158018080156,0) u=(0.019919846083138404,0) pdt=(0.019915893590880127,0)] [v=(0.99979467434125413,0) u=(0.020263493254358313,0) pdt=(0.020259332639257371,0)] [v=(0.9997873837418445,0) u=(0.020620070577983114,0) pdt=(0.020615686415733921,0)] [v=(0.99977967832471704,0) u=(0.020990350376498275,0) pdt=(0.020985725747338549,0)] [v=(0.99977152497431276,0) u=(0.021375169017803085,0) pdt=(0.021370285325512672,0)] [v=(0.99976288713041039,0) u=(0.021775433788299037,0) pdt=(0.021770270552706937,0)] [v=(0.9997537241207769,0) u=(0.022192140650233321,0) pdt=(0.022186675261282842,0)] [v=(0.99974399035829042,0) u=(0.022626394818543314,0) pdt=(0.022620602243312641,0)] [v=(0.99973363792915426,0) u=(0.023079280598418364,0) pdt=(0.023073133153444541,0)] [v=(0.9997226093927406,0) u=(0.023552160600930849,0) pdt=(0.023545627452799485,0)] [v=(0.99971084257003151,0) u=(0.024046439402119688,0) pdt=(0.024039486195502276,0)] [v=(0.99969826986724108,0) u=(0.024563575156048449,0) pdt=(0.024556163585255582,0)] [v=(0.99968481200137516,0) u=(0.025105311266289218,0) pdt=(0.025097398373476344,0)] [v=(0.9996703808224553,0) u=(0.02567352150152891,0) pdt=(0.025665059016486899,0)] [v=(0.99965487643582174,0) u=(0.026270287742700345,0) pdt=(0.026261221247362597,0)] [v=(0.99963818696863738,0) u=(0.026897865232351915,0) pdt=(0.026888133234195016,0)] [v=(0.99962018343943604,0) u=(0.02755882545593832,0) pdt=(0.027548358157640462,0)] [v=(0.99960071917521265,0) u=(0.028256012181480251,0) pdt=(0.028244730097631229,0)] [v=(0.99957962355492758,0) u=(0.028992691730696837,0) pdt=(0.028980503886014006,0)] [v=(0.99955670658530382,0) u=(0.029772307944509413,0) pdt=(0.029759110076457304,0)] [v=(0.99953174052114091,0) u=(0.030599014539369522,0) pdt=(0.030584686260767716,0)] [v=(0.99950446688826577,0) u=(0.03147730405237361,0) pdt=(0.031461706005947533,0)] [v=(0.99947458024404712,0) u=(0.032412396486343364,0) pdt=(0.032395366372891664,0)] [v=(0.99944172283490307,0) u=(0.033410217850276647,0) pdt=(0.033391565688569921,0)] [v=(0.99940547162985283,0) u=(0.034477576427493641,0) pdt=(0.034457078530173581,0)] [v=(0.99936532403781608,0) u=(0.035622311979889285,0) pdt=(0.035599703354758233,0)] [v=(0.999320679221538,0) u=(0.036853494816715349,0) pdt=(0.036828459471927415,0)] [v=(0.99927081235937809,0) u=(0.038181717701407991,0) pdt=(0.038153876064762407,0)] [v=(0.99921484475943556,0) u=(0.039619364108710302,0) pdt=(0.039588256757352516,0)] [v=(0.99915169666690762,0) u=(0.041181149178255931,0) pdt=(0.041146215072147441,0)] [v=(0.99908003480174501,0) u=(0.042884543375738861,0) pdt=(0.042845091088290127,0)] [v=(0.99899819347151642,0) u=(0.044750524473443173,0) pdt=(0.044705693105872614,0)] [v=(0.99890406929878151,0) u=(0.046804490578757851,0) pdt=(0.046753196100577696,0)] [v=(0.99879497392850136,0) u=(0.049077490310385996,0) pdt=(0.049018350655038262,0)] [v=(0.99866741880474807,0) u=(0.051608009241431663,0) pdt=(0.051539237378792145,0)] [v=(0.99851681478754284,0) u=(0.054444196996019815,0) pdt=(0.054363446168131213,0)] [v=(0.99833701609531744,0) u=(0.057647222776986438,0) pdt=(0.057551356373358661,0)] [v=(0.99811963211807919,0) u=(0.061296002973048283,0) pdt=(0.061180743937767644,0)] [v=(0.99785295031692922,0) u=(0.065494194733591943,0) pdt=(0.065353575443546211,0)] [v=(0.99752019540586478,0) u=(0.070380819528100227,0) pdt=(0.070206288848495446,0)] [v=(0.9970966178712739,0) u=(0.076146796581789661,0) pdt=(0.075925713333434355,0)] [v=(0.99654439998122513,0) u=(0.083061777407312007,0) pdt=(0.082774749127743824,0)] [v=(0.99580326487314852,0) u=(0.091519711909401127,0) pdt=(0.091135627919631618,0)] [v=(0.99477208523494698,0) u=(0.1021200197675127,0) pdt=(0.10158614500836262,0)] [v=(0.99326998672355182,0) u=(0.1158219904603475,0) pdt=(0.1150425069268447,0)] [v=(0.99094574533944235,0) u=(0.1342629129494034,0) pdt=(0.13304726234409123,0)] [v=(0.98703850028105844,0) u=(0.1604836407953186,0) pdt=(0.15840353213025535,0)] [v=(0.97962582488478289,0) u=(0.20083138006499451,0) pdt=(0.1967396063589196,0)] [v=(0.96256725987772773,0) u=(0.27104293056909784,0) pdt=(0.26089705098712573,0)] [v=(0,0) u=(0,0) pdt=(0,0)] [v=(0.27101763364351023,0) u=(0.96257438271246021,0) pdt=(0.26087463140859352,0)] [v=(0.2008095725609356,0) u=(0.97963029535018775,0) pdt=(0.19671914087701431,0)] [v=(0.16046383982718365,0) u=(0.98704171953768893,0) pdt=(0.15838450438664364,0)] [v=(0.1342443142416713,0) u=(0.99094826509449296,0) pdt=(0.13302917029658409,0)] [v=(0.11580413619883576,0) u=(0.99327206848840954,0) pdt=(0.1150250139017311,0)] [v=(0.10210264869077454,0) u=(0.99477386833909676,0) pdt=(0.1015690468057896,0)] [v=(0.091502665035582242,0) u=(0.99580483142601217,0) pdt=(0.091118795930788837,0)] [v=(0.083044931847543968,0) u=(0.99654580391191216,0) pdt=(0.082758078368820667,0)] [v=(0.076130084183828481,0) u=(0.9970978940315568,0) pdt=(0.075909146612140516,0)] [v=(0.070364185140583471,0) u=(0.99752136891873366,0) pdt=(0.070189778284286047,0)] [v=(0.065477615289802588,0) u=(0.997854038372328,0) pdt=(0.065337102839919198,0)] [v=(0.061279449328690234,0) u=(0.99812064856407778,0) pdt=(0.061164283707601838,0)] [v=(0.057630680285332588,0) u=(0.99833797117501877,0) pdt=(0.057534896433495089,0)] [v=(0.054427645746820748,0) u=(0.99851771710794468,0) pdt=(0.054346968578675388,0)] [v=(0.051591457021169948,0) u=(0.99866827403419378,0) pdt=(0.05152275133824108,0)] [v=(0.049060938582777186,0) u=(0.99879578708832162,0) pdt=(0.049001858767076745,0)] [v=(0.046787913842791254,0) u=(0.99890484587784545,0) pdt=(0.046736673866079312,0)] [v=(0.044733919274009437,0) u=(0.99899893716979948,0) pdt=(0.044689137810175035,0)] [v=(0.042867944607393418,0) u=(0.99908074714966855,0) pdt=(0.042828538127125219,0)] [v=(0.041164527110955938,0) u=(0.99915238162541231,0) pdt=(0.041129635301395476,0)] [v=(0.0396027341061942,0) u=(0.99921550400867787,0) pdt=(0.039571665920042493,0)] [v=(0.038165071589576889,0) u=(0.99927144826146441,0) pdt=(0.038137266360318965,0)] [v=(0.036836812784727516,0) u=(0.99932129429121286,0) pdt=(0.036811811429596997,0)] [v=(0.035605642757380158,0) u=(0.99936591807197206,0) pdt=(0.035583065862771886,0)] [v=(0.034460903315875389,0) u=(0.99940604668105537,0) pdt=(0.034440435147977094,0)] [v=(0.033393538035963975,0) u=(0.99944228028308013,0) pdt=(0.033374913801383604,0)] [v=(0.032395713829059133,0) u=(0.99947512111383141,0) pdt=(0.032378710002867898,0)] [v=(0.031460620939481924,0) u=(0.99950499214866562,0) pdt=(0.031445047685109029,0)] [v=(0.030582333696945775,0) u=(0.99953225103827958,0) pdt=(0.03056802884211204,0)] [v=(0.029755649841911824,0) u=(0.99955720261648207,0) pdt=(0.029742474118016948,0)] [v=(0.028975877724107882,0) u=(0.99958011110171585,0) pdt=(0.02896371107473349,0)] [v=(0.028239371646000128,0) u=(0.99960118941958054,0) pdt=(0.028228109485803305,0)] [v=(0.027542190797304252,0) u=(0.99962064190676136,0) pdt=(0.02753174244431977,0)] [v=(0.026881240137670383,0) u=(0.99963863417169996,0) pdt=(0.0268715261760623,0)] [v=(0.026253673997054118,0) u=(0.999655312896229,0) pdt=(0.026244624694200726,0)] [v=(0.025656931510549867,0) u=(0.99967080674863362,0) pdt=(0.025648485421845824,0)] [v=(0.025088726296816594,0) u=(0.99968522836581142,0) pdt=(0.025080829077440435,0)] [v=(0.024547006517907245,0) u=(0.99969867683768143,0) pdt=(0.024539609936277813,0)] [v=(0.024029886367136617,0) u=(0.99971124058959315,0) pdt=(0.024022947511317099,0)] [v=(0.023535602251070941,0) u=(0.99972299934865994,0) pdt=(0.023529082873917712,0)] [v=(0.023062765785564765,0) u=(0.99973401904422632,0) pdt=(0.023056631529078334,0)] [v=(0.022609902313015573,0) u=(0.99974436348368423,0) pdt=(0.022604122396354034,0)] [v=(0.022175691816314524,0) u=(0.9997540891101514,0) pdt=(0.022170238572206964,0)] [v=(0.02175899037490632,0) u=(0.99976324514250159,0) pdt=(0.0217538388282408,0)] [v=(0.021358753352434447,0) u=(0.99977187580729177,0) pdt=(0.021353880904068669,0)] [v=(0.020973963404491619,0) u=(0.9997800222344454,0) pdt=(0.020969349598887074,0)] [v=(0.020603713232297111,0) u=(0.99978772096932778,0) pdt=(0.020599339496023911,0)] [v=(0.020247166434860697,0) u=(0.99979500511422859,0) pdt=(0.020243015869290188,0)] [v=(0.019903550653474787,0) u=(0.999801904714822,0) pdt=(0.019899607853932032,0)] [v=(0.019572151500785118,0) u=(0.99980844709655858,0) pdt=(0.019568402398338548,0)] [v=(0.019252307163764221,0) u=(0.99981465715845264,0) pdt=(0.019248738886448145,0)] [v=(0.018943403666383411,0) u=(0.99982055762898481,0) pdt=(0.018940004417114419,0)] [v=(0.018644853121793856,0) u=(0.99982616961753334,0) pdt=(0.018641612079844661,0)] [v=(0.018356130949845735,0) u=(0.99983151203417975,0) pdt=(0.018353038162681665,0)] [v=(0.018076786161241302,0) u=(0.99983660155151499,0) pdt=(0.01807383244242896,0)] [v=(0.017806324642203417,0) u=(0.9998414548330844,0) pdt=(0.017803501535490866,0)] [v=(0.017544315463469056,0) u=(0.99984608665280117,0) pdt=(0.017541615159151761,0)] [v=(0.01729035562481249,0) u=(0.99985051062764896,0) pdt=(0.01728777090040241,0)] [v=(0.017044067804091827,0) u=(0.99985473932601443,0) pdt=(0.017041591971315148,0)] [v=(0.016805098323210175,0) u=(0.99985878436424691,0) pdt=(0.01680272518056657,0)] [v=(0.016573115305618596,0) u=(0.99986265649291495,0) pdt=(0.016570839095839198,0)] [v=(0.016347807004477913,0) u=(0.99986636567400655,0) pdt=(0.016345622376307399,0)] [v=(0.016128880283722492,0) u=(0.99986992115014406,0) pdt=(0.016126782257525722,0)] [v=(0.015916059233614704,0) u=(0.9998733315067837,0) pdt=(0.015914043170373642,0)] [v=(0.015709083896957663,0) u=(0.99987660472836404,0) pdt=(0.015707145470283047,0)] [v=(0.015507691606990347,0) u=(0.99987974852030348,0) pdt=(0.01550582678412793,0)] [v=(0.015311601818720415,0) u=(0.99988277055350216,0) pdt=(0.015309806848114211,0)] [v=(0.01512076290453118,0) u=(0.99988567472945988,0) pdt=(0.015119034219221348,0)] [v=(0.014934875875574932,0) u=(0.99988846852165625,0) pdt=(0.014933210166789649,0)] [v=(0.014753731480618645,0) u=(0.99989115778038584,0) pdt=(0.014752125651736702,0)] [v=(0.014577145588959721,0) u=(0.99989374776847195,0) pdt=(0.014575596734711585,0)] [v=(0.014404943601433687,0) u=(0.99989624341720673,0) pdt=(0.014403448993710273,0)] [v=(0.01423695984129226,0) u=(0.99989864935126282,0) pdt=(0.0142355169161763,0)] [v=(0.014073036985246097,0) u=(0.99990096991152777,0) pdt=(0.014071643331148374,0)] [v=(0.01391302554277613,0) u=(0.99990320917589237,0) pdt=(0.013911678889568015,0)] [v=(0.013756783373083696,0) u=(0.99990537097828813,0) pdt=(0.013755481582131199,0)] [v=(0.013604175232430415,0) u=(0.99990745892619848,0) pdt=(0.013602916287446221,0)] [v=(0.013455072362643121,0) u=(0.99990947641659955,0) pdt=(0.013453854361277941,0)] [v=(0.013309352097855618,0) u=(0.99991142665074972,0) pdt=(0.01330817324396396,0)] [v=(0.013166897516957545,0) u=(0.9999133126475418,0) pdt=(0.013165756113471712,0)] [v=(0.013027597097195526,0) u=(0.99991513725609515,0) pdt=(0.013026491539559371,0)] [v=(0.012891344379625577,0) u=(0.99991690316750237,0) pdt=(0.012890273149740993,0)] [v=(0.012758031795588346,0) u=(0.99991861300043072,0) pdt=(0.012756993457660093,0)] [v=(0.012627460367508768,0) u=(0.99992027044393372,0) pdt=(0.012626453585699422,0)] [v=(0.012499778153495379,0) u=(0.99992187472127836,0) pdt=(0.012498801604843179,0)] [v=(0.012374762163456008,0) u=(0.99992342969919468,0) pdt=(0.012373814624194759,0)] [v=(0.012252327534176743,0) u=(0.99992493741780297,0) pdt=(0.012251407842834103,0)] [v=(0.012132393024323748,0) u=(0.99992639981125875,0) pdt=(0.012131500077907274,0)] [v=(0.012014880814680254,0) u=(0.99992781871443648,0) pdt=(0.012014013565137158,0)] [v=(0.011899716334635282,0) u=(0.99992919586896589,0) pdt=(0.011898873785560656,0)] [v=(0.011786828083071415,0) u=(0.99993053292903378,0) pdt=(0.011786009286648502,0)] [v=(0.011676147486552726,0) u=(0.99993183146646247,0) pdt=(0.0116753515407012,0)] [v=(0.011567608731942992,0) u=(0.99993309297583821,0) pdt=(0.01156683477766607,0)] [v=(0.011461148639893113,0) u=(0.99993431887892315,0) pdt=(0.011460395858801617,0)] [v=(0.011356693319732658,0) u=(0.99993551067898545,0) pdt=(0.011355960934291498,0)] [v=(0.011254200690831656,0) u=(0.99993666947802862,0) pdt=(0.011253487956427536,0)] [v=(0.011153622122476416,0) u=(0.99993779642213299,0) pdt=(0.011152928327274221,0)] [v=(0.011054893288326194,0) u=(0.99993889280014803,0) pdt=(0.011054217754752682,0)] [v=(0.010957962341257633,0) u=(0.99993995972824767,0) pdt=(0.010957304422220811,0)] [v=(0.01086277937876659,0) u=(0.99994099827148308,0) pdt=(0.010862138456006745,0)] amplitudes vu = 
+tot = (-0.013289048755898739,0)
+Eigenvalue(bis): <GS|H|GS> = -100.23988529480893
+diff: E_GS - <GS|H|GS> = 2.1316282072803006e-13
+deltaE: sqrt(<GS|H^2|GS> - <GS|H|GS>^2) = 0.0007599090952330273
+residuum: <GS|H|GS> - E_GS*<GS|GS> = -2.984279490192421e-13
+
+n =   200  Sz =  0.0  E = -100.2551135097183
+n =   201  Sz =  0.5  E = -100.24188529467484
+n =   199  Sz =  0.5  E = -100.23988529480872
+N_GS = 200
+SZ_GS = 0.0
