@@ -243,9 +243,10 @@ struct params {
   bool sc_only;          // do not put any electrons on the SC in the initial state
   bool randomMPSb;       // randomize initial MPS
 
-  double EnergyErrgoal; // the convergence value at which dmrg() will stop the sweeps; default is machine precision
+  double EnergyErrgoal; // convergence value at which dmrg() will stop the sweeps; default is machine precision
   int nrH;              // number of times to apply H to psi before comencing the sweep - akin to a power method; default = 5
-  int nrange;           // the number of energies computed is 2*nrange + 1
+  int nref;             // central value of the occupancy.
+  int nrange;           // number of occupancies considered is 2*nrange + 1, i.e. [nref-nrange:nref+nrange]
 
   std::unique_ptr<imp>    qd;
   std::unique_ptr<SCbath> sc;

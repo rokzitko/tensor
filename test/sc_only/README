@@ -1,0 +1,43 @@
+Referencni rezultati iz tocnega izracuna so v richardson_solution_JvD.nb
+
+
+Parameter:
+sc_only=true -> zacetna valovna funkcija brez elektronov na necistoci
+NBath -> st. nivojev v superprevodniku
+alpha -> sklopitev
+Ec -> charging energy, Ec=e^2/2C
+n0 -> gate voltage, E_c(\hat{n}-n_0)^2
+
+gamma=0,U=0,epsimp=1000 -> s tem povsem razklopimo necistoco, ki bo povsem prazna
+
+verbose -> detajli v izracunu
+band_level_shift -> popravek alpha/2 v eps_i. Mora biti false za primerjavo z richardson_solution_JvD.nb
+
+nref, nrange -> izracunaj zasedenosti v intervalu [nref-nrange:nref+nrange]
+
+MPO=Ec -> katera formulacija MPO. Naceloma std,Ec,middle,middle_Ec dajo isti rezultat
+
+EnergyErrgoal -> ciljna natancnost energije
+nrsweeps -> dolzina tabele "sweeps"
+
+ maxdim, mindim -> dovoljeni razpon velikost matrik v MPS zapisu
+ cutoff -> kriterij za tezanje spektra v SVD
+ niter -> stevilo iteracij Davidsonove metode za diagonalization
+ noise -> sum, ki preprece, da bi se ujeli v metastabilne resitve
+
+
+
+
+Names and meaning of "accuracy parameters"
+
+    maxdim — the bond dimension of any bond of the MPS cannot exceed the maxdim value.
+
+    mindim — the bond dimension of any bond of the MPS will be at least as large as mindim, however singular values that are exactly zero will still be truncated.
+
+    cutoff — the truncation error cutoff to use when computing SVD or density matrix diagonalizations. For more information on how the cutoff is defined, see the page on tensor decompositions.
+
+    niter — controls maximum number of Davidson ("exact diagonalization") iterations to use in the core step of DMRG. (Regrettably, for historical reasons within ITensor, niter actually corresponds to the number of basis states used, so the minimum value of niter that will result in any optimization happening must be niter >= 2. )
+
+    noise — magnitude of the noise term to be added to the density matrix to aid convergence. If noise is set to zero, no noise term will be computed.
+
+

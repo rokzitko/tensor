@@ -1,0 +1,161 @@
+Got params.MPO = Ec
+Def params.N = 0
+Got params.NBath = 5
+N=6 NBath=5 impindex=1
+Got params.U = 0
+Def params.EZ_imp = 0
+Got params.epsimp = 1000
+Def params.EZ_bulk = 0
+Got params.n0 = 0
+Got params.Ec = 0
+Got params.alpha = -0.1
+Got params.gamma = 0
+Def params.V = 0
+Got params.band_level_shift = false
+Def params.EZ_bulk1 = 0
+Def params.n01 = 2
+Def params.Ec1 = 0
+Def params.alpha1 = 0
+Def params.EZ_bulk2 = 0
+Def params.n02 = 2
+Def params.Ec2 = 0
+Def params.alpha2 = 0
+Def params.gamma1 = 0
+Def params.gamma2 = 0
+Got params.nref = 5
+Got params.nrange = 1
+Def params.refisn0 = 0
+Def params.excited_state = 0
+Def params.computeEntropy = 0
+Def params.impNupNdn = 0
+Def params.chargeCorrelation = 0
+Def params.spinCorrelation = 0
+Def params.pairCorrelation = 0
+Def params.hoppingExpectation = 0
+Def params.calcweights = 0
+Def params.printTotSpinZ = 0
+Def params.printDimensions = 0
+Def params.parallel = 0
+Got params.verbose = true
+Got params.EnergyErrgoal = 1e-10
+Def params.nrH = 5
+Got params.sc_only = true
+Def params.randomMPS = 0
+Got params.nrsweeps = 26
+
+Sweeping in the sector with 5 particles, Sz = 0.5
+eps=-0.8 -0.4 0 0.4 0.8 
+V=0 0 0 0 0 
+tot=5 Sztot=0.5
+ntot=5 SZ=0.5
+
+    vN Entropy at center bond b=3 = 0.012155069406
+    Eigs at center bond b=3: 0.9984 0.0016 
+    Largest link dim during sweep 1/26 was 20
+    Largest truncation error: 3.41074e-28
+    Energy after sweep 1/26 is -2.482934589466
+    Sweep 1/26 CPU time = 0.241s (Wall time = 0.256s)
+
+    vN Entropy at center bond b=3 = 0.012155069406
+    Eigs at center bond b=3: 0.9984 0.0016 
+    Largest link dim during sweep 2/26 was 20
+    Largest truncation error: 3.54054e-26
+    Energy after sweep 2/26 is -2.482934589466
+    Sweep 2/26 CPU time = 0.369s (Wall time = 0.382s)
+    Energy error dE = 8.882E-16 after 2 sweeps;
+    Energy error goal met (dE = 8.882E-16 < 1.000E-10); returning after 2 sweeps.
+
+Sweeping in the sector with 6 particles, Sz = 0
+eps=-0.8 -0.4 0 0.4 0.8 
+V=0 0 0 0 0 
+tot=6 Sztot=0
+ntot=6 SZ=0
+
+    vN Entropy at center bond b=3 = 0.014250994286
+    Eigs at center bond b=3: 0.9981 0.0018 
+    Largest link dim during sweep 1/26 was 20
+    Largest truncation error: 3.2159e-28
+    Energy after sweep 1/26 is -2.526275081682
+    Sweep 1/26 CPU time = 0.250s (Wall time = 0.256s)
+
+    vN Entropy at center bond b=3 = 0.014250994314
+    Eigs at center bond b=3: 0.9981 0.0018 
+    Largest link dim during sweep 2/26 was 20
+    Largest truncation error: 1.06722e-23
+    Energy after sweep 2/26 is -2.526275081682
+    Sweep 2/26 CPU time = 0.312s (Wall time = 0.320s)
+    Energy error dE = 4.441E-16 after 2 sweeps;
+    Energy error goal met (dE = 4.441E-16 < 1.000E-10); returning after 2 sweeps.
+
+Sweeping in the sector with 4 particles, Sz = 0
+eps=-0.8 -0.4 0 0.4 0.8 
+V=0 0 0 0 0 
+tot=4 Sztot=0
+ntot=4 SZ=0
+
+    vN Entropy at center bond b=3 = 0.034064512621
+    Eigs at center bond b=3: 0.9946 0.0054 
+    Largest link dim during sweep 1/26 was 20
+    Largest truncation error: 8.95538e-26
+    Energy after sweep 1/26 is -2.486275081682
+    Sweep 1/26 CPU time = 0.166s (Wall time = 0.168s)
+
+    vN Entropy at center bond b=3 = 0.034064593352
+    Eigs at center bond b=3: 0.9946 0.0054 
+    Largest link dim during sweep 2/26 was 20
+    Largest truncation error: 1.56516e-22
+    Energy after sweep 2/26 is -2.486275081682
+    Sweep 2/26 CPU time = 0.247s (Wall time = 0.248s)
+    Energy error dE = 4.441E-15 after 2 sweeps;
+    Energy error goal met (dE = 4.441E-15 < 1.000E-10); returning after 2 sweeps.
+
+
+RESULTS FOR THE SECTOR WITH 5 PARTICLES, Sz 0.5:
+Ground state energy = -2.4829345894663524
+norm = 0.9999999999999998
+site occupancies = 4.6448342091101876e-28 1.9990676080924701 1.9980686375993915 0.99999999999999978 0.0019313624013805818 0.00093239190675742021 
+tot = 5
+site pairing = (-4.1649953490854745e-16,-0) (-0.00086346151284019429,-0) (-0.0012424161364846585,-0) (-0,-3.5463380610260589e-16) (-0.0012424161367328959,-0) (-0.00086346151248264729,-0) 
+tot = (-0.0042117552985403966,-3.5463380610260589e-16)
+[v=(1.0446238499693133e-14,0) u=(0.99999999999999944,0) pdt=(1.0446238499693126e-14,0)] [v=(0.99976687484944915,0) u=(0.021591571359328526,0) pdt=(0.021586537821004753,0)] [v=(0.99951704277600728,0) u=(0.031075411506592047,0) pdt=(0.031060403412116393,0)] [v=(6.5458670727216937e-15,0) u=(1.2459988349612819e-14,0) pdt=(8.1561427464226475e-29,0)] [v=(0.031075411512807023,0) u=(0.9995170427758141,0) pdt=(0.031060403418322363,0)] [v=(0.02159157135038366,0) u=(0.99976687484964233,0) pdt=(0.021586537812066143,0)] amplitudes vu = 
+tot = (-0.004211755298540387,0)
+Eigenvalue(bis): <GS|H|GS> = -2.4829345894663533
+diff: E_GS - <GS|H|GS> = 8.881784197001252e-16
+deltaE: sqrt(<GS|H^2|GS> - <GS|H|GS>^2) = -nan
+residuum: <GS|H|GS> - E_GS*<GS|GS> = -1.3322676295501878e-15
+
+
+RESULTS FOR THE SECTOR WITH 6 PARTICLES, Sz 0.0:
+Ground state energy = -2.5262750816815704
+norm = 0.9999999999999997
+site occupancies = 1.4130070896530414e-27 1.9989853918538152 1.9978946149053849 1.992872643704408 0.0078001705907882676 0.0024471789456022262 
+tot = 5.9999999999999991
+site pairing = (-8.2727371662826832e-16,-0) (-0.00090070791329509834,-0) (-0.0012971256751504508,-0) (-0.0023836034387810759,-0) (-0.0024931504984923069,-0) (-0.0013983374709150354,-0) 
+tot = (-0.0084729249966339661,0)
+[v=(2.0696061085964447e-14,0) u=(0.99999999999999911,0) pdt=(2.0696061085964428e-14,0)] [v=(0.99974631578561257,0) u=(0.02252341166636011,0) pdt=(0.022517697832366203,0)] [v=(0.99947351513318805,0) u=(0.032445223798076898,0) pdt=(0.032428141878746881,0)] [v=(0.99821657061591729,0) u=(0.059696550551900464,0) pdt=(0.059590085969517828,0)] [v=(0.062450662889949618,0) u=(0.99804805230239502,0) pdt=(0.062328762462307674,0)] [v=(0.034979843807557275,0) u=(0.99938801800261612,0) pdt=(0.034958436772875752,0)] amplitudes vu = 
+tot = (-0.0084729249966325748,0)
+Eigenvalue(bis): <GS|H|GS> = -2.5262750816815696
+diff: E_GS - <GS|H|GS> = -8.881784197001252e-16
+deltaE: sqrt(<GS|H^2|GS> - <GS|H|GS>^2) = 5.960464477539063e-08
+residuum: <GS|H|GS> - E_GS*<GS|GS> = 0.0
+
+
+RESULTS FOR THE SECTOR WITH 4 PARTICLES, Sz 0.0:
+Ground state energy = -2.486275081681571
+norm = 0.9999999999999997
+site occupancies = 2.6119218083711623e-22 1.9975528210620663 1.9921998296204284 0.0071273560413911922 0.0021053851126472552 0.0010146081634657832 
+tot = 3.9999999999999991
+site pairing = (-4.5594714484658407e-13,-0) (-0.0013983374687264586,-0) (-0.002493150464869115,-0) (-0.0023836033964266452,-0) (-0.0012971256806989758,-0) (-0.00090070792096132895,-0) 
+tot = (-0.0084729249316825243,0)
+[v=(1.1398677448430311e-11,0) u=(0.99999999999999978,0) pdt=(1.1398677448430308e-11,0)] [v=(0.99938801800453514,0) u=(0.034979843752748652,0) pdt=(0.034958436718167799,0)] [v=(0.99804805235530281,0) u=(0.062450662044412263,0) pdt=(0.06232876162172489,0)] [v=(0.059696549487349669,0) u=(0.99821657067958114,0) pdt=(0.059590084910666093,0)] [v=(0.032445223937023961,0) u=(0.99947351512867744,0) pdt=(0.032428142017474446,0)] [v=(0.022523411858173074,0) u=(0.99974631578129125,0) pdt=(0.022517698024033177,0)] amplitudes vu = 
+tot = (-0.0084729249316826578,0)
+Eigenvalue(bis): <GS|H|GS> = -2.4862750816815704
+diff: E_GS - <GS|H|GS> = -4.440892098500626e-16
+deltaE: sqrt(<GS|H^2|GS> - <GS|H|GS>^2) = 2.9802322387695312e-08
+residuum: <GS|H|GS> - E_GS*<GS|GS> = -4.440892098500626e-16
+
+n =     5  Sz =  0.5  E = -2.4829345894663524
+n =     6  Sz =  0.0  E = -2.5262750816815704
+n =     4  Sz =  0.0  E = -2.486275081681571
+N_GS = 6
+SZ_GS = 0.0

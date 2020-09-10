@@ -13,8 +13,13 @@ auto n_list(int nref, int nrange) {
 
 void init_subspace_lists(params &p)
 {
-  const int nhalf = p.N; // total nr of electrons at half-filling
-  const int nref = (p.refisn0 ? ( round(p.sc->n0() + 0.5 - (p.qd->eps()/p.qd->U())) ) : nhalf); //calculation of the energies is centered around this n
+  const int nhalf = p.N;  // total nr of electrons at half-filling
+  int nref = nhalf;       // default
+  if (p.nref >= 0) {      // override
+    nref = p.nref;
+  } else if (p.refisn0) { // adaptable
+    nref = round(p.sc->n0() + 0.5 - (p.qd->eps()/p.qd->U())); // calculation of the energies is centered around this n
+  }
   p.numPart = n_list(nref, p.nrange);
 
   bool magnetic_field = ((p.qd->EZ()!=0 || p.sc->EZ()!=0) ? true : false); // true if there is magnetic field, implying that Sz=0.5 states are NOT degenerate
@@ -70,6 +75,7 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   p.Gamma2 = std::make_unique<hyb>(input.getReal("gamma2", 0));
 
   // parameters controlling the calculation targets
+  p.nref = input.getInt("nref", -1);
   p.nrange = input.getInt("nrange", 1);
   p.refisn0 = input.getYesNo("refisn0", false);
   p.excited_state = input.getYesNo("excited_state", false);
