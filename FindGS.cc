@@ -393,9 +393,9 @@ auto calcOcc(MPS &psi, const params &p) {
 
 void MeasureOcc(MPS& psi, auto & file, std::string path, const params &p) {
   auto r = calcOcc(psi, p);
-  std::cout << "site occupancies = " << std::setprecision(full) << r << std::endl;
   auto tot = std::accumulate(r.begin(), r.end(), 0.0);
-  Print(tot);
+  std::cout << "site occupancies = " << std::setprecision(full) << r << std::endl;
+  std::cout << "tot = " << tot << std::endl;
   dump(file, path + "/site_occupancies", r);
   dump(file, path + "/total_occupancy", tot);
 }
@@ -422,7 +422,7 @@ auto calcPairing(MPS &psi, const params &p) {
 void MeasurePairing(MPS& psi, auto & file, std::string path, const params &p) {
   auto [r, tot] = calcPairing(psi, p);
   std::cout << "site pairing = " << std::setprecision(full) << r << std::endl;
-  Print(tot);
+  std::cout << "tot = " << tot << std::endl;
   dumpreal(file, path + "/pairing", r);
   dumpreal(file, path + "/pairing_total", tot);
 }
@@ -449,11 +449,10 @@ auto calcAmplitudes(MPS &psi, const params &p) {
 
 void MeasureAmplitudes(MPS& psi, auto & file, std::string path, const params &p) {
   auto [rv, ru, rpdt, tot] = calcAmplitudes(psi, p);
-  std::cout << "amplitudes vu = " << std::setprecision(full);
   for (size_t i = 0; i < rv.size(); i++)
     std::cout << "[v=" << rv[i] << " u=" << ru[i] << " pdt=" << rpdt[i] << "] ";
-  std::cout << std::endl;
-  Print(tot);
+  std::cout << "amplitudes vu = " << std::setprecision(full);
+  std::cout << std::endl << "tot = " << tot << std::endl;
   dumpreal(file, path + "/amplitudes/u", ru);
   dumpreal(file, path + "/amplitudes/v", rv);
   dumpreal(file, path + "/amplitudes/pdt", rpdt);
@@ -557,9 +556,8 @@ void calc_weight(store &s, subspace subGS, subspace subES, int q, std::string sz
 }
 
 void calculate_spectral_weights(store &s, subspace subGS, auto & file, params &p) {
-  printfln(""); 
-  printfln("Spectral weights:");
-  printfln("(Spectral weight is the square of the absolute value of the number.)");
+  std::cout << std::endl << "Spectral weights:" << std::endl 
+    << "(Spectral weight is the square of the absolute value of the number.)" << std::endl;
   auto [N_GS, Sz_GS] = subGS;
   calc_weight(s, subGS, subspace(N_GS+1, Sz_GS+0.5), +1, "up", file, p);
   calc_weight(s, subGS, subspace(N_GS+1, Sz_GS-0.5), +1, "dn", file, p);
@@ -568,7 +566,7 @@ void calculate_spectral_weights(store &s, subspace subGS, auto & file, params &p
 }
 
 void print_energies(store &s, params &p) {
-  printfln("");
+  std::cout << std::endl;
   for(auto ntot: p.numPart)
     for(auto Sz: p.Szs[ntot])
       printfln("n = %.17g  Sz = %.17g  E = %.17g", ntot, Sz, s.eigen0[subspace(ntot,Sz)].E());
