@@ -242,6 +242,7 @@ struct params {
   bool band_level_shift; // shifts the band levels for a constant in order to make H particle-hole symmetric
   bool sc_only;          // do not put any electrons on the SC in the initial state
   bool randomMPSb;       // randomize initial MPS
+  double Weight;         // parameter 'Weight' for the calculaiton of excited states
 
   double EnergyErrgoal; // convergence value at which dmrg() will stop the sweeps; default is machine precision
   int nrH;              // number of times to apply H to psi before comencing the sweep - akin to a power method; default = 5

@@ -98,6 +98,7 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   p.nrH = input.getInt("nrH", 5);
   p.sc_only = input.getYesNo("sc_only", false);
   p.randomMPSb = input.getYesNo("randomMPS", false);
+  p.Weight = input.getReal("Weight", 11.0);
 
   init_subspace_lists(p);
   return input;
@@ -529,8 +530,8 @@ void FindGS(InputGroup &input, store &s, params &p){
       auto wfs = std::vector<MPS>(1);
       wfs.at(0) = psi;
       auto [E1, psi1] = dmrg(H, wfs, psi, sweeps, {"Silent", p.parallel,
-                                                   "Quiet", true,
-                                                   "Weight", 11.0});
+                                                   "Quiet", !p.printDimensions,
+                                                   "Weight", p.Weight});
       double ESenergy = E1+Eshift;
       s.eigen1[sub] = eigenpair(ESenergy, psi1);
     }
