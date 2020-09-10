@@ -414,6 +414,7 @@ void MeasureOcc(MPS& psi, auto & file, std::string path, const params &p) {
   dump(file, path + "/total_occupancy", tot);
 }
 
+// This is actually sqrt of local charge correlation, <n_up n_down>-<n_up><n_down>, summed over all bath levels.
 // The sum (tot) corresponds to \bar{\Delta}', Eq. (4) in Braun, von Delft, PRB 50, 9527 (1999), first proposed by Dan Ralph.
 // It reduces to Delta_BCS in the thermodynamic limit (if the impurity is decoupled, Gamma=0).
 auto calcPairing(MPS &psi, const params &p) {
@@ -426,7 +427,7 @@ auto calcPairing(MPS &psi, const params &p) {
     auto val1d = psi.A(i) * p.sites.op("Cdagdn*Cdn", i) * dag(prime(psi.A(i),"Site"));
     // For Gamma>0, <C+CC+C>-<C+C><C+C> may be negative.
     auto diff = val2.cplx() - val1u.cplx() * val1d.cplx();
-    auto sq = p.sc->g() * sqrt(diff);
+    auto sq = p.sc->g() * sqrt(diff); // XXX: only meaningful for single channel!
     r.push_back(sq);
     if (i != p.impindex) tot += sq; // exclude the impurity site in the sum
   }
@@ -442,6 +443,8 @@ void MeasurePairing(MPS& psi, auto & file, std::string path, const params &p) {
 }
 
 // See von Delft, Zaikin, Golubev, Tichy, PRL 77, 3189 (1996)
+// v = <c^\dag_up c^\dag_dn c_dn c_up>
+// u = <c_dn c_up c^\dag_up c^\dag_dn>
 auto calcAmplitudes(MPS &psi, const params &p) {
   std::vector<complex_t> rv, ru, rpdt;
   complex_t tot = 0;
@@ -463,9 +466,9 @@ auto calcAmplitudes(MPS &psi, const params &p) {
 
 void MeasureAmplitudes(MPS& psi, auto & file, std::string path, const params &p) {
   auto [rv, ru, rpdt, tot] = calcAmplitudes(psi, p);
+  std::cout << "amplitudes vu = " << std::setprecision(full);
   for (size_t i = 0; i < rv.size(); i++)
     std::cout << "[v=" << rv[i] << " u=" << ru[i] << " pdt=" << rpdt[i] << "] ";
-  std::cout << "amplitudes vu = " << std::setprecision(full);
   std::cout << std::endl << "tot = " << tot << std::endl;
   dumpreal(file, path + "/amplitudes/u", ru);
   dumpreal(file, path + "/amplitudes/v", rv);
