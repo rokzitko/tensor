@@ -116,11 +116,11 @@ MPS initPsi(charge ntot, spin Sz, const auto &sites, int impindex, bool sc_only,
   const auto nsc = sc_only ? ntot : ntot-1; // number of electrons in the bath
   // ** Add electron to the impurity site
   if (nimp) {
-    if (Sz == -0.5) {
+    if (Sz == -1 || Sz == -0.5) {
       state.set(impindex, "Dn");
       Sztot -= 0.5;
     }
-    if (Sz == 0 || Sz == +0.5) {
+    if (Sz == 0 || Sz == +0.5 || Sz == +1) {
       state.set(impindex, "Up");
       Sztot += 0.5;
     }
@@ -150,8 +150,6 @@ MPS initPsi(charge ntot, spin Sz, const auto &sites, int impindex, bool sc_only,
       tot++;
     }
   }
-  std::cout << "tot=" << tot << " Sztot=" << Sztot << std::endl;
-  std::cout << "ntot=" << ntot << " SZ=" << Sz << std::endl;
   my_assert(tot == ntot);
   my_assert(Sztot == Sz);
   MPS psi(state);
