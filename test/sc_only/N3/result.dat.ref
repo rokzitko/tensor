@@ -41,71 +41,66 @@ Got params.EnergyErrgoal = 1e-10
 Def params.nrH = 5
 Got params.sc_only = true
 Def params.randomMPS = 0
+Def params.Weight = 11
 Got params.nrsweeps = 26
 
 Sweeping in the sector with 3 particles, Sz = 0.5
 eps=-0.666667 0 0.666667 
 V=0 0 0 
-tot=3 Sztot=0.5
-ntot=3 SZ=0.5
 
     vN Entropy at center bond b=2 = 0.005960762256
     Eigs at center bond b=2: 0.9993 
     Largest link dim during sweep 1/26 was 16
     Largest truncation error: 0
     Energy after sweep 1/26 is -1.401665626300
-    Sweep 1/26 CPU time = 0.0280s (Wall time = 0.0291s)
+    Sweep 1/26 CPU time = 0.0321s (Wall time = 0.0340s)
 
     vN Entropy at center bond b=2 = 0.005960762256
     Eigs at center bond b=2: 0.9993 
     Largest link dim during sweep 2/26 was 16
     Largest truncation error: 0
     Energy after sweep 2/26 is -1.401665626300
-    Sweep 2/26 CPU time = 0.0350s (Wall time = 0.0371s)
+    Sweep 2/26 CPU time = 0.0378s (Wall time = 0.0379s)
     Energy error dE = 2.220E-16 after 2 sweeps;
     Energy error goal met (dE = 2.220E-16 < 1.000E-10); returning after 2 sweeps.
 
 Sweeping in the sector with 4 particles, Sz = 0
 eps=-0.666667 0 0.666667 
 V=0 0 0 
-tot=4 Sztot=0
-ntot=4 SZ=0
 
     vN Entropy at center bond b=2 = 0.007592812938
     Eigs at center bond b=2: 0.9991 
     Largest link dim during sweep 1/26 was 16
     Largest truncation error: 0
     Energy after sweep 1/26 is -1.471822721969
-    Sweep 1/26 CPU time = 0.0304s (Wall time = 0.0305s)
+    Sweep 1/26 CPU time = 0.0454s (Wall time = 0.0454s)
 
     vN Entropy at center bond b=2 = 0.007592812938
     Eigs at center bond b=2: 0.9991 
     Largest link dim during sweep 2/26 was 16
     Largest truncation error: 0
     Energy after sweep 2/26 is -1.471822721969
-    Sweep 2/26 CPU time = 0.0375s (Wall time = 0.0375s)
+    Sweep 2/26 CPU time = 0.0507s (Wall time = 0.0507s)
     Energy error dE = 2.220E-16 after 2 sweeps;
     Energy error goal met (dE = 2.220E-16 < 1.000E-10); returning after 2 sweeps.
 
 Sweeping in the sector with 2 particles, Sz = 0
 eps=-0.666667 0 0.666667 
 V=0 0 0 
-tot=2 Sztot=0
-ntot=2 SZ=0
 
     vN Entropy at center bond b=2 = 0.023348632165
     Eigs at center bond b=2: 0.9965 0.0035 
     Largest link dim during sweep 1/26 was 16
     Largest truncation error: 0
     Energy after sweep 1/26 is -1.405156055303
-    Sweep 1/26 CPU time = 0.0199s (Wall time = 0.0199s)
+    Sweep 1/26 CPU time = 0.0212s (Wall time = 0.0212s)
 
     vN Entropy at center bond b=2 = 0.023348632165
     Eigs at center bond b=2: 0.9965 0.0035 
     Largest link dim during sweep 2/26 was 16
     Largest truncation error: 0
     Energy after sweep 2/26 is -1.405156055303
-    Sweep 2/26 CPU time = 0.0246s (Wall time = 0.0247s)
+    Sweep 2/26 CPU time = 0.0219s (Wall time = 0.0219s)
     Energy error dE = 2.220E-16 after 2 sweeps;
     Energy error goal met (dE = 2.220E-16 < 1.000E-10); returning after 2 sweeps.
 
@@ -154,8 +149,11 @@ diff: E_GS - <GS|H|GS> = -6.661338147750939e-16
 deltaE: sqrt(<GS|H^2|GS> - <GS|H|GS>^2) = 3.650024149988857e-08
 residuum: <GS|H|GS> - E_GS*<GS|GS> = 4.440892098500626e-16
 
-n =     3  Sz =  0.5  E = -1.4016656263000524
-n =     4  Sz =  0.0  E = -1.4718227219692983
-n =     2  Sz =  0.0  E = -1.4051560553026317
 N_GS = 4
 SZ_GS = 0.0
+
+n =     3  Sz =  0.5  E = -1.4016656263000524  DeltaE = 0.07015709566924588
+n =     4  Sz =  0.0  E = -1.4718227219692983  DeltaE =               0.0
+n =     2  Sz =  0.0  E = -1.4051560553026317  DeltaE = 0.06666666666666665
+
+Wall time: 0 s

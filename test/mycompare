@@ -38,8 +38,9 @@ while (<A>) {
       print "a: [$a] b: [$b]\n";
   }
 
-  next if (($a =~ /occupancies/ or $a =~ /amplitudes/ ) and defined($second_argument)); #if the test is middle_notMiddle, do not compare occupancies and amplitudes 	
+  next if (($a =~ /occupancies/ or $a =~ /amplitudes/ ) and defined($second_argument)); #if the test is middle_notMiddle, do not compare occupancies and amplitudes
   next if ($a =~ /sqrt/); # these lines lead to false positives, ignore them
+  next if ($a =~ /Wall\ time/); # ignore
   next if ($a eq $b); # equal as strings, ok
   # extract first floating-point number after equality sign
   $a =~ /[=:]\s*([-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?)/ or next; # skip this line if not found
