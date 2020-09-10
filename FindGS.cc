@@ -90,55 +90,64 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   p.verbose = input.getYesNo("verbose", false);
   p.EnergyErrgoal = input.getReal("EnergyErrgoal", 1e-16);
   p.nrH = input.getInt("nrH", 5);
+  p.sc_only = input.getYesNo("sc_only", false);
+  p.randomMPSb = input.getYesNo("randomMPS", false);
 
   init_subspace_lists(p);
   return input;
 }
 
 // Initialize the MPS in a product state with ntot electrons.
-// Sz is the spin of the electron on the impurity site.
-MPS initPsi(charge ntot, spin Sz, const auto &sites, int impindex, bool randomMPSb) {
+// Sz is the z-component of the total spin.
+// Electron is added on the impurity site only if sc_only=false.
+MPS initPsi(charge ntot, spin Sz, const auto &sites, int impindex, bool sc_only, bool randomMPSb) {
   my_assert(ntot >= 0);
-  my_assert(Sz == -0.5 || Sz == 0 || Sz == +0.5);
+  my_assert(Sz == -1 || Sz == -0.5 || Sz == 0 || Sz == +0.5 || Sz == +1);
   int tot = 0;      // electron counter, for assertion test
-  double SZtot = 0; // SZ counter, for assertion test
+  double Sztot = 0; // SZ counter, for assertion test
   auto state = InitState(sites);
+  const auto nimp = sc_only ? 0 : 1;        // number of electrons in the impurity level
+  const auto nsc = sc_only ? ntot : ntot-1; // number of electrons in the bath
   // ** Add electron to the impurity site
-  if (ntot > 0) {
+  if (nimp) {
     if (Sz == -0.5) {
       state.set(impindex, "Dn");
-      SZtot -= 0.5;
+      Sztot -= 0.5;
     }
     if (Sz == 0 || Sz == +0.5) {
       state.set(impindex, "Up");
-      SZtot += 0.5;
+      Sztot += 0.5;
     }
     tot++;
   }
   // ** Add electrons to the bath
-  const auto nsc = ntot-1;    // number of electrons in the bath
-  if (nsc > 0) {
-    const int npair = nsc/2; // number of pairs in the bath
-    auto j = 0;               // counts added pairs
-    auto i = 1;               // site index (1 based)
+  if (nsc) {
+    const int npair = nsc/2;                // number of pairs in the bath
+    auto j = 0;                             // counts added pairs
+    auto i = 1;                             // site index (1 based)
     for(; j < npair; i++)
-      if (i != impindex) {   // skip impurity site
+      if (i != impindex) {                  // skip impurity site
         j++;
         state.set(i, "UpDn");
-        tot += 2;            // SZtot does not change!
+        tot += 2;                           // Sztot does not change!
       }
-    if (odd(nsc)) {          // if ncs is odd (implies even ntot and sz=0), add spin-down electron
+    if (odd(nsc)) {                         // if ncs is odd (implies even ntot and sz=0), add spin-down electron
       if (i == impindex)
         i++;
-      state.set(i,"Dn");
-      SZtot -= 0.5;
+      if (Sztot + 0.5 == Sz) {              // need to add spin-up electron
+        state.set(i, "Up");
+        Sztot += 0.5;
+      } else if (Sztot - 0.5 == Sz) {       // need to add spin-down electron
+        state.set(i, "Dn");
+        Sztot -= 0.5;
+      } else throw std::runtime_error("oops! should not happen!");
       tot++;
     }
   }
-  std::cout << "tot=" << tot << " SZtot=" << SZtot << std::endl;
+  std::cout << "tot=" << tot << " Sztot=" << Sztot << std::endl;
   std::cout << "ntot=" << ntot << " SZ=" << Sz << std::endl;
   my_assert(tot == ntot);
-  my_assert(SZtot == Sz);
+  my_assert(Sztot == Sz);
   MPS psi(state);
   if (randomMPSb)
     psi = randomMPS(state);
@@ -499,7 +508,7 @@ void FindGS(InputGroup &input, store &s, params &p){
     auto [ntot, Sz] = sub;
     std::cout << "\nSweeping in the sector with " << ntot << " particles, Sz = " << Sz << std::endl;
     auto [H, Eshift] = p.problem->initH(ntot, p);
-    auto psi_init = initPsi(ntot, Sz, p.sites, p.impindex, input.getYesNo("randomMPS", false)); 
+    auto psi_init = initPsi(ntot, Sz, p.sites, p.impindex, p.sc_only, p.randomMPSb);
     Args args; // args is used to store and transport parameters between various functions
     // Apply the MPO a couple of times to get DMRG started, otherwise it might not converge.
     for(auto i : range1(p.nrH)){

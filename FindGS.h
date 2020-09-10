@@ -240,7 +240,8 @@ struct params {
   bool parallel;         // enables openMP parallel calculation of the for loop in findGS()
   bool verbose;          // verbosity level
   bool band_level_shift; // shifts the band levels for a constant in order to make H particle-hole symmetric
-
+  bool sc_only;          // do not put any electrons on the SC in the initial state
+  bool randomMPSb;       // randomize initial MPS
 
   double EnergyErrgoal; // the convergence value at which dmrg() will stop the sweeps; default is machine precision
   int nrH;              // number of times to apply H to psi before comencing the sweep - akin to a power method; default = 5
