@@ -482,7 +482,7 @@ auto calcEntropy(MPS& psi, const params &p) {
 
 void PrintEntropy(MPS& psi, auto & file, std::string path, const params &p) {
   auto SvN = calcEntropy(psi, p);
-  printfln("Entanglement entropy across impurity bond b=%d, SvN = %.10f", p.impindex, SvN);
+  std::cout << fmt::format("Entanglement entropy across impurity bond b={}, SvN = {:10}", p.impindex, SvN) << std::endl;
   dump(file, path + "/entanglement_entropy_imp", SvN);
 }
 
@@ -569,7 +569,7 @@ void print_energies(store &s, params &p) {
   std::cout << std::endl;
   for(auto ntot: p.numPart)
     for(auto Sz: p.Szs[ntot])
-      printfln("n = %.17g  Sz = %.17g  E = %.17g", ntot, Sz, s.eigen0[subspace(ntot,Sz)].E());
+      std::cout << fmt::format("n = {:5}  Sz = {:4}  E = {:17}", ntot, Sz, s.eigen0[subspace(ntot,Sz)].E()) << std::endl;
 }
 
 auto find_global_GS_subspace(store &s, auto & file) {
@@ -583,8 +583,7 @@ auto find_global_GS_subspace(store &s, auto & file) {
     }
   }
   auto [N_GS, Sz_GS] = subGS;
-  printfln("N_GS = %i",N_GS);
-  printfln("Sz_GS = %i",Sz_GS);
+  std::cout << fmt::format("N_GS = {}\nSZ_GS = {}\n",N_GS, Sz_GS);
   dump(file, "/GS/N",  N_GS);
   dump(file, "/GS/Sz", Sz_GS);
   return subGS;
@@ -599,9 +598,9 @@ void calculateAndPrint(InputGroup &input, store &s, params &p) {
       auto E = s.eigen0[sub].E();
       dump(file, str(sub, "0/E"), E);
       MPS & GS = s.eigen0[sub].psi();
-      printfln("\n\nRESULTS FOR THE SECTOR WITH %i PARTICLES, Sz %i:", ntot, Sz);
-      printfln("Ground state energy = %.17g", E);
-      printfln("norm = %.17g", s.stats0[sub].norm());
+      std::cout << fmt::format("\n\nRESULTS FOR THE SECTOR WITH {} PARTICLES, Sz {}:", ntot, Sz) << std::endl
+        << fmt::format("Ground state energy = {}", E) << std::endl
+        << fmt::format("norm = {}", s.stats0[sub].norm()) << std::endl;
       auto path0 = str(sub, "0");
       MeasureOcc(GS, file, path0, p);
       MeasurePairing(GS, file, path0, p);
@@ -614,17 +613,17 @@ void calculateAndPrint(InputGroup &input, store &s, params &p) {
       if (p.hoppingExpectation) expectedHopping(GS, file, path0, p);
       if (p.printTotSpinZ) TotalSpinz(GS, file, path0, p);
       // various measures of convergence (energy deviation, residual value)
-      printfln("Eigenvalue(bis): <GS|H|GS> = %.17g", s.stats0[sub].Ebis());
-      printfln("diff: E_GS - <GS|H|GS> = %.17g", E-s.stats0[sub].Ebis()); // TODO: remove this
-      printfln("deltaE: sqrt(<GS|H^2|GS> - <GS|H|GS>^2) = %.17g", s.stats0[sub].deltaE());
-      printfln("residuum: <GS|H|GS> - E_GS*<GS|GS> = %.17g", s.stats0[sub].residuum());
+      std::cout << fmt::format("Eigenvalue(bis): <GS|H|GS> = {}", s.stats0[sub].Ebis()) << std::endl
+        << fmt::format("diff: E_GS - <GS|H|GS> = {}", E-s.stats0[sub].Ebis()) << std::endl // TODO: remove this
+        << fmt::format("deltaE: sqrt(<GS|H^2|GS> - <GS|H|GS>^2) = {}", s.stats0[sub].deltaE()) << std::endl
+        << fmt::format("residuum: <GS|H|GS> - E_GS*<GS|GS> = {}", s.stats0[sub].residuum()) << std::endl;
       s.stats0[sub].dump(file, path0);
       if (p.excited_state){
         double E1 = s.eigen1[sub].E();
         MPS & ES = s.eigen1[sub].psi();
         dump(file, str(sub, "1/E"), E1);
         MeasureOcc(ES, file, str(sub, "1"), p);
-        printfln("Excited state energy = %.17g", E1);
+        std::cout << fmt::format("Excited state energy = {}", E1) << std::endl;
        }
     } //end of Sz for loop 
   } //end of ntot for loop

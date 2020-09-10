@@ -15,6 +15,9 @@
 #include <tuple>
 #include <cassert>
 
+#define FMT_HEADER_ONLY
+#include <fmt/format.h>
+
 #include <omp.h>
 
 #include <highfive/H5Easy.hpp>
