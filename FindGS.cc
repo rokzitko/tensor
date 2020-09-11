@@ -558,6 +558,7 @@ void FindGS(InputGroup &input, store &s, params &p){
                                                    "Weight", p.Weight});
       double ESenergy = E1+Eshift;
       s.eigen[es(sub)] = eigenpair(ESenergy, psi1);
+      s.stats[es(sub)] = psi_stats(psi1, H);
     }
   }
 }
@@ -651,22 +652,10 @@ void calc_properties(state_t st, File &file, store &s, params &p)
   s.stats[st].dump();
 }
 
-// Loops over all particle sectors and prints relevant quantities
 void calculateAndPrint(InputGroup &input, store &s, params &p) {
   File file("solution.h5", File::Overwrite);
-  for(auto ntot: p.numPart) {
-    for (auto Sz: p.Szs[ntot]) {
-      auto sub = subspace_t(ntot, Sz);
-      calc_properties(gs(sub), file, s, p);
-      if (p.excited_state){
-        double E1 = s.eigen[es(sub)].E();
-        MPS & ES = s.eigen[es(sub)].psi();
-        dump(file, str(sub, "1/E"), E1);
-        MeasureOcc(ES, file, str(sub, "1"), p);
-        std::cout << fmt::format("Excited state energy = {}", E1) << std::endl;
-       }
-    } //end of Sz for loop 
-  } //end of ntot for loop
+  for(const auto & [st, e]: s.eigen)
+    calc_properties(st, file, s, p);
   auto [GS, EGS] = find_global_GS(s, file);
   print_energies(s, EGS, p);
   if (p.calcweights) 
