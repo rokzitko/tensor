@@ -105,7 +105,26 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   return input;
 }
 
-//void add_bath_electrons(int nsc, const ndx_t &bath, auto & state, charge & tot, spin & Sztot)
+// nsc = number of electrons to add, Szadd = spin of the unpaired electron in the case of odd nsc
+void add_bath_electrons(const int nsc, const spin & Szadd, const ndx_t &bath, auto & state, charge & tot, spin & Sztot)
+{
+  const size_t npair = nsc/2;            // number of pairs to add
+  my_assert(bath.size() >= npair);
+  for (size_t j = 0; j < npair; j++)
+    state.set(bath[j], "UpDn");
+  tot += npair*2;                        // Sztot does not change!
+  if (odd(nsc)) {                        // if ncs is odd, add one electron
+    my_assert(bath.size() >= npair+1);
+    const auto i = bath[npair];          // note: vector bath is 0-based
+    if (Szadd == 0.5) 
+      state.set(i, "Up");
+    else if (Szadd == -0.5)
+      state.set(i, "Dn");
+    else throw std::runtime_error("oops! should not happen!");
+    tot++;
+    Sztot += Szadd;
+  }
+}
 
 // Initialize the MPS in a product state with ntot electrons.
 // Sz is the z-component of the total spin.
@@ -133,25 +152,8 @@ MPS initPsi(subspace_t sub, const auto &sites, int impindex, bool sc_only, bool 
   }
   // ** Add electrons to the bath
   if (nsc) {
-//    add_bath_electrons(nsc, bath_sites, state, tot, Sztot);
-    ndx_t bath = p.problem->bath_indexes(p.NBath);
-    const size_t npair = nsc/2;             // number of pairs in the bath
-    my_assert(bath.size() >= npair);
-    for (size_t j = 0; j < npair; j++)
-      state.set(bath[j], "UpDn");
-    tot += npair*2;                         // Sztot does not change!
-    if (odd(nsc)) {                         // if ncs is odd (implies even ntot and sz=0), add spin-down electron
-      my_assert(bath.size() >= npair+1);
-      const auto i = bath[npair];           // note: vector bath is 0-based
-      if (Sztot + 0.5 == Sz) {              // need to add spin-up electron
-        state.set(i, "Up");
-        Sztot += 0.5;
-      } else if (Sztot - 0.5 == Sz) {       // need to add spin-down electron
-        state.set(i, "Dn");
-        Sztot -= 0.5;
-      } else throw std::runtime_error("oops! should not happen!");
-      tot++;
-    }
+    ndx_t bath_sites = p.problem->bath_indexes(p.NBath);
+    add_bath_electrons(nsc, Sz-Sztot, bath_sites, state, tot, Sztot);
   }
   my_assert(tot == ntot);
   my_assert(Sztot == Sz);
