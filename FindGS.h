@@ -14,6 +14,7 @@
 #include <limits> // quiet_NaN
 #include <tuple>
 #include <cassert>
+#include <utility>
 
 #define FMT_HEADER_ONLY
 #include <fmt/format.h>
@@ -155,10 +156,10 @@ constexpr auto spin0 = spin(0);
 constexpr auto spinp = spin(0.5);
 constexpr auto spinm = spin(-0.5);
 
-using subspace = std::pair<charge, spin>;
-using state = std::pair<subspace, int>;
+using subspace_t = std::pair<charge, spin>;
+using state_t = std::tuple<charge, spin, int>;
 
-inline std::string str(subspace &sub)
+inline std::string str(subspace_t &sub)
 {
   std::ostringstream ss;
   auto [n, sz] = sub;
@@ -166,7 +167,7 @@ inline std::string str(subspace &sub)
   return ss.str();
 }
 
-inline std::string str(subspace &sub, std::string s)
+inline std::string str(subspace_t &sub, std::string s)
 {
   return str(sub) + "/" + s;
 }
@@ -260,14 +261,15 @@ struct params {
 
   std::vector<int> numPart; // range of total occupancies of interest
   std::map<int, std::vector<double>> Szs; // Szs for each n in numPart
-  std::vector<subspace> iterateOver; // a zipped vector of off (n, Sz) combinations
+  std::vector<subspace_t> iterateOver; // a zipped vector of off (n, Sz) combinations
 };
 
 // lists of quantities calculated in FindGS 
 struct store
 {
-  std::map<subspace, eigenpair> eigen0, eigen1; // 0=GS, 1=1st ES, etc.
-  std::map<subspace, psi_stats> stats0;
+  std::map<subspace_t, eigenpair> eigen0, eigen1; // 0=GS, 1=1st ES, etc.
+  std::map<state_t, eigenpair> eigen;
+  std::map<subspace_t, psi_stats> stats0;
 };
 
 using H_t = std::tuple<MPO, double>;
