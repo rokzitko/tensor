@@ -61,7 +61,7 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   p.sites = Hubbard(p.N);
 
   // parameters entering the problem definition
-  double U = input.getReal("U", 0); // need to parse it first because it enters the default value for epsimp just below
+  const double U = input.getReal("U", 0); // need to parse it first because it enters the default value for epsimp just below
   p.qd = std::make_unique<imp>(U, input.getReal("epsimp", -U/2.), input.getReal("EZ_imp", 0.));
   p.sc = std::make_unique<SCbath>(p.NBath, input.getReal("alpha", 0), input.getReal("Ec", 0), input.getReal("n0", p.N-1), input.getReal("EZ_bulk", 0.));
   p.Gamma = std::make_unique<hyb>(input.getReal("gamma", 0));
@@ -130,7 +130,7 @@ void add_bath_electrons(const int nsc, const spin & Szadd, const ndx_t &bath, au
 // Sz is the z-component of the total spin.
 // Electron is added on the impurity site only if sc_only=false.
 MPS initPsi(subspace_t sub, const auto &sites, int impindex, bool sc_only, bool randomMPSb, params &p) {
-  auto [ntot, Sz] = sub;
+  const auto [ntot, Sz] = sub;
   my_assert(0 <= ntot && ntot <= 2*p.N);
   my_assert(Sz == -1 || Sz == -0.5 || Sz == 0 || Sz == +0.5 || Sz == +1);
   int tot = 0;      // electron counter, for assertion test
@@ -211,7 +211,7 @@ auto calcChargeCorrelation(MPS& psi, const ndx_t sites, const params &p) {
 }
 
 void ChargeCorrelation(MPS& psi, auto & file, std::string path, const params &p) {
-  auto [r, tot] = calcChargeCorrelation(psi, range(1, p.N), p);
+  const auto [r, tot] = calcChargeCorrelation(psi, range(1, p.N), p);
   std::cout << "charge correlation = " << std::setprecision(full) << r << std::endl;
   std::cout << "charge correlation tot = " << tot << std::endl;
   dump(file, path + "/charge_correlation", r);
@@ -272,7 +272,7 @@ auto calcSpinCorrelation(MPS& psi, const ndx_t &sites, const params &p) {
 }
 
 void SpinCorrelation(MPS& psi, File & file, std::string path, const params &p) {
-  auto [onSiteSzSz, onSiteSpSm, onSiteSmSp, rzz, rpm, rmp, tot] = calcSpinCorrelation(psi, range(1, p.N), p);
+  const auto [onSiteSzSz, onSiteSpSm, onSiteSmSp, rzz, rpm, rmp, tot] = calcSpinCorrelation(psi, range(1, p.N), p);
   std::cout << "spin correlations:\n";
   std::cout << "SzSz correlations: ";
   std::cout << std::setprecision(full) << onSiteSzSz << " ";
@@ -309,7 +309,7 @@ auto calcPairCorrelation(MPS& psi, const ndx_t &sites, const params &p) {
 }
 
 void PairCorrelation(MPS& psi, File & file, std::string path, const params &p) {
-  auto [r, tot] = calcPairCorrelation(psi, range(1, p.N), p);
+  const auto [r, tot] = calcPairCorrelation(psi, range(1, p.N), p);
   std::cout << "pair correlation = " << std::setprecision(full) << r << std::endl;
   std::cout << "pair correlation tot = " << tot << std::endl;
   dump(file, path + "/pair_correlation", r);
@@ -354,12 +354,12 @@ auto calcexpectedHopping(MPS& psi, const ndx_t &sites, const params &p) {
 }
 
 void expectedHopping(MPS& psi, File & file, std::string path, const params &p) {
-  auto [rup, rdn, totup, totdn] = calcexpectedHopping(psi, range(1, p.N), p);
+  const auto [rup, rdn, totup, totdn] = calcexpectedHopping(psi, range(1, p.N), p);
   std::cout << "hopping spin up = " << std::setprecision(full) << rup << std::endl;
   std::cout << "hopping correlation up tot = " << totup << std::endl;
   std::cout << "hopping spin down = " << std::setprecision(full) << rdn << std::endl;
   std::cout << "hopping correlation down tot = " << totdn << std::endl;
-  auto tot = totup+totdn;
+  const auto tot = totup+totdn;
   std::cout << "total hopping correlation = " << tot << std::endl;
   dump(file, path + "/hopping/up", rup);
   dump(file, path + "/hopping/dn", rdn);
@@ -371,14 +371,14 @@ void expectedHopping(MPS& psi, File & file, std::string path, const params &p) {
 //prints the occupation number Nup and Ndn at the impurity
 auto calc_NUp_NDn(MPS& psi, int ndx, const params &p){
   psi.position(ndx);
-  auto valnup = psi.A(ndx) * p.sites.op("Nup",ndx) * dag(prime(psi.A(ndx),"Site"));
-  auto valndn = psi.A(ndx) * p.sites.op("Ndn",ndx) * dag(prime(psi.A(ndx),"Site"));
+  const auto valnup = psi.A(ndx) * p.sites.op("Nup",ndx) * dag(prime(psi.A(ndx),"Site"));
+  const auto valndn = psi.A(ndx) * p.sites.op("Ndn",ndx) * dag(prime(psi.A(ndx),"Site"));
   return std::make_pair(std::real(valnup.cplx()), std::real(valndn.cplx()));
 }
 
 void ImpurityUpDn(MPS& psi, auto &file, std::string path, const params &p){
-  auto [up, dn] = calc_NUp_NDn(psi, p.impindex, p);
-  auto sz = 0.5*(up-dn);
+  const auto [up, dn] = calc_NUp_NDn(psi, p.impindex, p);
+  const auto sz = 0.5*(up-dn);
   std::cout << "impurity nup ndn = " << std::setprecision(full) << up << " " << dn << " sz = " << sz << std::endl;
   dump(file, path + "/impurity_Nup", up);
   dump(file, path + "/impurity_Ndn", dn);
@@ -396,12 +396,12 @@ auto calcTotalSpinz(MPS& psi, const ndx_t &sites, const params &p) {
     totNup += std::real(Nupi.cplx());
     totNdn += std::real(Ndni.cplx());
   }
-  auto totSz =  0.5*(totNup-totNdn);
+  const auto totSz =  0.5*(totNup-totNdn);
   return std::make_tuple(totNup, totNdn, totSz);
 }
 
 void TotalSpinz(MPS& psi, File &file, std::string path, const params &p) {
-  auto [totNup, totNdn, totSz] = calcTotalSpinz(psi, range(1, p.N), p);
+  const auto [totNup, totNdn, totSz] = calcTotalSpinz(psi, range(1, p.N), p);
   std::cout << std::setprecision(full) << "Total spin z: " << " Nup = " << totNup << " Ndn = " << totNdn << " Sztot = " << totSz << std::endl;
   dump(file, path + "/total_Nup", totNup);
   dump(file, path + "/total_Ndn", totNdn);
@@ -414,15 +414,15 @@ auto calcOcc(MPS &psi, const ndx_t &sites, const params &p) {
   for(const auto i : sites) {
     // position call very important! otherwise one would need to contract the whole tensor network of <psi|O|psi> this way, only the local operator at site i is needed
     psi.position(i);
-    auto val = psi.A(i) * p.sites.op("Ntot",i) * dag(prime(psi.A(i),"Site"));
+    const auto val = psi.A(i) * p.sites.op("Ntot",i) * dag(prime(psi.A(i),"Site"));
     r.push_back(std::real(val.cplx()));
   }
   return r;
 }
 
 void MeasureOcc(MPS& psi, auto & file, std::string path, const params &p) {
-  auto r = calcOcc(psi, range(1, p.N), p);
-  auto tot = std::accumulate(r.begin(), r.end(), 0.0);
+  const auto r = calcOcc(psi, range(1, p.N), p);
+  const auto tot = std::accumulate(r.cbegin(), r.cend(), 0.0);
   std::cout << "site occupancies = " << std::setprecision(full) << r << std::endl;
   std::cout << "tot = " << tot << std::endl;
   dump(file, path + "/site_occupancies", r);
@@ -450,7 +450,7 @@ auto calcPairing(MPS &psi, const ndx_t &sites, const params &p) {
 }
 
 void MeasurePairing(MPS& psi, auto & file, std::string path, const params &p) {
-  auto [r, tot] = calcPairing(psi, range(1, p.N), p);
+  const auto [r, tot] = calcPairing(psi, range(1, p.N), p);
   std::cout << "site pairing = " << std::setprecision(full) << r << std::endl;
   std::cout << "tot = " << tot << std::endl;
   dumpreal(file, path + "/pairing", r);
@@ -480,7 +480,7 @@ auto calcAmplitudes(MPS &psi, const ndx_t &sites, const params &p) {
 }
 
 void MeasureAmplitudes(MPS& psi, auto & file, std::string path, const params &p) {
-  auto [rv, ru, rpdt, tot] = calcAmplitudes(psi, range(1, p.N), p);
+  const auto [rv, ru, rpdt, tot] = calcAmplitudes(psi, range(1, p.N), p);
   std::cout << "amplitudes vu = " << std::setprecision(full);
   for (size_t i = 0; i < rv.size(); i++)
     std::cout << "[v=" << rv[i] << " u=" << ru[i] << " pdt=" << rpdt[i] << "] ";
@@ -513,17 +513,17 @@ auto calcEntropy(MPS& psi, const params &p) {
 }
 
 void PrintEntropy(MPS& psi, auto & file, std::string path, const params &p) {
-  auto SvN = calcEntropy(psi, p);
+  const auto SvN = calcEntropy(psi, p);
   std::cout << fmt::format("Entanglement entropy across impurity bond b={}, SvN = {:10}", p.impindex, SvN) << std::endl;
   dump(file, path + "/entanglement_entropy_imp", SvN);
 }
 
-state_t gs(const subspace_t &sub)
+inline state_t gs(const subspace_t &sub)
 {
   return state_t(std::get<charge>(sub), std::get<spin>(sub), 0); // ground state in the subspace
 }
 
-state_t es(const subspace_t &sub)
+inline state_t es(const subspace_t &sub)
 {
   return state_t(std::get<charge>(sub), std::get<spin>(sub), 1); // 1st excited state in the subspace
 }
@@ -535,39 +535,42 @@ auto sweeps(params &p)
   return Sweeps(p.nrsweeps, sw_table);
 }
 
-//calculates the groundstates and the energies of the relevant particle number sectors
-void FindGS(InputGroup &input, store &s, params &p) {
-#pragma omp parallel for if(p.parallel) 
-  for (size_t i=0; i<p.iterateOver.size(); i++){
-    auto sub = p.iterateOver[i];
-    std::cout << "\nSweeping in the sector " << sub << std::endl;
-    auto [H, Eshift] = p.problem->initH(sub, p);
-    auto psi_init = initPsi(sub, p.sites, p.impindex, p.sc_only, p.randomMPSb, p);
-    Args args; // args is used to store and transport parameters between various functions
-    // Apply the MPO a couple of times to get DMRG started, otherwise it might not converge.
-    for(auto i : range1(p.nrH)){
-      psi_init = applyMPO(H,psi_init,args);
-      psi_init.noPrime().normalize();
-    }
-    auto [E, psi] = dmrg(H, psi_init, sweeps(p), {"Silent", p.parallel, 
-        "Quiet", !p.printDimensions, 
-        "EnergyErrgoal", p.EnergyErrgoal});
-    const double GSenergy = E+Eshift;
-    s.eigen[gs(sub)] = eigenpair(GSenergy, psi);
-    s.stats[gs(sub)] = psi_stats(psi, H);
-    if (p.excited_state) {
-      auto wfs = std::vector<MPS>(1);
-      wfs.at(0) = psi;
-      auto [E1, psi1] = dmrg(H, wfs, psi, sweeps(p), {"Silent", p.parallel,
-          "Quiet", !p.printDimensions,
-          "Weight", p.Weight});
-      const double ESenergy = E1+Eshift;
-      s.eigen[es(sub)] = eigenpair(ESenergy, psi1);
-      s.stats[es(sub)] = psi_stats(psi1, H);
-    }
+void solve(const subspace_t &sub, InputGroup &input, store &s, params &p) {
+  std::cout << "\nSweeping in the sector " << sub << std::endl;
+  auto [H, Eshift] = p.problem->initH(sub, p);
+  auto psi_init = initPsi(sub, p.sites, p.impindex, p.sc_only, p.randomMPSb, p);
+  Args args; // args is used to store and transport parameters between various functions
+  // Apply the MPO a couple of times to get DMRG started, otherwise it might not converge.
+  for(auto i : range1(p.nrH)){
+    psi_init = applyMPO(H,psi_init,args);
+    psi_init.noPrime().normalize();
+  }
+  auto [E, psi] = dmrg(H, psi_init, sweeps(p), {"Silent", p.parallel, 
+      "Quiet", !p.printDimensions, 
+      "EnergyErrgoal", p.EnergyErrgoal});
+  const double GSenergy = E+Eshift;
+  s.eigen[gs(sub)] = eigenpair(GSenergy, psi);
+  s.stats[gs(sub)] = psi_stats(psi, H);
+  if (p.excited_state) {
+    auto wfs = std::vector<MPS>(1);
+    wfs.at(0) = psi;
+    auto [E1, psi1] = dmrg(H, wfs, psi, sweeps(p), {"Silent", p.parallel,
+        "Quiet", !p.printDimensions,
+        "Weight", p.Weight});
+    const double ESenergy = E1+Eshift;
+    s.eigen[es(sub)] = eigenpair(ESenergy, psi1);
+    s.stats[es(sub)] = psi_stats(psi1, H);
   }
 }
 
+void FindGS(InputGroup &input, store &s, params &p) {
+#pragma omp parallel for if(p.parallel) 
+  for (size_t i=0; i<p.iterateOver.size(); i++) {
+    auto sub = p.iterateOver[i];
+    solve(sub, input, s, p);
+  }
+}
+  
 // calculates <psi1|c_dag|psi2>, according to http://itensor.org/docs.cgi?vers=cppv3&page=formulas/mps_onesite_op
 auto ExpectationValueAddEl(MPS psi1, MPS psi2, std::string spin, const params &p){
   psi2.position(p.impindex);                                                      // set orthogonality center
