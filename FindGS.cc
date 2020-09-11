@@ -105,12 +105,14 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   return input;
 }
 
+//void add_bath_electrons(int nsc, const ndx_t &bath, auto & state, charge & tot, spin & Sztot)
+
 // Initialize the MPS in a product state with ntot electrons.
 // Sz is the z-component of the total spin.
 // Electron is added on the impurity site only if sc_only=false.
-MPS initPsi(subspace_t sub, const auto &sites, int impindex, bool sc_only, bool randomMPSb) {
+MPS initPsi(subspace_t sub, const auto &sites, int impindex, bool sc_only, bool randomMPSb, params &p) {
   auto [ntot, Sz] = sub;
-  my_assert(ntot >= 0);
+  my_assert(0 <= ntot && ntot <= 2*p.N);
   my_assert(Sz == -1 || Sz == -0.5 || Sz == 0 || Sz == +0.5 || Sz == +1);
   int tot = 0;      // electron counter, for assertion test
   double Sztot = 0; // SZ counter, for assertion test
@@ -131,18 +133,16 @@ MPS initPsi(subspace_t sub, const auto &sites, int impindex, bool sc_only, bool 
   }
   // ** Add electrons to the bath
   if (nsc) {
-    const int npair = nsc/2;                // number of pairs in the bath
-    auto j = 0;                             // counts added pairs
-    auto i = 1;                             // site index (1 based)
-    for(; j < npair; i++)
-      if (i != impindex) {                  // skip impurity site
-        j++;
-        state.set(i, "UpDn");
-        tot += 2;                           // Sztot does not change!
-      }
+//    add_bath_electrons(nsc, bath_sites, state, tot, Sztot);
+    ndx_t bath = p.problem->bath_indexes(p.NBath);
+    const size_t npair = nsc/2;             // number of pairs in the bath
+    my_assert(bath.size() >= npair);
+    for (size_t j = 0; j < npair; j++)
+      state.set(bath[j], "UpDn");
+    tot += npair*2;                         // Sztot does not change!
     if (odd(nsc)) {                         // if ncs is odd (implies even ntot and sz=0), add spin-down electron
-      if (i == impindex)
-        i++;
+      my_assert(bath.size() >= npair+1);
+      const auto i = bath[npair];           // note: vector bath is 0-based
       if (Sztot + 0.5 == Sz) {              // need to add spin-up electron
         state.set(i, "Up");
         Sztot += 0.5;
@@ -540,7 +540,7 @@ void FindGS(InputGroup &input, store &s, params &p) {
     auto sub = p.iterateOver[i];
     std::cout << "\nSweeping in the sector " << sub << std::endl;
     auto [H, Eshift] = p.problem->initH(sub, p);
-    auto psi_init = initPsi(sub, p.sites, p.impindex, p.sc_only, p.randomMPSb);
+    auto psi_init = initPsi(sub, p.sites, p.impindex, p.sc_only, p.randomMPSb, p);
     Args args; // args is used to store and transport parameters between various functions
     // Apply the MPO a couple of times to get DMRG started, otherwise it might not converge.
     for(auto i : range1(p.nrH)){

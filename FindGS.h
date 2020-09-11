@@ -225,14 +225,15 @@ class psi_stats {
 };
 
 class problem_type;
-std::unique_ptr<problem_type> set_problem(std::string);
+using type_ptr = std::unique_ptr<problem_type>;
+type_ptr set_problem(std::string);
 
 // parameters from the input file
 struct params {
   string inputfn;       // filename of the input file
   InputGroup input;     // itensor input parser
 
-  std::unique_ptr<problem_type> problem = set_problem("std");
+  type_ptr problem = set_problem("std");
 
   int N;                // number of sites
   int NBath;            // number of bath sites
@@ -295,7 +296,8 @@ using ndx_t = std::vector<int>;
 class problem_type {
  public:
    virtual int imp_index(int) = 0;
-   virtual ndx_t bath_indexes(int,int) = 0;
+   virtual ndx_t bath_indexes(int) = 0;          // all bath indexes
+   virtual ndx_t bath_indexes(int, int) = 0;     // per channel bath indexes
    virtual H_t initH(subspace_t, params &) = 0;
 };
 
@@ -303,11 +305,15 @@ class imp_first : virtual public problem_type
 {
  public:
    int imp_index(int) override { return 1; }
-   ndx_t bath_indexes(int NBath, int) override {
+   ndx_t bath_indexes(int NBath) override {
      ndx_t l;
      for (int i = 1; i <= NBath; i++)
        l.push_back(1+i);
      return l;
+   }
+   ndx_t bath_indexes(int NBath, int ch) override { 
+     my_assert(ch == 1);
+     return bath_indexes(NBath);
    }
 };
 
@@ -318,15 +324,18 @@ class imp_middle : virtual public problem_type
      my_assert(even(NBath));
      return 1+NBath/2;
    }
-   ndx_t bath_indexes(int NBath, int ch) override {
+   ndx_t bath_indexes(int NBath) override {
      my_assert(even(NBath));
-     my_assert(ch == 1 || ch == 2);
-     const int N = NBath/2;
-     const auto offset = ch == 1 ? 0 : N+1;
      ndx_t l;
-     for (int i = 1; i <= N; i++)
-       l.push_back(offset + i);
+     for (int i = 1; i <= 1+NBath; i++)
+       if (i != 1+NBath/2) 
+         l.push_back(i);
      return l;
+   }
+   ndx_t bath_indexes(int NBath, int ch) override {
+     my_assert(ch == 1 || ch == 2);
+     auto ndx = bath_indexes(NBath);
+     return ch == 1 ? ndx_t(ndx.begin(), ndx.begin() + NBath/2) : ndx_t(ndx.begin() + NBath/2, ndx.begin() + NBath);
    }
 };
 
@@ -477,7 +486,7 @@ namespace prob {
    };
 }
 
-inline std::unique_ptr<problem_type> set_problem(std::string str)
+inline type_ptr set_problem(std::string str)
 {
   if (str == "std") return std::make_unique<prob::Std>();
   if (str == "Ec") return std::make_unique<prob::Ec>();
