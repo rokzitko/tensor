@@ -107,7 +107,8 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
 // Initialize the MPS in a product state with ntot electrons.
 // Sz is the z-component of the total spin.
 // Electron is added on the impurity site only if sc_only=false.
-MPS initPsi(charge ntot, spin Sz, const auto &sites, int impindex, bool sc_only, bool randomMPSb) {
+MPS initPsi(subspace_t sub, const auto &sites, int impindex, bool sc_only, bool randomMPSb) {
+  auto [ntot, Sz] = sub;
   my_assert(ntot >= 0);
   my_assert(Sz == -1 || Sz == -0.5 || Sz == 0 || Sz == +0.5 || Sz == +1);
   int tot = 0;      // electron counter, for assertion test
@@ -534,10 +535,9 @@ void FindGS(InputGroup &input, store &s, params &p){
 #pragma omp parallel for if(p.parallel) 
   for (size_t i=0; i<p.iterateOver.size(); i++){
     auto sub = p.iterateOver[i];
-    auto [ntot, Sz] = sub;
-    std::cout << "\nSweeping in the sector with " << ntot << " particles, Sz = " << Sz << std::endl;
-    auto [H, Eshift] = p.problem->initH(ntot, p);
-    auto psi_init = initPsi(ntot, Sz, p.sites, p.impindex, p.sc_only, p.randomMPSb);
+    std::cout << "\nSweeping in the sector " << sub << std::endl;
+    auto [H, Eshift] = p.problem->initH(sub, p);
+    auto psi_init = initPsi(sub, p.sites, p.impindex, p.sc_only, p.randomMPSb);
     Args args; // args is used to store and transport parameters between various functions
     // Apply the MPO a couple of times to get DMRG started, otherwise it might not converge.
     for(auto i : range1(p.nrH)){
