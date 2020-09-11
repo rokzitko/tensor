@@ -15,6 +15,7 @@
 #include <tuple>
 #include <cassert>
 #include <utility>
+#include <algorithm>
 
 #define FMT_HEADER_ONLY
 #include <fmt/format.h>

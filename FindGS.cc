@@ -159,6 +159,15 @@ MPS initPsi(charge ntot, spin Sz, const auto &sites, int impindex, bool sc_only,
   return psi;
 }
 
+// Range of integers [a:b], end points included.
+inline ndx_t range(int a, int b)
+{
+  if (a > b) std::swap(a, b);
+  ndx_t l(b - a + 1);
+  std::iota(l.begin(), l.end(), a);
+  return l;
+}
+
 // computes the correlation between operator impOp on impurity and operator opj on j
 double ImpurityCorrelator(MPS& psi, auto impOp, int j, auto opj, const params &p) {
   my_assert(p.impindex == 1); // !!!
@@ -182,11 +191,11 @@ double ImpurityCorrelator(MPS& psi, auto impOp, int j, auto opj, const params &p
 //according to: http://www.itensor.org/docs.cgi?vers=cppv3&page=formulas/correlator_mps
 
 // <n_imp n_i>
-auto calcChargeCorrelation(MPS& psi, const params &p) {
+auto calcChargeCorrelation(MPS& psi, const ndx_t sites, const params &p) {
   std::vector<double> r;
   double tot = 0;
   auto impOp = op(p.sites, "Ntot", p.impindex);
-  for (auto j: range1(1, length(psi))) {
+  for (const auto j: sites) {
     if (j != p.impindex) { // skip impurity site!
       auto scOp = op(p.sites, "Ntot", j);
       double result = ImpurityCorrelator(psi, impOp, j, scOp, p);
@@ -198,7 +207,7 @@ auto calcChargeCorrelation(MPS& psi, const params &p) {
 }
 
 void ChargeCorrelation(MPS& psi, auto & file, std::string path, const params &p) {
-  auto [r, tot] = calcChargeCorrelation(psi, p);
+  auto [r, tot] = calcChargeCorrelation(psi, range(1, p.N), p);
   std::cout << "charge correlation = " << std::setprecision(full) << r << std::endl;
   std::cout << "charge correlation tot = " << tot << std::endl;
   dump(file, path + "/charge_correlation", r);
@@ -206,7 +215,7 @@ void ChargeCorrelation(MPS& psi, auto & file, std::string path, const params &p)
 }
 
 // <S_imp S_i> = <Sz_imp Sz_i> + 1/2 ( <S+_imp S-_i> + <S-_imp S+_i> )
-auto calcSpinCorrelation(MPS& psi, const params &p) {
+auto calcSpinCorrelation(MPS& psi, const ndx_t &sites, const params &p) {
   std::vector<double> rzz, rpm, rmp;
   //squares of the impurity operators; for on-site terms
   double tot = 0;
@@ -221,7 +230,7 @@ auto calcSpinCorrelation(MPS& psi, const params &p) {
   //on site term
   auto onSiteSzSz = elt(psi(p.impindex) * SzSz *  dag(prime(psi(p.impindex),"Site")));
   tot += onSiteSzSz;
-  for(auto j: range1(1, length(psi))) {
+  for(const auto j: sites) {
     if (j != p.impindex) {
       auto scSz = 0.5*( op(p.sites, "Nup", j) - op(p.sites, "Ndn", j) );
       auto result = ImpurityCorrelator(psi, impSz, j, scSz, p);
@@ -234,7 +243,7 @@ auto calcSpinCorrelation(MPS& psi, const params &p) {
   //on site term
   auto onSiteSpSm = elt(psi(p.impindex) * op(p.sites, "Cdagup*Cdn*Cdagdn*Cup", p.impindex) * dag(prime(psi(p.impindex),"Site")));
   tot += 0.5*onSiteSpSm; 
-  for(auto j: range1(1, length(psi))) {
+  for(const auto j: sites) {
     if (j != p.impindex) {
       auto scSm = op(p.sites, "Cdagdn*Cup", j);
       auto result = ImpurityCorrelator(psi, impSp, j, scSm, p);
@@ -247,7 +256,7 @@ auto calcSpinCorrelation(MPS& psi, const params &p) {
   //on site term
   auto onSiteSmSp = elt(psi(p.impindex) * op(p.sites, "Cdagdn*Cup*Cdagup*Cdn", p.impindex) * dag(prime(psi(p.impindex),"Site")));
   tot += 0.5*onSiteSmSp; 
-  for(auto j: range1(1, length(psi))) {
+  for(const auto j: sites) {
     if (j != p.impindex) {
       auto scSp = op(p.sites, "Cdagup*Cdn", j);
       auto result = ImpurityCorrelator(psi, impSm, j, scSp, p);
@@ -259,7 +268,7 @@ auto calcSpinCorrelation(MPS& psi, const params &p) {
 }
 
 void SpinCorrelation(MPS& psi, File & file, std::string path, const params &p) {
-  auto [onSiteSzSz, onSiteSpSm, onSiteSmSp, rzz, rpm, rmp, tot] = calcSpinCorrelation(psi, p);
+  auto [onSiteSzSz, onSiteSpSm, onSiteSmSp, rzz, rpm, rmp, tot] = calcSpinCorrelation(psi, range(1, p.N), p);
   std::cout << "spin correlations:\n";
   std::cout << "SzSz correlations: ";
   std::cout << std::setprecision(full) << onSiteSzSz << " ";
@@ -280,21 +289,23 @@ void SpinCorrelation(MPS& psi, File & file, std::string path, const params &p) {
   dump(file, path + "/spin_correlation_total", tot);
 }
 
-auto calcPairCorrelation(MPS& psi, const params &p) {
+auto calcPairCorrelation(MPS& psi, const ndx_t &sites, const params &p) {
   std::vector<double> r;
   double tot = 0;
   auto impOp = op(p.sites, "Cup*Cdn", p.impindex);
-  for(auto j: range1(2, length(psi))) {
-    auto scOp = op(p.sites, "Cdagdn*Cdagup", j);
-    double result = ImpurityCorrelator(psi, impOp, j, scOp, p);
-    r.push_back(result);
-    tot += result;
+  for(const auto j: sites) {
+    if (j != p.impindex) {
+      auto scOp = op(p.sites, "Cdagdn*Cdagup", j);
+      double result = ImpurityCorrelator(psi, impOp, j, scOp, p);
+      r.push_back(result);
+      tot += result;
+    }
   }
   return std::make_pair(r, tot);
 }
 
 void PairCorrelation(MPS& psi, File & file, std::string path, const params &p) {
-  auto [r, tot] = calcPairCorrelation(psi, p);
+  auto [r, tot] = calcPairCorrelation(psi, range(1, p.N), p);
   std::cout << "pair correlation = " << std::setprecision(full) << r << std::endl;
   std::cout << "pair correlation tot = " << tot << std::endl;
   dump(file, path + "/pair_correlation", r);
@@ -303,7 +314,7 @@ void PairCorrelation(MPS& psi, File & file, std::string path, const params &p) {
 
 //Prints <d^dag c_i + c_i^dag d> for each i. the sum of this expected value, weighted by 1/sqrt(N)
 //gives <d^dag f_0 + f_0^dag d>, where f_0 = 1/sqrt(N) sum_i c_i. This is the expected value of hopping.
-auto calcexpectedHopping(MPS& psi, const params &p) {
+auto calcexpectedHopping(MPS& psi, const ndx_t &sites, const params &p) {
   std::vector<double> rup, rdn;
   double totup = 0;
   double totdn = 0;
@@ -312,7 +323,7 @@ auto calcexpectedHopping(MPS& psi, const params &p) {
   auto impOpDn = op(p.sites, "Cdn", p.impindex);
   auto impOpDagDn = op(p.sites, "Cdagdn", p.impindex);
   // hopping expectation values for spin up
-  for (auto j : range1(1, length(psi))) {
+  for (const auto j : sites) {
     if (j != p.impindex) {
       auto scDagOp = op(p.sites, "Cdagup", j);
       auto scOp = op(p.sites, "Cup", j);
@@ -324,7 +335,7 @@ auto calcexpectedHopping(MPS& psi, const params &p) {
     }
   }
   // hopping expectation values for spin dn
-  for (auto j : range1(1, length(psi))) {
+  for (const auto j : sites) {
     if (j != p.impindex) {
       auto scDagOp = op(p.sites, "Cdagdn", j);
       auto scOp = op(p.sites, "Cdn", j);
@@ -339,7 +350,7 @@ auto calcexpectedHopping(MPS& psi, const params &p) {
 }
 
 void expectedHopping(MPS& psi, File & file, std::string path, const params &p) {
-  auto [rup, rdn, totup, totdn] = calcexpectedHopping(psi, p);
+  auto [rup, rdn, totup, totdn] = calcexpectedHopping(psi, range(1, p.N), p);
   std::cout << "hopping spin up = " << std::setprecision(full) << rup << std::endl;
   std::cout << "hopping correlation up tot = " << totup << std::endl;
   std::cout << "hopping spin down = " << std::setprecision(full) << rdn << std::endl;
@@ -354,15 +365,15 @@ void expectedHopping(MPS& psi, File & file, std::string path, const params &p) {
 }
 
 //prints the occupation number Nup and Ndn at the impurity
-auto calcImpurityUpDn(MPS& psi, const params &p){
-  psi.position(p.impindex);
-  auto valnup = psi.A(p.impindex) * p.sites.op("Nup",p.impindex)* dag(prime(psi.A(p.impindex),"Site"));
-  auto valndn = psi.A(p.impindex) * p.sites.op("Ndn",p.impindex)* dag(prime(psi.A(p.impindex),"Site"));
+auto calc_NUp_NDn(MPS& psi, int ndx, const params &p){
+  psi.position(ndx);
+  auto valnup = psi.A(ndx) * p.sites.op("Nup",ndx) * dag(prime(psi.A(ndx),"Site"));
+  auto valndn = psi.A(ndx) * p.sites.op("Ndn",ndx) * dag(prime(psi.A(ndx),"Site"));
   return std::make_pair(std::real(valnup.cplx()), std::real(valndn.cplx()));
 }
 
 void ImpurityUpDn(MPS& psi, auto &file, std::string path, const params &p){
-  auto [up, dn] = calcImpurityUpDn(psi, p);
+  auto [up, dn] = calc_NUp_NDn(psi, p.impindex, p);
   auto sz = 0.5*(up-dn);
   std::cout << "impurity nup ndn = " << std::setprecision(full) << up << " " << dn << " sz = " << sz << std::endl;
   dump(file, path + "/impurity_Nup", up);
@@ -371,10 +382,10 @@ void ImpurityUpDn(MPS& psi, auto &file, std::string path, const params &p){
 }
 
 // total Sz of the state
-auto calcTotalSpinz(MPS& psi, const params &p) {
+auto calcTotalSpinz(MPS& psi, const ndx_t &sites, const params &p) {
   double totNup = 0.;
   double totNdn = 0.;
-  for (auto j: range1(length(psi))) {
+  for (const auto j: sites) {
     psi.position(j);
     auto Nupi = psi.A(j) * p.sites.op("Nup",j)* dag(prime(psi.A(j),"Site"));
     auto Ndni = psi.A(j) * p.sites.op("Ndn",j)* dag(prime(psi.A(j),"Site"));
@@ -386,17 +397,17 @@ auto calcTotalSpinz(MPS& psi, const params &p) {
 }
 
 void TotalSpinz(MPS& psi, File &file, std::string path, const params &p) {
-  auto [totNup, totNdn, totSz] = calcTotalSpinz(psi, p);
+  auto [totNup, totNdn, totSz] = calcTotalSpinz(psi, range(1, p.N), p);
   std::cout << std::setprecision(full) << "Total spin z: " << " Nup = " << totNup << " Ndn = " << totNdn << " Sztot = " << totSz << std::endl;
   dump(file, path + "/total_Nup", totNup);
   dump(file, path + "/total_Ndn", totNdn);
   dump(file, path + "/total_Sz",  totSz);
 }
 
-// occupation numbers of all levels in the problem
-auto calcOcc(MPS &psi, const params &p) {
+// occupation numbers of levels 'sites'
+auto calcOcc(MPS &psi, const ndx_t &sites, const params &p) {
   std::vector<double> r;
-  for(auto i : range1(length(psi)) ) {
+  for(const auto i : sites) {
     // position call very important! otherwise one would need to contract the whole tensor network of <psi|O|psi> this way, only the local operator at site i is needed
     psi.position(i);
     auto val = psi.A(i) * p.sites.op("Ntot",i)* dag(prime(psi.A(i),"Site"));
@@ -406,7 +417,7 @@ auto calcOcc(MPS &psi, const params &p) {
 }
 
 void MeasureOcc(MPS& psi, auto & file, std::string path, const params &p) {
-  auto r = calcOcc(psi, p);
+  auto r = calcOcc(psi, range(1, p.N), p);
   auto tot = std::accumulate(r.begin(), r.end(), 0.0);
   std::cout << "site occupancies = " << std::setprecision(full) << r << std::endl;
   std::cout << "tot = " << tot << std::endl;
@@ -445,10 +456,10 @@ void MeasurePairing(MPS& psi, auto & file, std::string path, const params &p) {
 // See von Delft, Zaikin, Golubev, Tichy, PRL 77, 3189 (1996)
 // v = <c^\dag_up c^\dag_dn c_dn c_up>
 // u = <c_dn c_up c^\dag_up c^\dag_dn>
-auto calcAmplitudes(MPS &psi, const params &p) {
+auto calcAmplitudes(MPS &psi, const ndx_t &sites, const params &p) {
   std::vector<complex_t> rv, ru, rpdt;
   complex_t tot = 0;
-  for(auto i : range1(length(psi)) ) {
+  for(auto i : sites) {
     psi.position(i);
     auto valv = psi.A(i) * p.sites.op("Cdagup*Cdagdn*Cdn*Cup", i) * dag(prime(psi.A(i),"Site"));
     auto valu = psi.A(i) * p.sites.op("Cdn*Cup*Cdagup*Cdagdn", i) * dag(prime(psi.A(i),"Site"));
@@ -465,7 +476,7 @@ auto calcAmplitudes(MPS &psi, const params &p) {
 }
 
 void MeasureAmplitudes(MPS& psi, auto & file, std::string path, const params &p) {
-  auto [rv, ru, rpdt, tot] = calcAmplitudes(psi, p);
+  auto [rv, ru, rpdt, tot] = calcAmplitudes(psi, range(1, p.N), p);
   std::cout << "amplitudes vu = " << std::setprecision(full);
   for (size_t i = 0; i < rv.size(); i++)
     std::cout << "[v=" << rv[i] << " u=" << ru[i] << " pdt=" << rpdt[i] << "] ";
@@ -567,7 +578,6 @@ auto ExpectationValueTakeEl(MPS psi1, MPS psi2, std::string spin, const params &
   return inner(psi1, psi2);
 }
 
-
 void calc_weight(store &s, state_t GS, state_t ES, int q, std::string sz, auto & file, params &p)
 {
   double res;
@@ -607,21 +617,16 @@ void print_energies(store &s, double EGS, params &p) {
 }
 
 auto find_global_GS(store &s, auto & file) {
-  state_t GS;
-  double EGS = std::numeric_limits<double>::infinity();
-  for(const auto & [st, eig] : s.eigen) {
-    auto E0 = eig.E();
-    if (E0 < EGS) {
-      EGS = E0;
-      GS = st;
-    }
-  }
+  auto m = std::min_element(begin(s.eigen), end(s.eigen), [](const auto &p1, const auto &p2) { return p1.second.E() < p2.second.E(); });
+  state_t GS = m->first;
+  double E_GS = m->second.E();
   auto [N_GS, Sz_GS, i] = GS;
   my_assert(i == 0);
-  std::cout << fmt::format("\nN_GS = {}\nSZ_GS = {}\n",N_GS, Sz_GS);
+  std::cout << fmt::format("\nN_GS = {}\nSZ_GS = {}\nE_GS = {}\n",N_GS, Sz_GS, E_GS);
   dump(file, "/GS/N",  N_GS);
   dump(file, "/GS/Sz", Sz_GS);
-  return std::make_pair(GS, EGS);
+  dump(file, "/GS/E",  E_GS);
+  return std::make_pair(GS, E_GS);
 }
 
 // Loops over all particle sectors and prints relevant quantities
