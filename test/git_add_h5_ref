@@ -1,4 +1,3 @@
 #!/bin/sh
 # Update references files in git repo
-find . -iname "result*.dat.ref" -exec git add {} \;
 find . -iname "solution*.h5.ref" -exec git add {} \;

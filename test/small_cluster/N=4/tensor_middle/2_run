@@ -3,7 +3,5 @@ calcGS inputFile_0.1.txt >result_0.1.dat
 mv solution.h5 solution1.h5
 calcGS inputFile_1.txt >result_1.dat
 mv solution.h5 solution2.h5
-mycompare result_0.1.dat
-mycompare result_1.dat
 h5diff -d 1e-6 solution1.h5 solution1.h5.ref
 h5diff -d 1e-6 solution2.h5 solution2.h5.ref

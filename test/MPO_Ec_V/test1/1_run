@@ -2,5 +2,4 @@
 PATH=../../..:../..:$PATH
 calcGS inputFile-std.txt >result-std.dat
 mv solution.h5 solution1.h5
-mycompare result-std.dat
 h5diff -d 1e-6 solution1.h5 solution1.h5.ref

@@ -1,5 +1,4 @@
 #!/bin/bash
 PATH=../../../..:../../..:$PATH
 calcGS inputFile_0.1.txt >result_0.1.dat
-mycompare result_0.1.dat
 h5diff -d 1e-6 solution.h5 solution.h5.ref
