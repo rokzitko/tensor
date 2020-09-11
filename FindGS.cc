@@ -505,12 +505,12 @@ void PrintEntropy(MPS& psi, auto & file, std::string path, const params &p) {
 
 state_t gs(const subspace_t &sub)
 {
-  return state_t(std::get<0>(sub), std::get<1>(sub), 0);
+  return state_t(std::get<0>(sub), std::get<1>(sub), 0); // ground state in the subspace
 }
 
 state_t es(const subspace_t &sub)
 {
-  return state_t(std::get<0>(sub), std::get<1>(sub), 0);
+  return state_t(std::get<0>(sub), std::get<1>(sub), 1); // 1st excited state in the subspace
 }
 
 //calculates the groundstates and the energies of the relevant particle number sectors
@@ -598,10 +598,10 @@ void print_energies(store &s, double EGS, params &p) {
   for(auto ntot: p.numPart)
     for(auto Sz: p.Szs[ntot]) {
       auto E0 = s.eigen[state_t(ntot, Sz, 0)].E();
-      std::cout << fmt::format("n = {:5}  Sz = {:4}  E = {22:17}  DeltaE = {22:17}", ntot, Sz, E0, E0-EGS) << std::endl;
+      std::cout << fmt::format("n = {:5}  Sz = {:4}  E = {:22.15}  DeltaE = {:22.15}", ntot, Sz, E0, E0-EGS) << std::endl;
       if (p.excited_state) {
         auto E1 = s.eigen[state_t(ntot, Sz, 1)].E();
-        std::cout << fmt::format(" 1st excited state    E = {22:17}  DeltaE = {22:17}", E1, E1-EGS) << std::endl;
+        std::cout << fmt::format(" 1st excited state    E = {:22.15}  DeltaE = {:22.15}", E1, E1-EGS) << std::endl;
       }
     }
 }
