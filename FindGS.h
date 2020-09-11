@@ -293,10 +293,12 @@ struct store
 };
 
 using H_t = std::tuple<MPO, double>;
+using ndx_t = std::vector<int>;
 
 class problem_type {
  public:
    virtual int imp_index(int) = 0;
+   virtual ndx_t bath_indexes(int,int) = 0;
    virtual H_t initH(int, params &) = 0;
 };
 
@@ -304,6 +306,12 @@ class imp_first : virtual public problem_type
 {
  public:
    int imp_index(int) override { return 1; }
+   ndx_t bath_indexes(int NBath, int) override {
+     ndx_t l;
+     for (int i = 1; i <= NBath; i++)
+       l.push_back(1+i);
+     return l;
+   }
 };
 
 class imp_middle : virtual public problem_type
@@ -312,6 +320,16 @@ class imp_middle : virtual public problem_type
    int imp_index(int NBath) override {
      my_assert(even(NBath));
      return 1+NBath/2;
+   }
+   ndx_t bath_indexes(int NBath, int ch) override {
+     my_assert(even(NBath));
+     my_assert(ch == 1 || ch == 2);
+     const int N = NBath/2;
+     const auto offset = ch == 1 ? 0 : N+1;
+     ndx_t l;
+     for (int i = 1; i <= N; i++)
+       l.push_back(offset + i);
+     return l;
    }
 };
 
