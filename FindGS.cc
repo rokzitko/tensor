@@ -517,12 +517,12 @@ void PrintEntropy(MPS& psi, auto & file, std::string path, const params &p) {
 
 state_t gs(const subspace_t &sub)
 {
-  return state_t(std::get<0>(sub), std::get<1>(sub), 0); // ground state in the subspace
+  return state_t(std::get<charge>(sub), std::get<spin>(sub), 0); // ground state in the subspace
 }
 
 state_t es(const subspace_t &sub)
 {
-  return state_t(std::get<0>(sub), std::get<1>(sub), 1); // 1st excited state in the subspace
+  return state_t(std::get<charge>(sub), std::get<spin>(sub), 1); // 1st excited state in the subspace
 }
 
 //calculates the groundstates and the energies of the relevant particle number sectors
