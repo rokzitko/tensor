@@ -208,24 +208,19 @@ class eigenpair {
 class psi_stats {
  private:
    double _norm = 0;
-   double _Ebis = 0;
-   double _deltaE = 0;
-   double _residuum = 0;
+   double _E = 0;
+   double _deltaE2 = 0;
  public:
    psi_stats() {}
-   psi_stats(double E, MPS &psi, MPO &H) {
+   psi_stats(MPS &psi, MPO &H) {
      _norm = inner(psi, psi);
-     _Ebis = inner(psi, H, psi);
-     _deltaE = sqrt( inner(H, psi, H, psi) - pow(_Ebis,2) );
-     _residuum = _Ebis-E*_norm;
+     _E = inner(psi, H, psi);
+     _deltaE2 = inner(H, psi, H, psi) - pow(_E,2);
    }
-   auto norm() const { return _norm; }
-   auto Ebis() const { return _Ebis; }
-   auto deltaE() const { return _deltaE; }
-   auto residuum() const { return _residuum; }
-   void dump(auto &file, std::string path) const {
-     H5Easy::dump(file, path + "/norm", _norm);
-     H5Easy::dump(file, path + "/residuum", _residuum);
+   void dump() const {
+     std::cout << fmt::format("norm: <psi|psi> = {}", _norm) << std::endl
+       << fmt::format("E: <psi|H|psi> = {}", _E) << std::endl
+       << fmt::format("deltaE^2: <psi|H^2|psi> - <psi|H|psi>^2 = {}", _deltaE2) << std::endl;
    }
 };
 

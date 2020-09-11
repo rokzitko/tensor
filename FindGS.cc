@@ -549,7 +549,7 @@ void FindGS(InputGroup &input, store &s, params &p){
                                                "EnergyErrgoal", p.EnergyErrgoal});
     double GSenergy = E+Eshift;
     s.eigen[gs(sub)] = eigenpair(GSenergy, psi);
-    s.stats[gs(sub)] = psi_stats(E, psi, H);
+    s.stats[gs(sub)] = psi_stats(psi, H);
     if (p.excited_state) {
       auto wfs = std::vector<MPS>(1);
       wfs.at(0) = psi;
@@ -629,35 +629,35 @@ auto find_global_GS(store &s, auto & file) {
   return std::make_pair(GS, E_GS);
 }
 
+void calc_properties(state_t st, File &file, store &s, params &p)
+{
+  auto [ntot, Sz, i] = st;
+  auto path = fmt::format("{}/{}/{}", ntot, Sz, i);
+  std::cout << fmt::format("\n\nRESULTS FOR THE SECTOR WITH {} PARTICLES, Sz {}, state {}:", ntot, Sz, i) << std::endl;
+  auto E = s.eigen[st].E();
+  std::cout << fmt::format("Energy = {}", E) << std::endl;
+  dump(file, path + "/E", E);
+  auto psi = s.eigen[st].psi();
+  MeasureOcc(psi, file, path, p);
+  MeasurePairing(psi, file, path, p);
+  MeasureAmplitudes(psi, file, path, p);
+  if (p.computeEntropy) PrintEntropy(psi, file, path, p);
+  if (p.impNupNdn) ImpurityUpDn(psi, file, path, p);
+  if (p.chargeCorrelation) ChargeCorrelation(psi, file, path, p);
+  if (p.spinCorrelation) SpinCorrelation(psi, file, path, p);
+  if (p.pairCorrelation) PairCorrelation(psi, file, path, p);
+  if (p.hoppingExpectation) expectedHopping(psi, file, path, p);
+  if (p.printTotSpinZ) TotalSpinz(psi, file, path, p);
+  s.stats[st].dump();
+}
+
 // Loops over all particle sectors and prints relevant quantities
 void calculateAndPrint(InputGroup &input, store &s, params &p) {
   File file("solution.h5", File::Overwrite);
   for(auto ntot: p.numPart) {
     for (auto Sz: p.Szs[ntot]) {
       auto sub = subspace_t(ntot, Sz);
-      auto E = s.eigen[gs(sub)].E();
-      dump(file, str(sub, "0/E"), E);
-      MPS & GS = s.eigen[gs(sub)].psi();
-      std::cout << fmt::format("\n\nRESULTS FOR THE SECTOR WITH {} PARTICLES, Sz {}:", ntot, Sz) << std::endl
-        << fmt::format("Ground state energy = {}", E) << std::endl
-        << fmt::format("norm = {}", s.stats[gs(sub)].norm()) << std::endl;
-      auto path0 = str(sub, "0");
-      MeasureOcc(GS, file, path0, p);
-      MeasurePairing(GS, file, path0, p);
-      MeasureAmplitudes(GS, file, path0, p);
-      if (p.computeEntropy) PrintEntropy(GS, file, path0, p);
-      if (p.impNupNdn) ImpurityUpDn(GS, file, path0, p);
-      if (p.chargeCorrelation) ChargeCorrelation(GS, file, path0, p);
-      if (p.spinCorrelation) SpinCorrelation(GS, file, path0, p);
-      if (p.pairCorrelation) PairCorrelation(GS, file, path0, p);
-      if (p.hoppingExpectation) expectedHopping(GS, file, path0, p);
-      if (p.printTotSpinZ) TotalSpinz(GS, file, path0, p);
-      // various measures of convergence (energy deviation, residual value)
-      std::cout << fmt::format("Eigenvalue(bis): <GS|H|GS> = {}", s.stats[gs(sub)].Ebis()) << std::endl
-        << fmt::format("diff: E_GS - <GS|H|GS> = {}", E-s.stats[gs(sub)].Ebis()) << std::endl // TODO: remove this
-        << fmt::format("deltaE: sqrt(<GS|H^2|GS> - <GS|H|GS>^2) = {}", s.stats[gs(sub)].deltaE()) << std::endl
-        << fmt::format("residuum: <GS|H|GS> - E_GS*<GS|GS> = {}", s.stats[gs(sub)].residuum()) << std::endl;
-      s.stats[gs(sub)].dump(file, path0);
+      calc_properties(gs(sub), file, s, p);
       if (p.excited_state){
         double E1 = s.eigen[es(sub)].E();
         MPS & ES = s.eigen[es(sub)].psi();
