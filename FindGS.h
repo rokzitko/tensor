@@ -73,6 +73,27 @@ template <typename U, typename V>
     return out;
   }
 
+template< typename F, typename ...types >
+  F for_all(F f, types &&... values)
+{
+  (f(std::forward<types>(values)), ...);
+  return std::move(f);
+}
+
+template< typename F, typename ...types, std::size_t ...indices >
+  F for_all_indices(F f, std::tuple<types...> const & t, std::index_sequence<indices...>)
+{
+  return for_all(std::move(f), std::get<indices>(t)...);
+}
+
+template< typename first, typename ...rest >
+  std::ostream& operator<< (std::ostream& out, std::tuple<first, rest...> const & t)
+{
+  out << '[';
+  for_all_indices([&out] (auto const & value) { out << value << ","; }, t, std::index_sequence_for<rest...>{});
+  return out << std::get< sizeof...(rest) >(t) << ']';
+}
+
 // Convert 0-based vector to 1-based vector
 inline auto shift1(const std::vector<double> &a) {
   std::vector<double> b;
@@ -267,9 +288,8 @@ struct params {
 // lists of quantities calculated in FindGS 
 struct store
 {
-  std::map<subspace_t, eigenpair> eigen0, eigen1; // 0=GS, 1=1st ES, etc.
   std::map<state_t, eigenpair> eigen;
-  std::map<subspace_t, psi_stats> stats0;
+  std::map<state_t, psi_stats> stats;
 };
 
 using H_t = std::tuple<MPO, double>;

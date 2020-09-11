@@ -503,6 +503,16 @@ void PrintEntropy(MPS& psi, auto & file, std::string path, const params &p) {
   dump(file, path + "/entanglement_entropy_imp", SvN);
 }
 
+state_t gs(const subspace_t &sub)
+{
+  return state_t(std::get<0>(sub), std::get<1>(sub), 0);
+}
+
+state_t es(const subspace_t &sub)
+{
+  return state_t(std::get<0>(sub), std::get<1>(sub), 0);
+}
+
 //calculates the groundstates and the energies of the relevant particle number sectors
 void FindGS(InputGroup &input, store &s, params &p){
   auto inputsw = InputGroup(p.inputfn,"sweeps");
@@ -527,8 +537,8 @@ void FindGS(InputGroup &input, store &s, params &p){
                                                "Quiet", !p.printDimensions, 
                                                "EnergyErrgoal", p.EnergyErrgoal});
     double GSenergy = E+Eshift;
-    s.eigen0[sub] = eigenpair(GSenergy, psi);
-    s.stats0[sub] = psi_stats(E, psi, H);
+    s.eigen[gs(sub)] = eigenpair(GSenergy, psi);
+    s.stats[gs(sub)] = psi_stats(E, psi, H);
     if (p.excited_state) {
       auto wfs = std::vector<MPS>(1);
       wfs.at(0) = psi;
@@ -536,7 +546,7 @@ void FindGS(InputGroup &input, store &s, params &p){
                                                    "Quiet", !p.printDimensions,
                                                    "Weight", p.Weight});
       double ESenergy = E1+Eshift;
-      s.eigen1[sub] = eigenpair(ESenergy, psi1);
+      s.eigen[es(sub)] = eigenpair(ESenergy, psi1);
     }
   }
 }
@@ -557,59 +567,61 @@ auto ExpectationValueTakeEl(MPS psi1, MPS psi2, std::string spin, const params &
   return inner(psi1, psi2);
 }
 
-void calc_weight(store &s, subspace_t subGS, subspace_t subES, int q, std::string sz, auto & file, params &p)
+
+void calc_weight(store &s, state_t GS, state_t ES, int q, std::string sz, auto & file, params &p)
 {
   double res;
-  MPS & psiGS = s.eigen0[subGS].psi();
-  if (s.eigen0.find(subES) != s.eigen0.end()) {
-    MPS & psiES = s.eigen0[subES].psi();
+  MPS & psiGS = s.eigen[GS].psi();
+  if (s.eigen.find(ES) != s.eigen.end()) {
+    MPS & psiES = s.eigen[ES].psi();
     res = (q == +1 ? ExpectationValueAddEl(psiES, psiGS, sz, p) : ExpectationValueTakeEl(psiES, psiGS, sz, p));
     std::cout << "weight w" << (q == +1 ? "+" : "-") << " " << sz << ": " << res << std::endl;
   } else {
     res = std::numeric_limits<double>::quiet_NaN();
-    std::cout <<  "ERROR: we don't have info about the sector " << subES << std::endl;
+    std::cout <<  "ERROR: we don't have info about the state " << ES << std::endl;
   }
   dump(file, "weights/" + std::to_string(q) + "/" + sz, res);
 }
 
-void calculate_spectral_weights(store &s, subspace_t subGS, auto & file, params &p) {
+void calculate_spectral_weights(store &s, state_t GS, auto & file, params &p) {
   std::cout << std::endl << "Spectral weights:" << std::endl 
     << "(Spectral weight is the square of the absolute value of the number.)" << std::endl;
-  auto [N_GS, Sz_GS] = subGS;
-  calc_weight(s, subGS, subspace_t(N_GS+1, Sz_GS+0.5), +1, "up", file, p);
-  calc_weight(s, subGS, subspace_t(N_GS+1, Sz_GS-0.5), +1, "dn", file, p);
-  calc_weight(s, subGS, subspace_t(N_GS-1, Sz_GS-0.5), -1, "up", file, p);
-  calc_weight(s, subGS, subspace_t(N_GS-1, Sz_GS+0.5), -1, "dn", file, p);
+  auto [N_GS, Sz_GS, i] = GS;
+  calc_weight(s, GS, state_t(N_GS+1, Sz_GS+0.5, 0), +1, "up", file, p);
+  calc_weight(s, GS, state_t(N_GS+1, Sz_GS-0.5, 0), +1, "dn", file, p);
+  calc_weight(s, GS, state_t(N_GS-1, Sz_GS-0.5, 0), -1, "up", file, p);
+  calc_weight(s, GS, state_t(N_GS-1, Sz_GS+0.5, 0), -1, "dn", file, p);
 }
 
 void print_energies(store &s, double EGS, params &p) {
   std::cout << std::endl;
   for(auto ntot: p.numPart)
     for(auto Sz: p.Szs[ntot]) {
-      auto E0 = s.eigen0[subspace_t(ntot, Sz)].E();
+      auto E0 = s.eigen[state_t(ntot, Sz, 0)].E();
       std::cout << fmt::format("n = {:5}  Sz = {:4}  E = {:17}  DeltaE = {:17}", ntot, Sz, E0, E0-EGS) << std::endl;
       if (p.excited_state) {
-        auto E1 = s.eigen1[subspace_t(ntot, Sz)].E();
+        auto E1 = s.eigen[state_t(ntot, Sz, 1)].E();
         std::cout << fmt::format(" 1st excited state    E = {:17}  DeltaE = {:17}", E1, E1-EGS) << std::endl;
       }
     }
 }
 
-auto find_global_GS_subspace(store &s, auto & file) {
-  subspace_t subGS;
+auto find_global_GS(store &s, auto & file) {
+  state_t GS;
   double EGS = std::numeric_limits<double>::infinity();
-  for(const auto & [sub, eig] : s.eigen0) {
+  for(const auto & [st, eig] : s.eigen) {
     auto E0 = eig.E();
     if (E0 < EGS) {
       EGS = E0;
-      subGS = sub;
+      GS = st;
     }
   }
-  auto [N_GS, Sz_GS] = subGS;
+  auto [N_GS, Sz_GS, i] = GS;
+  my_assert(i == 0);
   std::cout << fmt::format("\nN_GS = {}\nSZ_GS = {}\n",N_GS, Sz_GS);
   dump(file, "/GS/N",  N_GS);
   dump(file, "/GS/Sz", Sz_GS);
-  return subGS;
+  return std::make_pair(GS, EGS);
 }
 
 // Loops over all particle sectors and prints relevant quantities
@@ -618,12 +630,12 @@ void calculateAndPrint(InputGroup &input, store &s, params &p) {
   for(auto ntot: p.numPart) {
     for (auto Sz: p.Szs[ntot]) {
       auto sub = subspace_t(ntot, Sz);
-      auto E = s.eigen0[sub].E();
+      auto E = s.eigen[gs(sub)].E();
       dump(file, str(sub, "0/E"), E);
-      MPS & GS = s.eigen0[sub].psi();
+      MPS & GS = s.eigen[gs(sub)].psi();
       std::cout << fmt::format("\n\nRESULTS FOR THE SECTOR WITH {} PARTICLES, Sz {}:", ntot, Sz) << std::endl
         << fmt::format("Ground state energy = {}", E) << std::endl
-        << fmt::format("norm = {}", s.stats0[sub].norm()) << std::endl;
+        << fmt::format("norm = {}", s.stats[gs(sub)].norm()) << std::endl;
       auto path0 = str(sub, "0");
       MeasureOcc(GS, file, path0, p);
       MeasurePairing(GS, file, path0, p);
@@ -636,23 +648,22 @@ void calculateAndPrint(InputGroup &input, store &s, params &p) {
       if (p.hoppingExpectation) expectedHopping(GS, file, path0, p);
       if (p.printTotSpinZ) TotalSpinz(GS, file, path0, p);
       // various measures of convergence (energy deviation, residual value)
-      std::cout << fmt::format("Eigenvalue(bis): <GS|H|GS> = {}", s.stats0[sub].Ebis()) << std::endl
-        << fmt::format("diff: E_GS - <GS|H|GS> = {}", E-s.stats0[sub].Ebis()) << std::endl // TODO: remove this
-        << fmt::format("deltaE: sqrt(<GS|H^2|GS> - <GS|H|GS>^2) = {}", s.stats0[sub].deltaE()) << std::endl
-        << fmt::format("residuum: <GS|H|GS> - E_GS*<GS|GS> = {}", s.stats0[sub].residuum()) << std::endl;
-      s.stats0[sub].dump(file, path0);
+      std::cout << fmt::format("Eigenvalue(bis): <GS|H|GS> = {}", s.stats[gs(sub)].Ebis()) << std::endl
+        << fmt::format("diff: E_GS - <GS|H|GS> = {}", E-s.stats[gs(sub)].Ebis()) << std::endl // TODO: remove this
+        << fmt::format("deltaE: sqrt(<GS|H^2|GS> - <GS|H|GS>^2) = {}", s.stats[gs(sub)].deltaE()) << std::endl
+        << fmt::format("residuum: <GS|H|GS> - E_GS*<GS|GS> = {}", s.stats[gs(sub)].residuum()) << std::endl;
+      s.stats[gs(sub)].dump(file, path0);
       if (p.excited_state){
-        double E1 = s.eigen1[sub].E();
-        MPS & ES = s.eigen1[sub].psi();
+        double E1 = s.eigen[es(sub)].E();
+        MPS & ES = s.eigen[es(sub)].psi();
         dump(file, str(sub, "1/E"), E1);
         MeasureOcc(ES, file, str(sub, "1"), p);
         std::cout << fmt::format("Excited state energy = {}", E1) << std::endl;
        }
     } //end of Sz for loop 
   } //end of ntot for loop
-  subspace_t subGS = find_global_GS_subspace(s, file);
-  auto EGS = s.eigen0[subGS].E();
+  auto [GS, EGS] = find_global_GS(s, file);
   print_energies(s, EGS, p);
   if (p.calcweights) 
-    calculate_spectral_weights(s, subGS, file, p);
+    calculate_spectral_weights(s, GS, file, p);
 }
