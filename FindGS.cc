@@ -91,6 +91,7 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   p.printTotSpinZ = input.getYesNo("printTotSpinZ", false);
 
   // parameters controlling the calculation
+  p.nrsweeps = input.getInt("nrsweeps", 15);
   p.printDimensions = input.getYesNo("printDimensions", false);
   p.parallel = input.getYesNo("parallel", false);
   p.verbose = input.getYesNo("verbose", false);
@@ -411,7 +412,7 @@ auto calcOcc(MPS &psi, const ndx_t &sites, const params &p) {
   for(const auto i : sites) {
     // position call very important! otherwise one would need to contract the whole tensor network of <psi|O|psi> this way, only the local operator at site i is needed
     psi.position(i);
-    auto val = psi.A(i) * p.sites.op("Ntot",i)* dag(prime(psi.A(i),"Site"));
+    auto val = psi.A(i) * p.sites.op("Ntot",i) * dag(prime(psi.A(i),"Site"));
     r.push_back(std::real(val.cplx()));
   }
   return r;
@@ -429,10 +430,10 @@ void MeasureOcc(MPS& psi, auto & file, std::string path, const params &p) {
 // This is actually sqrt of local charge correlation, <n_up n_down>-<n_up><n_down>, summed over all bath levels.
 // The sum (tot) corresponds to \bar{\Delta}', Eq. (4) in Braun, von Delft, PRB 50, 9527 (1999), first proposed by Dan Ralph.
 // It reduces to Delta_BCS in the thermodynamic limit (if the impurity is decoupled, Gamma=0).
-auto calcPairing(MPS &psi, const params &p) {
+auto calcPairing(MPS &psi, const ndx_t &sites, const params &p) {
   std::vector<complex_t> r;
   complex_t tot = 0;
-  for(auto i : range1(length(psi))) {
+  for(const auto i : sites) {
     psi.position(i);
     auto val2  = psi.A(i) * p.sites.op("Cdagup*Cup*Cdagdn*Cdn", i) * dag(prime(psi.A(i),"Site"));
     auto val1u = psi.A(i) * p.sites.op("Cdagup*Cup", i) * dag(prime(psi.A(i),"Site"));
@@ -447,7 +448,7 @@ auto calcPairing(MPS &psi, const params &p) {
 }
 
 void MeasurePairing(MPS& psi, auto & file, std::string path, const params &p) {
-  auto [r, tot] = calcPairing(psi, p);
+  auto [r, tot] = calcPairing(psi, range(1, p.N), p);
   std::cout << "site pairing = " << std::setprecision(full) << r << std::endl;
   std::cout << "tot = " << tot << std::endl;
   dumpreal(file, path + "/pairing", r);
@@ -460,7 +461,7 @@ void MeasurePairing(MPS& psi, auto & file, std::string path, const params &p) {
 auto calcAmplitudes(MPS &psi, const ndx_t &sites, const params &p) {
   std::vector<complex_t> rv, ru, rpdt;
   complex_t tot = 0;
-  for(auto i : sites) {
+  for(const auto i : sites) {
     psi.position(i);
     auto valv = psi.A(i) * p.sites.op("Cdagup*Cdagdn*Cdn*Cup", i) * dag(prime(psi.A(i),"Site"));
     auto valu = psi.A(i) * p.sites.op("Cdn*Cup*Cdagup*Cdagdn", i) * dag(prime(psi.A(i),"Site"));
@@ -525,13 +526,15 @@ state_t es(const subspace_t &sub)
   return state_t(std::get<charge>(sub), std::get<spin>(sub), 1); // 1st excited state in the subspace
 }
 
-//calculates the groundstates and the energies of the relevant particle number sectors
-void FindGS(InputGroup &input, store &s, params &p){
-  auto inputsw = InputGroup(p.inputfn,"sweeps");
-  auto sw_table = InputGroup(inputsw,"sweeps");
-  int nrsweeps = input.getInt("nrsweeps", 15);
-  auto sweeps = Sweeps(nrsweeps,sw_table);
+auto sweeps(params &p)
+{
+  auto inputsw = InputGroup(p.inputfn, "sweeps");
+  auto sw_table = InputGroup(inputsw, "sweeps");
+  return Sweeps(p.nrsweeps, sw_table);
+}
 
+//calculates the groundstates and the energies of the relevant particle number sectors
+void FindGS(InputGroup &input, store &s, params &p) {
 #pragma omp parallel for if(p.parallel) 
   for (size_t i=0; i<p.iterateOver.size(); i++){
     auto sub = p.iterateOver[i];
@@ -544,19 +547,19 @@ void FindGS(InputGroup &input, store &s, params &p){
       psi_init = applyMPO(H,psi_init,args);
       psi_init.noPrime().normalize();
     }
-    auto [E, psi] = dmrg(H, psi_init, sweeps, {"Silent", p.parallel, 
-                                               "Quiet", !p.printDimensions, 
-                                               "EnergyErrgoal", p.EnergyErrgoal});
-    double GSenergy = E+Eshift;
+    auto [E, psi] = dmrg(H, psi_init, sweeps(p), {"Silent", p.parallel, 
+        "Quiet", !p.printDimensions, 
+        "EnergyErrgoal", p.EnergyErrgoal});
+    const double GSenergy = E+Eshift;
     s.eigen[gs(sub)] = eigenpair(GSenergy, psi);
     s.stats[gs(sub)] = psi_stats(psi, H);
     if (p.excited_state) {
       auto wfs = std::vector<MPS>(1);
       wfs.at(0) = psi;
-      auto [E1, psi1] = dmrg(H, wfs, psi, sweeps, {"Silent", p.parallel,
-                                                   "Quiet", !p.printDimensions,
-                                                   "Weight", p.Weight});
-      double ESenergy = E1+Eshift;
+      auto [E1, psi1] = dmrg(H, wfs, psi, sweeps(p), {"Silent", p.parallel,
+          "Quiet", !p.printDimensions,
+          "Weight", p.Weight});
+      const double ESenergy = E1+Eshift;
       s.eigen[es(sub)] = eigenpair(ESenergy, psi1);
       s.stats[es(sub)] = psi_stats(psi1, H);
     }
@@ -597,7 +600,7 @@ void calc_weight(store &s, state_t GS, state_t ES, int q, std::string sz, auto &
 void calculate_spectral_weights(store &s, state_t GS, auto & file, params &p) {
   std::cout << std::endl << "Spectral weights:" << std::endl 
     << "(Spectral weight is the square of the absolute value of the number.)" << std::endl;
-  auto [N_GS, Sz_GS, i] = GS;
+  const auto [N_GS, Sz_GS, i] = GS;
   calc_weight(s, GS, state_t(N_GS+1, Sz_GS+0.5, 0), +1, "up", file, p);
   calc_weight(s, GS, state_t(N_GS+1, Sz_GS-0.5, 0), +1, "dn", file, p);
   calc_weight(s, GS, state_t(N_GS-1, Sz_GS-0.5, 0), -1, "up", file, p);
@@ -606,8 +609,8 @@ void calculate_spectral_weights(store &s, state_t GS, auto & file, params &p) {
 
 void print_energies(store &s, double EGS, params &p) {
   std::cout << std::endl;
-  for(auto ntot: p.numPart)
-    for(auto Sz: p.Szs[ntot]) {
+  for(const auto ntot: p.numPart)
+    for(const auto Sz: p.Szs[ntot]) {
       auto E0 = s.eigen[state_t(ntot, Sz, 0)].E();
       std::cout << fmt::format("n = {:5}  Sz = {:4}  E = {:22.15}  DeltaE = {:22.15}", ntot, Sz, E0, E0-EGS) << std::endl;
       if (p.excited_state) {
@@ -621,7 +624,7 @@ auto find_global_GS(store &s, auto & file) {
   auto m = std::min_element(begin(s.eigen), end(s.eigen), [](const auto &p1, const auto &p2) { return p1.second.E() < p2.second.E(); });
   state_t GS = m->first;
   double E_GS = m->second.E();
-  auto [N_GS, Sz_GS, i] = GS;
+  const auto [N_GS, Sz_GS, i] = GS;
   my_assert(i == 0);
   std::cout << fmt::format("\nN_GS = {}\nSZ_GS = {}\nE_GS = {}\n",N_GS, Sz_GS, E_GS);
   dump(file, "/GS/N",  N_GS);
@@ -632,10 +635,10 @@ auto find_global_GS(store &s, auto & file) {
 
 void calc_properties(state_t st, File &file, store &s, params &p)
 {
-  auto [ntot, Sz, i] = st;
-  auto path = fmt::format("{}/{}/{}", ntot, Sz, i);
+  const auto [ntot, Sz, i] = st;
+  const auto path = fmt::format("{}/{}/{}", ntot, Sz, i);
   std::cout << fmt::format("\n\nRESULTS FOR THE SECTOR WITH {} PARTICLES, Sz {}, state {}:", ntot, Sz, i) << std::endl;
-  auto E = s.eigen[st].E();
+  const auto E = s.eigen[st].E();
   std::cout << fmt::format("Energy = {}", E) << std::endl;
   dump(file, path + "/E", E);
   auto psi = s.eigen[st].psi();
@@ -652,11 +655,11 @@ void calc_properties(state_t st, File &file, store &s, params &p)
   s.stats[st].dump();
 }
 
-void calculateAndPrint(InputGroup &input, store &s, params &p) {
-  File file("solution.h5", File::Overwrite);
+void calculateAndPrint(InputGroup &input, store &s, params &p, std::string h5_filename) {
+  File file(h5_filename, File::Overwrite);
   for(const auto & [st, e]: s.eigen)
     calc_properties(st, file, s, p);
-  auto [GS, EGS] = find_global_GS(s, file);
+  const auto [GS, EGS] = find_global_GS(s, file);
   print_energies(s, EGS, p);
   if (p.calcweights) 
     calculate_spectral_weights(s, GS, file, p);

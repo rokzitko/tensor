@@ -253,6 +253,7 @@ struct params {
   bool calcweights;      // calculates the spectral weights of the two closes spectroscopically availabe excitations
   bool excited_state;    // computes the first excited state
 
+  int nrsweeps;          // number of DMRG sweeps to perform
   bool printDimensions;  // prints dmrg() prints info during the sweep
   bool refisn0;          // the energies will be computed in the sectors centered around the one with n = round(n0) + 1
   bool parallel;         // enables openMP parallel calculation of the for loop in findGS()
@@ -488,8 +489,8 @@ inline std::unique_ptr<problem_type> set_problem(std::string str)
   throw std::runtime_error("Unknown MPO type");
 }
 
-InputGroup parse_cmd_line(int, char * [], params &p);
-void FindGS(InputGroup &input, store &s, params &p);
-void calculateAndPrint(InputGroup &input, store &s, params &p);
+InputGroup parse_cmd_line(int, char * [], params &);
+void FindGS(InputGroup &input, store &s, params &);
+void calculateAndPrint(InputGroup &, store &, params &, std::string = "solution.h5");
 
 #endif
