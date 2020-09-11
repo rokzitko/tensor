@@ -584,10 +584,10 @@ void print_energies(store &s, double EGS, params &p) {
   for(auto ntot: p.numPart)
     for(auto Sz: p.Szs[ntot]) {
       auto E0 = s.eigen0[subspace(ntot, Sz)].E();
-      std::cout << fmt::format("n = {:5}  Sz = {:4}  E = {:17}  DeltaE = {:17}", ntot, Sz, E0, E0-EGS) << std::endl;
+      std::cout << fmt::format("n = {:5}  Sz = {:4}  E = {22:17}  DeltaE = {22:17}", ntot, Sz, E0, E0-EGS) << std::endl;
       if (p.excited_state) {
         auto E1 = s.eigen1[subspace(ntot, Sz)].E();
-        std::cout << fmt::format(" 1st excited state    E = {:17}  DeltaE = {:17}", E1, E1-EGS) << std::endl;
+        std::cout << fmt::format(" 1st excited state    E = {22:17}  DeltaE = {22:17}", E1, E1-EGS) << std::endl;
       }
     }
 }
