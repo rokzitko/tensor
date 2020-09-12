@@ -498,8 +498,8 @@ inline type_ptr set_problem(std::string str)
   throw std::runtime_error("Unknown MPO type");
 }
 
-InputGroup parse_cmd_line(int, char * [], params &);
-void FindGS(InputGroup &input, store &s, params &);
-void calculateAndPrint(InputGroup &, store &, params &, std::string = "solution.h5");
+void parse_cmd_line(int, char * [], params &);
+void solve_all(store &s, params &);
+void process_and_save_results(store &, params &, std::string = "solution.h5");
 
 #endif

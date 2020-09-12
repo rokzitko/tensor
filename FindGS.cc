@@ -38,7 +38,7 @@ void init_subspace_lists(params &p)
   }
 }
 
-InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
+void parse_cmd_line(int argc, char *argv[], params &p) {
   if (argc != 2)
     throw std::runtime_error("Please provide input file. Usage: executable <input file>");
   p.inputfn = { argv[1] };                                 // read parameters from the input file
@@ -102,7 +102,6 @@ InputGroup parse_cmd_line(int argc, char *argv[], params &p) {
   p.Weight = input.getReal("Weight", 11.0);
 
   init_subspace_lists(p);
-  return input;
 }
 
 // nsc = number of electrons to add, Szadd = spin of the unpaired electron in the case of odd nsc
@@ -210,7 +209,7 @@ auto calcChargeCorrelation(MPS& psi, const ndx_t sites, const params &p) {
   return std::make_pair(r, tot);
 }
 
-void ChargeCorrelation(MPS& psi, auto & file, std::string path, const params &p) {
+void MeasureChargeCorrelation(MPS& psi, auto & file, std::string path, const params &p) {
   const auto [r, tot] = calcChargeCorrelation(psi, range(1, p.N), p);
   std::cout << "charge correlation = " << std::setprecision(full) << r << std::endl;
   std::cout << "charge correlation tot = " << tot << std::endl;
@@ -271,7 +270,7 @@ auto calcSpinCorrelation(MPS& psi, const ndx_t &sites, const params &p) {
   return std::make_tuple(onSiteSzSz, onSiteSpSm, onSiteSmSp, rzz, rpm, rmp, tot);
 }
 
-void SpinCorrelation(MPS& psi, File & file, std::string path, const params &p) {
+void MeasureSpinCorrelation(MPS& psi, File & file, std::string path, const params &p) {
   const auto [onSiteSzSz, onSiteSpSm, onSiteSmSp, rzz, rpm, rmp, tot] = calcSpinCorrelation(psi, range(1, p.N), p);
   std::cout << "spin correlations:\n";
   std::cout << "SzSz correlations: ";
@@ -308,7 +307,7 @@ auto calcPairCorrelation(MPS& psi, const ndx_t &sites, const params &p) {
   return std::make_pair(r, tot);
 }
 
-void PairCorrelation(MPS& psi, File & file, std::string path, const params &p) {
+void MeasurePairCorrelation(MPS& psi, File & file, std::string path, const params &p) {
   const auto [r, tot] = calcPairCorrelation(psi, range(1, p.N), p);
   std::cout << "pair correlation = " << std::setprecision(full) << r << std::endl;
   std::cout << "pair correlation tot = " << tot << std::endl;
@@ -318,7 +317,7 @@ void PairCorrelation(MPS& psi, File & file, std::string path, const params &p) {
 
 //Prints <d^dag c_i + c_i^dag d> for each i. the sum of this expected value, weighted by 1/sqrt(N)
 //gives <d^dag f_0 + f_0^dag d>, where f_0 = 1/sqrt(N) sum_i c_i. This is the expected value of hopping.
-auto calcexpectedHopping(MPS& psi, const ndx_t &sites, const params &p) {
+auto calcHopping(MPS& psi, const ndx_t &sites, const params &p) {
   std::vector<double> rup, rdn;
   double totup = 0;
   double totdn = 0;
@@ -353,8 +352,8 @@ auto calcexpectedHopping(MPS& psi, const ndx_t &sites, const params &p) {
   return std::make_tuple(rup, rdn, totup, totdn);
 }
 
-void expectedHopping(MPS& psi, File & file, std::string path, const params &p) {
-  const auto [rup, rdn, totup, totdn] = calcexpectedHopping(psi, range(1, p.N), p);
+void MeasureHopping(MPS& psi, File & file, std::string path, const params &p) {
+  const auto [rup, rdn, totup, totdn] = calcHopping(psi, range(1, p.N), p);
   std::cout << "hopping spin up = " << std::setprecision(full) << rup << std::endl;
   std::cout << "hopping correlation up tot = " << totup << std::endl;
   std::cout << "hopping spin down = " << std::setprecision(full) << rdn << std::endl;
@@ -376,7 +375,7 @@ auto calc_NUp_NDn(MPS& psi, int ndx, const params &p){
   return std::make_pair(std::real(valnup.cplx()), std::real(valndn.cplx()));
 }
 
-void ImpurityUpDn(MPS& psi, auto &file, std::string path, const params &p){
+void MeasureImpurityUpDn(MPS& psi, auto &file, std::string path, const params &p){
   const auto [up, dn] = calc_NUp_NDn(psi, p.impindex, p);
   const auto sz = 0.5*(up-dn);
   std::cout << "impurity nup ndn = " << std::setprecision(full) << up << " " << dn << " sz = " << sz << std::endl;
@@ -400,7 +399,7 @@ auto calcTotalSpinz(MPS& psi, const ndx_t &sites, const params &p) {
   return std::make_tuple(totNup, totNdn, totSz);
 }
 
-void TotalSpinz(MPS& psi, File &file, std::string path, const params &p) {
+void MeasureTotalSpinz(MPS& psi, File &file, std::string path, const params &p) {
   const auto [totNup, totNdn, totSz] = calcTotalSpinz(psi, range(1, p.N), p);
   std::cout << std::setprecision(full) << "Total spin z: " << " Nup = " << totNup << " Ndn = " << totNdn << " Sztot = " << totSz << std::endl;
   dump(file, path + "/total_Nup", totNup);
@@ -409,7 +408,7 @@ void TotalSpinz(MPS& psi, File &file, std::string path, const params &p) {
 }
 
 // occupation numbers of levels 'sites'
-auto calcOcc(MPS &psi, const ndx_t &sites, const params &p) {
+auto calcOccupancy(MPS &psi, const ndx_t &sites, const params &p) {
   std::vector<double> r;
   for(const auto i : sites) {
     // position call very important! otherwise one would need to contract the whole tensor network of <psi|O|psi> this way, only the local operator at site i is needed
@@ -420,8 +419,8 @@ auto calcOcc(MPS &psi, const ndx_t &sites, const params &p) {
   return r;
 }
 
-void MeasureOcc(MPS& psi, auto & file, std::string path, const params &p) {
-  const auto r = calcOcc(psi, range(1, p.N), p);
+void MeasureOccupancy(MPS& psi, auto & file, std::string path, const params &p) {
+  const auto r = calcOccupancy(psi, range(1, p.N), p);
   const auto tot = std::accumulate(r.cbegin(), r.cend(), 0.0);
   std::cout << "site occupancies = " << std::setprecision(full) << r << std::endl;
   std::cout << "tot = " << tot << std::endl;
@@ -512,7 +511,7 @@ auto calcEntropy(MPS& psi, const params &p) {
   return SvN;
 }
 
-void PrintEntropy(MPS& psi, auto & file, std::string path, const params &p) {
+void MeasureEntropy(MPS& psi, auto & file, std::string path, const params &p) {
   const auto SvN = calcEntropy(psi, p);
   std::cout << fmt::format("Entanglement entropy across impurity bond b={}, SvN = {:10}", p.impindex, SvN) << std::endl;
   dump(file, path + "/entanglement_entropy_imp", SvN);
@@ -535,7 +534,7 @@ auto sweeps(params &p)
   return Sweeps(p.nrsweeps, sw_table);
 }
 
-void solve(const subspace_t &sub, InputGroup &input, store &s, params &p) {
+void solve_subspace(const subspace_t &sub, store &s, params &p) {
   std::cout << "\nSweeping in the sector " << sub << std::endl;
   auto [H, Eshift] = p.problem->initH(sub, p);
   auto psi_init = initPsi(sub, p.sites, p.impindex, p.sc_only, p.randomMPSb, p);
@@ -563,11 +562,11 @@ void solve(const subspace_t &sub, InputGroup &input, store &s, params &p) {
   }
 }
 
-void FindGS(InputGroup &input, store &s, params &p) {
+void solve_all(store &s, params &p) {
 #pragma omp parallel for if(p.parallel) 
   for (size_t i=0; i<p.iterateOver.size(); i++) {
     auto sub = p.iterateOver[i];
-    solve(sub, input, s, p);
+    solve_subspace(sub, s, p);
   }
 }
   
@@ -647,20 +646,20 @@ void calc_properties(state_t st, File &file, store &s, params &p)
   std::cout << fmt::format("Energy = {}", E) << std::endl;
   dump(file, path + "/E", E);
   auto psi = s.eigen[st].psi();
-  MeasureOcc(psi, file, path, p);
+  MeasureOccupancy(psi, file, path, p);
   MeasurePairing(psi, file, path, p);
   MeasureAmplitudes(psi, file, path, p);
-  if (p.computeEntropy) PrintEntropy(psi, file, path, p);
-  if (p.impNupNdn) ImpurityUpDn(psi, file, path, p);
-  if (p.chargeCorrelation) ChargeCorrelation(psi, file, path, p);
-  if (p.spinCorrelation) SpinCorrelation(psi, file, path, p);
-  if (p.pairCorrelation) PairCorrelation(psi, file, path, p);
-  if (p.hoppingExpectation) expectedHopping(psi, file, path, p);
-  if (p.printTotSpinZ) TotalSpinz(psi, file, path, p);
+  if (p.computeEntropy) MeasureEntropy(psi, file, path, p);
+  if (p.impNupNdn) MeasureImpurityUpDn(psi, file, path, p);
+  if (p.chargeCorrelation) MeasureChargeCorrelation(psi, file, path, p);
+  if (p.spinCorrelation) MeasureSpinCorrelation(psi, file, path, p);
+  if (p.pairCorrelation) MeasurePairCorrelation(psi, file, path, p);
+  if (p.hoppingExpectation) MeasureHopping(psi, file, path, p);
+  if (p.printTotSpinZ) MeasureTotalSpinz(psi, file, path, p);
   s.stats[st].dump();
 }
 
-void calculateAndPrint(InputGroup &input, store &s, params &p, std::string h5_filename) {
+void process_and_save_results(store &s, params &p, std::string h5_filename) {
   File file(h5_filename, File::Overwrite);
   for(const auto & [st, e]: s.eigen)
     calc_properties(st, file, s, p);
