@@ -1,4 +1,4 @@
-include /home/zitko/repos/itensor/options.mk
+include ${HOME}/repos/itensor/options.mk
 
 ITENSOR_LIBDIR=${ITENSOR}/lib
 PREFIX=${ITENSOR}
