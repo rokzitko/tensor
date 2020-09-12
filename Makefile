@@ -4,10 +4,10 @@ ITENSOR_LIBDIR=${ITENSOR}/lib
 PREFIX=${ITENSOR}
 
 TENSOR_HEADERS=$(PREFIX)/itensor/all.h
-CCFLAGS= -I. -I./include $(ITENSOR_INCLUDEFLAGS) $(CPPFLAGS) $(OPTIMIZATIONS) -fopenmp -Wno-unused-variable -fconcepts
-CCGFLAGS= -I. -I./include $(ITENSOR_INCLUDEFLAGS) $(DEBUGFLAGS) -fopenmp -fconcepts
-LIBFLAGS=-L'$(ITENSOR_LIBDIR)' $(ITENSOR_LIBFLAGS) -lhdf5
-LIBGFLAGS=-L'$(ITENSOR_LIBDIR)' $(ITENSOR_LIBGFLAGS) -lhdf5
+CCFLAGS= -I. -I./include $(ITENSOR_INCLUDEFLAGS) $(CPPFLAGS) $(OPTIMIZATIONS) -Wno-unused-variable -fconcepts
+CCGFLAGS= -I. -I./include $(ITENSOR_INCLUDEFLAGS) $(DEBUGFLAGS) -fconcepts
+LIBFLAGS=-L'$(ITENSOR_LIBDIR)' $(ITENSOR_LIBFLAGS) -lhdf5 -ltbb $(myRPATH)
+LIBGFLAGS=-L'$(ITENSOR_LIBDIR)' $(ITENSOR_LIBGFLAGS) -lhdf5 -ltbb -Wl,-rpath,$(myRPATH)
 MPOFILES = $(wildcard SC_BathMPO*.h)
 
 #Rules ------------------

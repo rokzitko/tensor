@@ -11,8 +11,9 @@ auto n_list(int nref, int nrange) {
   return n;
 }
 
-void init_subspace_lists(params &p)
+std::vector<subspace_t> init_subspace_lists(params &p)
 {
+  std::vector<subspace_t> l;
   const int nhalf = p.N;  // total nr of electrons at half-filling
   int nref = nhalf;       // default
   if (p.nref >= 0) {      // override
@@ -34,8 +35,9 @@ void init_subspace_lists(params &p)
     }
     p.Szs[ntot] = sz_list;
     for (auto sz : sz_list) 
-      p.iterateOver.push_back(subspace_t(ntot, sz));
+      l.push_back(subspace_t(ntot, sz));
   }
+  return l;
 }
 
 void parse_cmd_line(int argc, char *argv[], params &p) {
@@ -91,17 +93,15 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.printTotSpinZ = input.getYesNo("printTotSpinZ", false);
 
   // parameters controlling the calculation
-  p.nrsweeps = input.getInt("nrsweeps", 15);
-  p.printDimensions = input.getYesNo("printDimensions", false);
-  p.parallel = input.getYesNo("parallel", false);
   p.verbose = input.getYesNo("verbose", false);
+  p.nrsweeps = input.getInt("nrsweeps", 15);
+  p.Quiet = input.getYesNo("Quiet", false);
+  p.Silent = input.getYesNo("Silent", false);
   p.EnergyErrgoal = input.getReal("EnergyErrgoal", 1e-16);
   p.nrH = input.getInt("nrH", 5);
   p.sc_only = input.getYesNo("sc_only", false);
   p.randomMPSb = input.getYesNo("randomMPS", false);
   p.Weight = input.getReal("Weight", 11.0);
-
-  init_subspace_lists(p);
 }
 
 inline void add_imp_electron(const double Sz, const int impindex, auto & state, charge & tot, spin & Sztot)
@@ -546,30 +546,25 @@ void solve_subspace(const subspace_t &sub, store &s, params &p) {
     psi_init = applyMPO(H,psi_init,args);
     psi_init.noPrime().normalize();
   }
-  auto [E, psi] = dmrg(H, psi_init, sweeps(p), {"Silent", p.parallel, 
-      "Quiet", !p.printDimensions, 
-      "EnergyErrgoal", p.EnergyErrgoal});
+  auto [E, psi] = dmrg(H, psi_init, sweeps(p), {"Silent", p.Silent, 
+      "Quiet", p.Quiet, "EnergyErrgoal", p.EnergyErrgoal});
   const double GSenergy = E+Eshift;
   s.eigen[gs(sub)] = eigenpair(GSenergy, psi);
   s.stats[gs(sub)] = psi_stats(psi, H);
   if (p.excited_state) {
     auto wfs = std::vector<MPS>(1);
     wfs.at(0) = psi;
-    auto [E1, psi1] = dmrg(H, wfs, psi, sweeps(p), {"Silent", p.parallel,
-        "Quiet", !p.printDimensions,
-        "Weight", p.Weight});
+    auto [E1, psi1] = dmrg(H, wfs, psi, sweeps(p), {"Silent", p.Silent,
+        "Quiet", p.Quiet, "Weight", p.Weight});
     const double ESenergy = E1+Eshift;
     s.eigen[es(sub)] = eigenpair(ESenergy, psi1);
     s.stats[es(sub)] = psi_stats(psi1, H);
   }
 }
 
-void solve_all(store &s, params &p) {
-#pragma omp parallel for if(p.parallel) 
-  for (size_t i=0; i<p.iterateOver.size(); i++) {
-    auto sub = p.iterateOver[i];
-    solve_subspace(sub, s, p);
-  }
+void solve_all(const std::vector<subspace_t> &l, store &s, params &p) {
+  std::for_each(std::execution::par, l.cbegin(), l.cend(), 
+                [&s,&p](const auto  &sub) { solve_subspace(sub, s, p); });
 }
   
 // calculates <psi1|c_dag|psi2>, according to http://itensor.org/docs.cgi?vers=cppv3&page=formulas/mps_onesite_op

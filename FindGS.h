@@ -8,11 +8,12 @@
 #include <vector>
 #include <map>
 #include <stdexcept>
-#include <limits> // quiet_NaN
+#include <limits>
 #include <tuple>
 #include <cassert>
 #include <utility>
 #include <algorithm>
+#include <execution>
 
 #include <gsl/gsl_assert>
 
@@ -240,9 +241,8 @@ struct params {
   bool excited_state;    // computes the first excited state
 
   int nrsweeps;          // number of DMRG sweeps to perform
-  bool printDimensions;  // prints dmrg() prints info during the sweep
+  bool Quiet, Silent;    // control output in dmrg()
   bool refisn0;          // the energies will be computed in the sectors centered around the one with n = round(n0) + 1
-  bool parallel;         // enables openMP parallel calculation of the for loop in findGS()
   bool verbose;          // verbosity level
   bool band_level_shift; // shifts the band levels for a constant in order to make H particle-hole symmetric
   bool sc_only;          // do not put any electrons on the SC in the initial state
@@ -482,7 +482,8 @@ inline type_ptr set_problem(std::string str)
 }
 
 void parse_cmd_line(int, char * [], params &);
-void solve_all(store &s, params &);
+std::vector<subspace_t> init_subspace_lists(params &p);
+void solve_all(const std::vector<subspace_t> &l, store &s, params &);
 void process_and_save_results(store &, params &, std::string = "solution.h5");
 
 #endif
