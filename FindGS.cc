@@ -138,11 +138,8 @@ inline void add_bath_electrons(const int nsc, const spin & Szadd, const ndx_t &b
   }
 }
 
-// Initialize the MPS in a product state with ntot electrons.
-// Sz is the z-component of the total spin.
-// Electron is added on the impurity site only if sc_only=false.
-MPS initPsi(subspace_t sub, const auto &sites, int impindex, bool sc_only, bool randomMPSb, params &p) {
-  const auto [ntot, Sz] = sub;
+auto initState(subspace_t sub, const auto &sites, int impindex, bool sc_only, params &p) {
+  const auto [ntot, Sz] = sub; // Sz is the z-component of the total spin.
   Expects(0 <= ntot && ntot <= 2*p.N);
   Expects(Sz == -1 || Sz == -0.5 || Sz == 0 || Sz == +0.5 || Sz == +1);
   int tot = 0;      // electron counter, for assertion test
@@ -161,10 +158,7 @@ MPS initPsi(subspace_t sub, const auto &sites, int impindex, bool sc_only, bool 
   }
   Ensures(tot == ntot);
   Ensures(Sztot == Sz);
-  MPS psi(state);
-  if (randomMPSb)
-    psi = randomMPS(state);
-  return psi;
+  return state;
 }
 
 // Range of integers [a:b], end points included.
@@ -542,7 +536,10 @@ auto sweeps(params &p)
 void solve_subspace(const subspace_t &sub, store &s, params &p) {
   std::cout << "\nSweeping in the sector " << sub << std::endl;
   auto [H, Eshift] = p.problem->initH(sub, p);
-  auto psi_init = initPsi(sub, p.sites, p.impindex, p.sc_only, p.randomMPSb, p);
+  auto state = initState(sub, p.sites, p.impindex, p.sc_only, p);
+  MPS psi_init(state);
+  if (p.randomMPSb)
+    psi_init = randomMPS(state);
   Args args; // args is used to store and transport parameters between various functions
   // Apply the MPO a couple of times to get DMRG started, otherwise it might not converge.
   for(auto i : range1(p.nrH)){
