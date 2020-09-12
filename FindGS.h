@@ -18,6 +18,7 @@
 
 #include <itensor/all.h>
 #include <itensor/util/args.h>
+using namespace itensor;
 
 #define FMT_HEADER_ONLY
 #include <fmt/format.h>
@@ -26,6 +27,27 @@
 
 #include <highfive/H5Easy.hpp>
 using namespace H5Easy;
+
+using complex_t = std::complex<double>;
+
+constexpr auto full = std::numeric_limits<double>::max_digits10;
+
+using charge = int;
+using spin = double;
+
+constexpr auto spin0 = spin(0);
+constexpr auto spinp = spin(0.5);
+constexpr auto spinm = spin(-0.5);
+
+using subspace_t = std::pair<charge, spin>;
+using state_t = std::tuple<charge, spin, int>;
+
+class problem_type;
+using type_ptr = std::unique_ptr<problem_type>;
+type_ptr set_problem(std::string);
+
+using H_t = std::tuple<MPO, double>;
+using ndx_t = std::vector<int>;
 
 template <typename T>
 inline DataSet dumpreal(File& file,
@@ -48,12 +70,6 @@ inline DataSet dumpreal(File& file,
     realdata.push_back(std::real(z));
   return dump(file, path, realdata, mode);
 }
-
-using namespace itensor;
-
-using complex_t = std::complex<double>;
-
-constexpr auto full = std::numeric_limits<double>::max_digits10;
 
 inline bool even(int i) { return i%2 == 0; }
 inline bool odd(int i) { return i%2 != 0; }
@@ -167,29 +183,6 @@ class hyb {
    }
 };
 
-using charge = int;
-using spin = double;
-
-constexpr auto spin0 = spin(0);
-constexpr auto spinp = spin(0.5);
-constexpr auto spinm = spin(-0.5);
-
-using subspace_t = std::pair<charge, spin>;
-using state_t = std::tuple<charge, spin, int>;
-
-inline std::string str(subspace_t &sub)
-{
-  std::ostringstream ss;
-  auto [n, sz] = sub;
-  ss << "/" << n << "/" << sz;
-  return ss.str();
-}
-
-inline std::string str(subspace_t &sub, std::string s)
-{
-  return str(sub) + "/" + s;
-}
-
 class eigenpair {
  private:
    Real _E = 0; // eigenenergy
@@ -219,10 +212,6 @@ class psi_stats {
        << fmt::format("deltaE^2: <psi|H^2|psi> - <psi|H|psi>^2 = {}", _deltaE2) << std::endl;
    }
 };
-
-class problem_type;
-using type_ptr = std::unique_ptr<problem_type>;
-type_ptr set_problem(std::string);
 
 // parameters from the input file
 struct params {
@@ -286,9 +275,6 @@ struct store
   std::map<state_t, psi_stats> stats;
 };
 
-using H_t = std::tuple<MPO, double>;
-using ndx_t = std::vector<int>;
-
 class problem_type {
  public:
    virtual int imp_index(int) = 0;
@@ -335,6 +321,7 @@ class imp_middle : virtual public problem_type
    }
 };
 
+// The functions in these headers take a class params argument
 #include "SC_BathMPO.h"
 #include "SC_BathMPO_Ec.h"
 #include "SC_BathMPO_Ec_V.h"
