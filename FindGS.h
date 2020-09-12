@@ -1,9 +1,6 @@
 #ifndef _calcGS_h_
 #define _calcGS_h_
 
-#include <itensor/all.h>
-#include <itensor/util/args.h>
-
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -17,6 +14,11 @@
 #include <utility>
 #include <algorithm>
 
+#include <gsl/gsl_assert>
+
+#include <itensor/all.h>
+#include <itensor/util/args.h>
+
 #define FMT_HEADER_ONLY
 #include <fmt/format.h>
 
@@ -24,12 +26,6 @@
 
 #include <highfive/H5Easy.hpp>
 using namespace H5Easy;
-
-#define my_assert(x) do { \
-  if (!(x)) { \
-    std::cout << "Failed assertion, file " << __FILE__ << ", line " << __LINE__ << std::endl; \
-    throw std::runtime_error("Failed assertion"); \
-  }} while(0)
 
 template <typename T>
 inline DataSet dumpreal(File& file,
@@ -312,7 +308,7 @@ class imp_first : virtual public problem_type
      return l;
    }
    ndx_t bath_indexes(int NBath, int ch) override { 
-     my_assert(ch == 1);
+     Expects(ch == 1);
      return bath_indexes(NBath);
    }
 };
@@ -321,11 +317,11 @@ class imp_middle : virtual public problem_type
 {
  public:
    int imp_index(int NBath) override {
-     my_assert(even(NBath));
+     Expects(even(NBath));
      return 1+NBath/2;
    }
    ndx_t bath_indexes(int NBath) override {
-     my_assert(even(NBath));
+     Expects(even(NBath));
      ndx_t l;
      for (int i = 1; i <= 1+NBath; i++)
        if (i != 1+NBath/2) 
@@ -333,7 +329,7 @@ class imp_middle : virtual public problem_type
      return l;
    }
    ndx_t bath_indexes(int NBath, int ch) override {
-     my_assert(ch == 1 || ch == 2);
+     Expects(ch == 1 || ch == 2);
      auto ndx = bath_indexes(NBath);
      return ch == 1 ? ndx_t(ndx.begin(), ndx.begin() + NBath/2) : ndx_t(ndx.begin() + NBath/2, ndx.begin() + NBath);
    }
@@ -474,8 +470,8 @@ namespace prob {
    class twoch : public imp_middle, public two_channel {
     public:
       H_t initH(subspace_t sub, params &p) override {
-        my_assert(even(p.NBath)); // in 2-ch problems, NBath is the total number of bath sites in both SCs !!
-        my_assert(p.sc1->NBath() + p.sc2->NBath() == p.NBath);
+        Expects(even(p.NBath)); // in 2-ch problems, NBath is the total number of bath sites in both SCs !!
+        Expects(p.sc1->NBath() + p.sc2->NBath() == p.NBath);
         auto [eps, V] = get_eps_V(p.sc1, p.Gamma1, p.sc2, p.Gamma2, p);
         MPO H(p.sites);
         double Eshift = p.sc1->Ec()*pow(p.sc1->n0(), 2) + p.sc2->Ec()*pow(p.sc2->n0(), 2) + p.qd->U()/2;

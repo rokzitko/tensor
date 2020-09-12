@@ -104,16 +104,29 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   init_subspace_lists(p);
 }
 
+inline void add_imp_electron(const double Sz, const int impindex, auto & state, charge & tot, spin & Sztot)
+{
+  if (Sz == -1 || Sz == -0.5) {
+    state.set(impindex, "Dn");
+    Sztot -= 0.5;
+  }
+  if (Sz == 0 || Sz == +0.5 || Sz == +1) {
+    state.set(impindex, "Up");
+    Sztot += 0.5;
+  }
+  tot++;
+}
+
 // nsc = number of electrons to add, Szadd = spin of the unpaired electron in the case of odd nsc
-void add_bath_electrons(const int nsc, const spin & Szadd, const ndx_t &bath, auto & state, charge & tot, spin & Sztot)
+inline void add_bath_electrons(const int nsc, const spin & Szadd, const ndx_t &bath, auto & state, charge & tot, spin & Sztot)
 {
   const size_t npair = nsc/2;            // number of pairs to add
-  my_assert(bath.size() >= npair);
+  Expects(bath.size() >= npair);
   for (size_t j = 0; j < npair; j++)
     state.set(bath[j], "UpDn");
   tot += npair*2;                        // Sztot does not change!
   if (odd(nsc)) {                        // if ncs is odd, add one electron
-    my_assert(bath.size() >= npair+1);
+    Expects(bath.size() >= npair+1);
     const auto i = bath[npair];          // note: vector bath is 0-based
     if (Szadd == 0.5) 
       state.set(i, "Up");
@@ -130,32 +143,24 @@ void add_bath_electrons(const int nsc, const spin & Szadd, const ndx_t &bath, au
 // Electron is added on the impurity site only if sc_only=false.
 MPS initPsi(subspace_t sub, const auto &sites, int impindex, bool sc_only, bool randomMPSb, params &p) {
   const auto [ntot, Sz] = sub;
-  my_assert(0 <= ntot && ntot <= 2*p.N);
-  my_assert(Sz == -1 || Sz == -0.5 || Sz == 0 || Sz == +0.5 || Sz == +1);
+  Expects(0 <= ntot && ntot <= 2*p.N);
+  Expects(Sz == -1 || Sz == -0.5 || Sz == 0 || Sz == +0.5 || Sz == +1);
   int tot = 0;      // electron counter, for assertion test
   double Sztot = 0; // SZ counter, for assertion test
   auto state = InitState(sites);
   const auto nimp = sc_only ? 0 : 1;        // number of electrons in the impurity level
   const auto nsc = sc_only ? ntot : ntot-1; // number of electrons in the bath
+  Ensures(nimp + nsc == ntot);
   // ** Add electron to the impurity site
-  if (nimp) {
-    if (Sz == -1 || Sz == -0.5) {
-      state.set(impindex, "Dn");
-      Sztot -= 0.5;
-    }
-    if (Sz == 0 || Sz == +0.5 || Sz == +1) {
-      state.set(impindex, "Up");
-      Sztot += 0.5;
-    }
-    tot++;
-  }
+  if (nimp)
+    add_imp_electron(Sz, impindex, state, tot, Sztot);
   // ** Add electrons to the bath
   if (nsc) {
     ndx_t bath_sites = p.problem->bath_indexes(p.NBath);
     add_bath_electrons(nsc, Sz-Sztot, bath_sites, state, tot, Sztot);
   }
-  my_assert(tot == ntot);
-  my_assert(Sztot == Sz);
+  Ensures(tot == ntot);
+  Ensures(Sztot == Sz);
   MPS psi(state);
   if (randomMPSb)
     psi = randomMPS(state);
@@ -173,7 +178,7 @@ inline ndx_t range(int a, int b)
 
 // computes the correlation between operator impOp on impurity and operator opj on j
 double ImpurityCorrelator(MPS& psi, auto impOp, int j, auto opj, const params &p) {
-  my_assert(p.impindex == 1); // !!!
+  Expects(p.impindex == 1);
   psi.position(p.impindex);
   MPS psidag = dag(psi);
   psidag.prime("Link");
@@ -494,7 +499,7 @@ void MeasureAmplitudes(MPS& psi, auto & file, std::string path, const params &p)
 // Copied from https://www.itensor.org/docs.cgi?vers=cppv3&page=formulas/entanglement_mps
 // von Neumann entropy at the bond between impurity and next site.
 auto calcEntropy(MPS& psi, const params &p) {
-  my_assert(p.impindex == 1); // Works as intended only if p.impindex=1.
+  Expects(p.impindex == 1); // Works as intended only if p.impindex=1.
   psi.position(p.impindex);
   // SVD this wavefunction to get the spectrum of density-matrix eigenvalues
   auto l = leftLinkIndex(psi, p.impindex);
@@ -629,7 +634,7 @@ auto find_global_GS(store &s, auto & file) {
   state_t GS = m->first;
   double E_GS = m->second.E();
   const auto [N_GS, Sz_GS, i] = GS;
-  my_assert(i == 0);
+  Expects(i == 0);
   std::cout << fmt::format("\nN_GS = {}\nSZ_GS = {}\nE_GS = {}\n",N_GS, Sz_GS, E_GS);
   dump(file, "/GS/N",  N_GS);
   dump(file, "/GS/Sz", Sz_GS);

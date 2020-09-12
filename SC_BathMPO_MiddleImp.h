@@ -1,6 +1,7 @@
 inline void Fill_SCBath_MPO_MiddleImp(MPO& H, const std::vector<double>& eps_,
                                       const std::vector<double>& v_, double epseff, double Ueff, const params &p)
 {
+  Expects(odd(length(H)));
   // QN objects are necessary to have abelian symmetries in MPS
   // automatically find the correct values
   QN qn0  = - div( p.sites.op( "Id",      1) ),
@@ -15,12 +16,9 @@ inline void Fill_SCBath_MPO_MiddleImp(MPO& H, const std::vector<double>& eps_,
   std::vector<Index> links;
   links.push_back( Index() );
 
-  my_assert(odd(length(H)));
-  int impSite = std::round( (length(H)+1)/2 );
-  my_assert(p.impindex == impSite);
 
     //first we create the link indices which carry quantum number information
-    for(auto i : range1( impSite-1 )){
+    for(auto i : range1( p.impindex-1 )){
         links.push_back(Index(  qn0,       2,
                                 cupC,      1,
                                 cdnC,      1,
@@ -31,7 +29,7 @@ inline void Fill_SCBath_MPO_MiddleImp(MPO& H, const std::vector<double>& eps_,
 
     }
     //first we create the link indices which carry quantum number information
-    for(auto i : range1( impSite, length(H)-1 )){
+    for(auto i : range1( p.impindex, length(H)-1 )){
         links.push_back(Index(  qn0,       2,
                                 cupA,      1,
                                 cdnA,      1,
@@ -74,8 +72,8 @@ inline void Fill_SCBath_MPO_MiddleImp(MPO& H, const std::vector<double>& eps_,
         W += p.sites.op("Cdagup*Cdagdn", i) * setElt(right(8)) * p.sc->g();
     }
 
-    // sites 2 ... impSite-1 are matrices
-    for(auto i : range1(2, impSite-1 )){
+    // sites 2 ... p.impindex-1 are matrices
+    for(auto i : range1(2, p.impindex-1 )){
         ITensor& W = H.ref(i);
         Index left = dag( links.at(i-1) );
         Index right = links.at(i);
@@ -117,7 +115,7 @@ inline void Fill_SCBath_MPO_MiddleImp(MPO& H, const std::vector<double>& eps_,
 
     // impurity 
     {
-        int i = impSite;
+        int i = p.impindex;
         ITensor& W = H.ref(i);
         Index left = dag( links.at(i-1) );
         Index right = links.at(i);
@@ -151,8 +149,8 @@ inline void Fill_SCBath_MPO_MiddleImp(MPO& H, const std::vector<double>& eps_,
     }
 
 
-    // sites impSite+1 ... N -1 are the same as before
-    for(auto i : range1(impSite+1, length(H)-1 )){
+    // sites p.impindex+1 ... N -1 are the same as before
+    for(auto i : range1(p.impindex+1, length(H)-1 )){
         ITensor& W = H.ref(i);
         Index left = dag( links.at(i-1) );
         Index right = links.at(i);
