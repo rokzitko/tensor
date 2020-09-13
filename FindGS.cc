@@ -14,7 +14,7 @@ std::vector<subspace_t> init_subspace_lists(params &p)
     spin szmax = even(ntot) ? (p.spin1 ? 1 : 0) : 0.5;
     spin szmin = p.magnetic_field() ? -szmax : (even(ntot) ? 0 : 0.5);
     for (spin sz = szmin; sz <= szmax; sz += 1.0)
-      l.push_back(subspace_t(ntot, sz));
+      l.push_back({ntot, sz});
   }
   return l;
 }
@@ -430,16 +430,6 @@ void MeasureEntropy(MPS& psi, auto & file, std::string path, const params &p) {
   dump(file, path + "/entanglement_entropy_imp", SvN);
 }
 
-inline state_t gs(const subspace_t &sub)
-{
-  return state_t(std::get<charge>(sub), std::get<spin>(sub), 0); // ground state in the subspace
-}
-
-inline state_t es(const subspace_t &sub)
-{
-  return state_t(std::get<charge>(sub), std::get<spin>(sub), 1); // 1st excited state in the subspace
-}
-
 auto sweeps(params &p)
 {
   auto inputsw = InputGroup(p.inputfn, "sweeps");
@@ -481,6 +471,51 @@ void solve_all(const std::vector<subspace_t> &l, store &s, params &p) {
                 [&s,&p](const auto  &sub) { solve_subspace(sub, s, p); });
 }
   
+void calc_properties(state_t st, File &file, store &s, params &p)
+{
+  const auto [ntot, Sz, i] = st;
+  const auto path = fmt::format("{}/{}/{}", ntot, Sz, i);
+  std::cout << fmt::format("\n\nRESULTS FOR THE SECTOR WITH {} PARTICLES, Sz {}, state {}:", ntot, Sz, i) << std::endl;
+  const auto E = s.eigen[st].E();
+  std::cout << fmt::format("Energy = {}", E) << std::endl;
+  dump(file, path + "/E", E);
+  auto psi = s.eigen[st].psi();
+  MeasureOccupancy(psi, file, path, p);
+  MeasurePairing(psi, file, path, p);
+  MeasureAmplitudes(psi, file, path, p);
+  if (p.computeEntropy) MeasureEntropy(psi, file, path, p);
+  if (p.impNupNdn) MeasureImpurityUpDn(psi, file, path, p);
+  if (p.chargeCorrelation) MeasureChargeCorrelation(psi, file, path, p);
+  if (p.spinCorrelation) MeasureSpinCorrelation(psi, file, path, p);
+  if (p.pairCorrelation) MeasurePairCorrelation(psi, file, path, p);
+  if (p.hoppingExpectation) MeasureHopping(psi, file, path, p);
+  if (p.printTotSpinZ) MeasureTotalSpinz(psi, file, path, p);
+  s.stats[st].dump();
+}
+
+auto find_global_GS(store &s, auto & file) {
+  auto m = std::min_element(begin(s.eigen), end(s.eigen), [](const auto &p1, const auto &p2) { return p1.second.E() < p2.second.E(); });
+  state_t GS = m->first;
+  double E_GS = m->second.E();
+  const auto [N_GS, Sz_GS, i] = GS;
+  Expects(i == 0);
+  std::cout << fmt::format("\nN_GS = {}\nSZ_GS = {}\nE_GS = {}\n",N_GS, Sz_GS, E_GS);
+  dump(file, "/GS/N",  N_GS);
+  dump(file, "/GS/Sz", Sz_GS);
+  dump(file, "/GS/E",  E_GS);
+  return std::make_pair(GS, E_GS);
+}
+
+void print_energies(store &s, double EGS, params &p) {
+  std::cout << std::endl;
+  for (const auto &st : s.eigen) {
+    const auto [ntot, Sz, i] = st.first;
+    const double E = st.second.E();
+    const double Ediff = E-EGS;
+    std::cout << fmt::format(FMT_STRING("n = {:<5}  Sz = {:<4}  i = {:<3}  E = {:<22.15}  DeltaE = {:<22.15}"), ntot, Sz, i, E, Ediff) << std::endl;
+  }
+}
+
 // calculates <psi1|c_dag|psi2>, according to http://itensor.org/docs.cgi?vers=cppv3&page=formulas/mps_onesite_op
 auto ExpectationValueAddEl(MPS psi1, MPS psi2, std::string spin, const params &p){
   psi2.position(p.impindex);                                                      // set orthogonality center
@@ -516,55 +551,10 @@ void calculate_spectral_weights(store &s, state_t GS, auto & file, params &p) {
   std::cout << std::endl << "Spectral weights:" << std::endl 
     << "(Spectral weight is the square of the absolute value of the number.)" << std::endl;
   const auto [N_GS, Sz_GS, i] = GS;
-  calc_weight(s, GS, state_t(N_GS+1, Sz_GS+0.5, 0), +1, "up", file, p);
-  calc_weight(s, GS, state_t(N_GS+1, Sz_GS-0.5, 0), +1, "dn", file, p);
-  calc_weight(s, GS, state_t(N_GS-1, Sz_GS-0.5, 0), -1, "up", file, p);
-  calc_weight(s, GS, state_t(N_GS-1, Sz_GS+0.5, 0), -1, "dn", file, p);
-}
-
-void print_energies(store &s, double EGS, params &p) {
-  std::cout << std::endl;
-  for (const auto &st : s.eigen) {
-    const auto [ntot, Sz, i] = st.first;
-    const double E = st.second.E();
-    const double Ediff = E-EGS;
-    std::cout << fmt::format(FMT_STRING("n = {:<5}  Sz = {:<4}  i = {:<3}  E = {:<22.15}  DeltaE = {:<22.15}"), ntot, Sz, i, E, Ediff) << std::endl;
-  }
-}
-
-auto find_global_GS(store &s, auto & file) {
-  auto m = std::min_element(begin(s.eigen), end(s.eigen), [](const auto &p1, const auto &p2) { return p1.second.E() < p2.second.E(); });
-  state_t GS = m->first;
-  double E_GS = m->second.E();
-  const auto [N_GS, Sz_GS, i] = GS;
-  Expects(i == 0);
-  std::cout << fmt::format("\nN_GS = {}\nSZ_GS = {}\nE_GS = {}\n",N_GS, Sz_GS, E_GS);
-  dump(file, "/GS/N",  N_GS);
-  dump(file, "/GS/Sz", Sz_GS);
-  dump(file, "/GS/E",  E_GS);
-  return std::make_pair(GS, E_GS);
-}
-
-void calc_properties(state_t st, File &file, store &s, params &p)
-{
-  const auto [ntot, Sz, i] = st;
-  const auto path = fmt::format("{}/{}/{}", ntot, Sz, i);
-  std::cout << fmt::format("\n\nRESULTS FOR THE SECTOR WITH {} PARTICLES, Sz {}, state {}:", ntot, Sz, i) << std::endl;
-  const auto E = s.eigen[st].E();
-  std::cout << fmt::format("Energy = {}", E) << std::endl;
-  dump(file, path + "/E", E);
-  auto psi = s.eigen[st].psi();
-  MeasureOccupancy(psi, file, path, p);
-  MeasurePairing(psi, file, path, p);
-  MeasureAmplitudes(psi, file, path, p);
-  if (p.computeEntropy) MeasureEntropy(psi, file, path, p);
-  if (p.impNupNdn) MeasureImpurityUpDn(psi, file, path, p);
-  if (p.chargeCorrelation) MeasureChargeCorrelation(psi, file, path, p);
-  if (p.spinCorrelation) MeasureSpinCorrelation(psi, file, path, p);
-  if (p.pairCorrelation) MeasurePairCorrelation(psi, file, path, p);
-  if (p.hoppingExpectation) MeasureHopping(psi, file, path, p);
-  if (p.printTotSpinZ) MeasureTotalSpinz(psi, file, path, p);
-  s.stats[st].dump();
+  calc_weight(s, GS, {N_GS+1, Sz_GS+0.5, 0}, +1, "up", file, p);
+  calc_weight(s, GS, {N_GS+1, Sz_GS-0.5, 0}, +1, "dn", file, p);
+  calc_weight(s, GS, {N_GS-1, Sz_GS-0.5, 0}, -1, "up", file, p);
+  calc_weight(s, GS, {N_GS-1, Sz_GS+0.5, 0}, -1, "dn", file, p);
 }
 
 void process_and_save_results(store &s, params &p, std::string h5_filename) {

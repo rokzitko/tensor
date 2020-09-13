@@ -43,6 +43,15 @@ constexpr auto spinm = spin(-0.5);
 using subspace_t = std::pair<charge, spin>;
 using state_t = std::tuple<charge, spin, int>;
 
+inline state_t gs(const subspace_t &sub)
+{
+  return {std::get<charge>(sub), std::get<spin>(sub), 0}; // ground state in the subspace
+}
+
+inline state_t es(const subspace_t &sub)
+{
+  return {std::get<charge>(sub), std::get<spin>(sub), 1}; // 1st excited state in the subspace
+}
 class problem_type;
 using type_ptr = std::unique_ptr<problem_type>;
 type_ptr set_problem(std::string);
