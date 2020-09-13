@@ -235,7 +235,7 @@ struct params {
   bool spinCorrelation;  // compute the impurity-superconductor correlation <S_imp S_i>
   bool pairCorrelation;  // compute the impurity-superconductor correlation <d d c_i^dag c_i^dag>
   bool hoppingExpectation;//compute the hopping expectation value 1/sqrt(N) \sum_sigma \sum_i <d^dag c_i> + <c^dag_i d>
-  bool printTotSpinZ;    // prints total Nup, Ndn and Sz.
+  bool printTotSpinZ;    // prints total Nup, Ndn and Sz
 
   bool calcweights;      // calculates the spectral weights of the two closes spectroscopically availabe excitations
   bool excited_state;    // computes the first excited state
@@ -249,23 +249,20 @@ struct params {
   bool randomMPSb;       // randomize initial MPS
   double Weight;         // parameter 'Weight' for the calculaiton of excited states
 
-  double EnergyErrgoal; // convergence value at which dmrg() will stop the sweeps; default is machine precision
-  int nrH;              // number of times to apply H to psi before comencing the sweep - akin to a power method; default = 5
-  int nref;             // central value of the occupancy.
-  int nrange;           // number of occupancies considered is 2*nrange + 1, i.e. [nref-nrange:nref+nrange]
+  double EnergyErrgoal;  // convergence value at which dmrg() will stop the sweeps; default is machine precision
+  int nrH;               // number of times to apply H to psi before comencing the sweep - akin to a power method; default = 5
+  int nref;              // central value of the occupancy.
+  int nrange;            // number of occupancies considered is 2*nrange + 1, i.e. [nref-nrange:nref+nrange]
+  bool spin1;            // include sz=1 for even charge sectors.
 
   std::unique_ptr<imp>    qd;
   std::unique_ptr<SCbath> sc;
   std::unique_ptr<hyb>    Gamma;
-  double V12;           // QD-SC capacitive coupling
+  double V12;            // QD-SC capacitive coupling
 
   std::unique_ptr<SCbath> sc1, sc2;
   std::unique_ptr<hyb> Gamma1, Gamma2;
   double SCSCinteraction = 0.0;  // test parameter for the 2 channel MPO
-
-  std::vector<int> numPart; // range of total occupancies of interest
-  std::map<int, std::vector<double>> Szs; // Szs for each n in numPart
-  std::vector<subspace_t> iterateOver; // a zipped vector of off (n, Sz) combinations
 };
 
 // lists of quantities calculated in FindGS 

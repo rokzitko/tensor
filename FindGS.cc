@@ -11,30 +11,24 @@ auto n_list(int nref, int nrange) {
   return n;
 }
 
+bool magnetic_field(const params &p) {
+  return p.qd->EZ() != 0 || p.sc->EZ() != 0; // true if there is magnetic field
+}
+
 std::vector<subspace_t> init_subspace_lists(params &p)
 {
-  std::vector<subspace_t> l;
   const int nhalf = p.N;  // total nr of electrons at half-filling
   int nref = nhalf;       // default
-  if (p.nref >= 0) {      // override
+  if (p.nref >= 0)        // override
     nref = p.nref;
-  } else if (p.refisn0) { // adaptable
+  else if (p.refisn0)     // adaptable
     nref = round(p.sc->n0() + 0.5 - (p.qd->eps()/p.qd->U())); // calculation of the energies is centered around this n
-  }
-  p.numPart = n_list(nref, p.nrange);
 
-  bool magnetic_field = ((p.qd->EZ()!=0 || p.sc->EZ()!=0) ? true : false); // true if there is magnetic field, implying that Sz=0.5 states are NOT degenerate
-  // Sz values for n are in Szs[n]
-  for (auto ntot : p.numPart) {
-    std::vector<spin> sz_list;
-    if (even(ntot))
-      sz_list.push_back(spin0);
-    else {
-      sz_list.push_back(spinp);
-      if (magnetic_field) sz_list.push_back(spinm);
-    }
-    p.Szs[ntot] = sz_list;
-    for (auto sz : sz_list) 
+  std::vector<subspace_t> l;
+  for (const auto &ntot : n_list(nref, p.nrange)) {
+    spin szmax = even(ntot) ? (p.spin1 ? 1 : 0) : 0.5;
+    spin szmin = magnetic_field(p) ? -szmax : (even(ntot) ? 0 : 0.5);
+    for (spin sz = szmin; sz <= szmax; sz += 1.0)
       l.push_back(subspace_t(ntot, sz));
   }
   return l;
@@ -81,6 +75,7 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.nrange = input.getInt("nrange", 1);
   p.refisn0 = input.getYesNo("refisn0", false);
   p.excited_state = input.getYesNo("excited_state", false);
+  p.spin1 = input.getYesNo("spin1", false);
 
   // parameters controlling the postprocessing and output
   p.computeEntropy = input.getYesNo("computeEntropy", false);
@@ -587,7 +582,7 @@ void calc_weight(store &s, state_t GS, state_t ES, int q, std::string sz, auto &
 {
   double res;
   MPS & psiGS = s.eigen[GS].psi();
-  if (s.eigen.find(ES) != s.eigen.end()) {
+  if (s.eigen.count(ES)) {
     MPS & psiES = s.eigen[ES].psi();
     res = (q == +1 ? ExpectationValueAddEl(psiES, psiGS, sz, p) : ExpectationValueTakeEl(psiES, psiGS, sz, p));
     std::cout << "weight w" << (q == +1 ? "+" : "-") << " " << sz << ": " << res << std::endl;
@@ -610,15 +605,12 @@ void calculate_spectral_weights(store &s, state_t GS, auto & file, params &p) {
 
 void print_energies(store &s, double EGS, params &p) {
   std::cout << std::endl;
-  for(const auto ntot: p.numPart)
-    for(const auto Sz: p.Szs[ntot]) {
-      auto E0 = s.eigen[state_t(ntot, Sz, 0)].E();
-      std::cout << fmt::format("n = {:5}  Sz = {:4}  E = {:22.15}  DeltaE = {:22.15}", ntot, Sz, E0, E0-EGS) << std::endl;
-      if (p.excited_state) {
-        auto E1 = s.eigen[state_t(ntot, Sz, 1)].E();
-        std::cout << fmt::format(" 1st excited state    E = {:22.15}  DeltaE = {:22.15}", E1, E1-EGS) << std::endl;
-      }
-    }
+  for (const auto &st : s.eigen) {
+    const auto [ntot, Sz, i] = st.first;
+    const double E = st.second.E();
+    const double Ediff = E-EGS;
+    std::cout << fmt::format(FMT_STRING("n = {:<5}  Sz = {:<4}  i = {:<3}  E = {:<22.15}  DeltaE = {:<22.15}"), ntot, Sz, i, E, Ediff) << std::endl;
+  }
 }
 
 auto find_global_GS(store &s, auto & file) {
