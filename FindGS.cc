@@ -1,20 +1,5 @@
 #include "FindGS.h"
 
-// Make an array centered at nref
-auto n_list(int nref, int nrange) {
-  std::vector<int> n;
-  n.push_back(nref);
-  for (auto i : range1(nrange)) {
-    n.push_back(nref+i);
-    n.push_back(nref-i);
-  }
-  return n;
-}
-
-bool magnetic_field(const params &p) {
-  return p.qd->EZ() != 0 || p.sc->EZ() != 0; // true if there is magnetic field
-}
-
 std::vector<subspace_t> init_subspace_lists(params &p)
 {
   const int nhalf = p.N;  // total nr of electrons at half-filling
@@ -27,7 +12,7 @@ std::vector<subspace_t> init_subspace_lists(params &p)
   std::vector<subspace_t> l;
   for (const auto &ntot : n_list(nref, p.nrange)) {
     spin szmax = even(ntot) ? (p.spin1 ? 1 : 0) : 0.5;
-    spin szmin = magnetic_field(p) ? -szmax : (even(ntot) ? 0 : 0.5);
+    spin szmin = p.magnetic_field() ? -szmax : (even(ntot) ? 0 : 0.5);
     for (spin sz = szmin; sz <= szmax; sz += 1.0)
       l.push_back(subspace_t(ntot, sz));
   }
@@ -99,40 +84,6 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.Weight = input.getReal("Weight", 11.0);
 }
 
-inline void add_imp_electron(const double Sz, const int impindex, auto & state, charge & tot, spin & Sztot)
-{
-  if (Sz == -1 || Sz == -0.5) {
-    state.set(impindex, "Dn");
-    Sztot -= 0.5;
-  }
-  if (Sz == 0 || Sz == +0.5 || Sz == +1) {
-    state.set(impindex, "Up");
-    Sztot += 0.5;
-  }
-  tot++;
-}
-
-// nsc = number of electrons to add, Szadd = spin of the unpaired electron in the case of odd nsc
-inline void add_bath_electrons(const int nsc, const spin & Szadd, const ndx_t &bath, auto & state, charge & tot, spin & Sztot)
-{
-  const size_t npair = nsc/2;            // number of pairs to add
-  Expects(bath.size() >= npair);
-  for (size_t j = 0; j < npair; j++)
-    state.set(bath[j], "UpDn");
-  tot += npair*2;                        // Sztot does not change!
-  if (odd(nsc)) {                        // if ncs is odd, add one electron
-    Expects(bath.size() >= npair+1);
-    const auto i = bath[npair];          // note: vector bath is 0-based
-    if (Szadd == 0.5) 
-      state.set(i, "Up");
-    else if (Szadd == -0.5)
-      state.set(i, "Dn");
-    else throw std::runtime_error("oops! should not happen!");
-    tot++;
-    Sztot += Szadd;
-  }
-}
-
 auto initState(subspace_t sub, const auto &sites, int impindex, bool sc_only, params &p) {
   const auto [ntot, Sz] = sub; // Sz is the z-component of the total spin.
   Expects(0 <= ntot && ntot <= 2*p.N);
@@ -154,15 +105,6 @@ auto initState(subspace_t sub, const auto &sites, int impindex, bool sc_only, pa
   Ensures(tot == ntot);
   Ensures(Sztot == Sz);
   return state;
-}
-
-// Range of integers [a:b], end points included.
-inline ndx_t range(int a, int b)
-{
-  if (a > b) std::swap(a, b);
-  ndx_t l(b - a + 1);
-  std::iota(l.begin(), l.end(), a);
-  return l;
 }
 
 // computes the correlation between operator impOp on impurity and operator opj on j

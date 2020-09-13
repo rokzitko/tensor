@@ -116,6 +116,26 @@ inline auto shift1(const std::vector<double> &a) {
   return b;
 }
 
+// Vector of integers centered at nref
+inline auto n_list(int nref, int nrange) {
+  std::vector<int> n;
+  n.push_back(nref);
+  for (auto i : range1(nrange)) {
+    n.push_back(nref+i);
+    n.push_back(nref-i);
+  }
+  return n;
+}
+
+// Range of integers [a:b], end points included.
+inline ndx_t range(int a, int b)
+{
+  if (a > b) std::swap(a, b);
+  ndx_t l(b - a + 1);
+  std::iota(l.begin(), l.end(), a);
+  return l;
+}
+
 // Class containing impurity parameters
 class imp {
  private:
@@ -260,6 +280,8 @@ struct params {
   std::unique_ptr<hyb>    Gamma;
   double V12;            // QD-SC capacitive coupling
 
+  bool magnetic_field() { return qd->EZ() != 0 || sc->EZ() != 0; } // true if there is magnetic field
+
   std::unique_ptr<SCbath> sc1, sc2;
   std::unique_ptr<hyb> Gamma1, Gamma2;
   double SCSCinteraction = 0.0;  // test parameter for the 2 channel MPO
@@ -317,6 +339,40 @@ class imp_middle : virtual public problem_type
      return ch == 1 ? ndx_t(ndx.begin(), ndx.begin() + NBath/2) : ndx_t(ndx.begin() + NBath/2, ndx.begin() + NBath);
    }
 };
+
+inline void add_imp_electron(const double Sz, const int impindex, auto & state, charge & tot, spin & Sztot)
+{
+    if (Sz == -1 || Sz == -0.5) {
+          state.set(impindex, "Dn");
+          Sztot -= 0.5;
+    }
+    if (Sz == 0 || Sz == +0.5 || Sz == +1) {
+          state.set(impindex, "Up");
+          Sztot += 0.5;
+    }
+    tot++;
+}
+
+// nsc = number of electrons to add, Szadd = spin of the unpaired electron in the case of odd nsc
+inline void add_bath_electrons(const int nsc, const spin & Szadd, const ndx_t &bath, auto & state, charge & tot, spin & Sztot)
+{
+  const size_t npair = nsc/2;            // number of pairs to add
+  Expects(bath.size() >= npair);
+  for (size_t j = 0; j < npair; j++)
+    state.set(bath[j], "UpDn");
+  tot += npair*2;                        // Sztot does not change!
+  if (odd(nsc)) {                        // if ncs is odd, add one electron
+    Expects(bath.size() >= npair+1);
+    const auto i = bath[npair];          // note: vector bath is 0-based
+    if (Szadd == 0.5)
+      state.set(i, "Up");
+    else if (Szadd == -0.5)
+      state.set(i, "Dn");
+    else throw std::runtime_error("oops! should not happen!");
+    tot++;
+    Sztot += Szadd;
+  }
+}
 
 // The functions in these headers take a class params argument
 #include "SC_BathMPO.h"
