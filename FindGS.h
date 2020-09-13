@@ -300,6 +300,7 @@ class problem_type {
    virtual ndx_t bath_indexes(int) = 0;          // all bath indexes
    virtual ndx_t bath_indexes(int, int) = 0;     // per channel bath indexes
    virtual H_t initH(subspace_t, params &) = 0;
+   virtual InitState initState(subspace_t, params &) = 0;
 };
 
 class imp_first : virtual public problem_type
@@ -396,6 +397,28 @@ class single_channel : virtual public problem_type
      auto V = shift1(V0);
      return std::make_pair(eps, V);
    }
+   InitState initState(subspace_t sub, params &p) override {
+     const auto [ntot, Sz] = sub; // Sz is the z-component of the total spin.
+     Expects(0 <= ntot && ntot <= 2*p.N);
+     Expects(Sz == -1 || Sz == -0.5 || Sz == 0 || Sz == +0.5 || Sz == +1);
+     int tot = 0;      // electron counter, for assertion test
+     double Sztot = 0; // SZ counter, for assertion test
+     auto state = InitState(p.sites);
+     const auto nimp = p.sc_only ? 0 : 1;        // number of electrons in the impurity level
+     const auto nsc = p.sc_only ? ntot : ntot-1; // number of electrons in the bath
+     Ensures(nimp + nsc == ntot);
+     // ** Add electron to the impurity site
+     if (nimp)
+       add_imp_electron(Sz, p.impindex, state, tot, Sztot);
+     // ** Add electrons to the bath
+     if (nsc) {
+       ndx_t bath_sites = p.problem->bath_indexes(p.NBath);
+       add_bath_electrons(nsc, Sz-Sztot, bath_sites, state, tot, Sztot);
+     }
+     Ensures(tot == ntot);
+     Ensures(Sztot == Sz);
+     return state;
+   }
 };
 
 template <class T>
@@ -423,6 +446,28 @@ class two_channel : virtual public problem_type
      auto eps = shift1(concat(eps1, eps2));
      auto V = shift1(concat(V1, V2));
      return std::make_pair(eps, V);
+   }
+   InitState initState(subspace_t sub, params &p) override {
+     const auto [ntot, Sz] = sub; // Sz is the z-component of the total spin.
+     Expects(0 <= ntot && ntot <= 2*p.N);
+     Expects(Sz == -1 || Sz == -0.5 || Sz == 0 || Sz == +0.5 || Sz == +1);
+     int tot = 0;      // electron counter, for assertion test
+     double Sztot = 0; // SZ counter, for assertion test
+     auto state = InitState(p.sites);
+     const auto nimp = p.sc_only ? 0 : 1;        // number of electrons in the impurity level
+     const auto nsc = p.sc_only ? ntot : ntot-1; // number of electrons in the bath
+     Ensures(nimp + nsc == ntot);
+     // ** Add electron to the impurity site
+     if (nimp)
+       add_imp_electron(Sz, p.impindex, state, tot, Sztot);
+     // ** Add electrons to the bath
+     if (nsc) {
+       ndx_t bath_sites = p.problem->bath_indexes(p.NBath);
+       add_bath_electrons(nsc, Sz-Sztot, bath_sites, state, tot, Sztot);
+     }
+     Ensures(tot == ntot);
+     Ensures(Sztot == Sz);
+     return state;
    }
 };
 

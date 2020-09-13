@@ -84,29 +84,6 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.Weight = input.getReal("Weight", 11.0);
 }
 
-auto initState(subspace_t sub, const auto &sites, int impindex, bool sc_only, params &p) {
-  const auto [ntot, Sz] = sub; // Sz is the z-component of the total spin.
-  Expects(0 <= ntot && ntot <= 2*p.N);
-  Expects(Sz == -1 || Sz == -0.5 || Sz == 0 || Sz == +0.5 || Sz == +1);
-  int tot = 0;      // electron counter, for assertion test
-  double Sztot = 0; // SZ counter, for assertion test
-  auto state = InitState(sites);
-  const auto nimp = sc_only ? 0 : 1;        // number of electrons in the impurity level
-  const auto nsc = sc_only ? ntot : ntot-1; // number of electrons in the bath
-  Ensures(nimp + nsc == ntot);
-  // ** Add electron to the impurity site
-  if (nimp)
-    add_imp_electron(Sz, impindex, state, tot, Sztot);
-  // ** Add electrons to the bath
-  if (nsc) {
-    ndx_t bath_sites = p.problem->bath_indexes(p.NBath);
-    add_bath_electrons(nsc, Sz-Sztot, bath_sites, state, tot, Sztot);
-  }
-  Ensures(tot == ntot);
-  Ensures(Sztot == Sz);
-  return state;
-}
-
 // computes the correlation between operator impOp on impurity and operator opj on j
 double ImpurityCorrelator(MPS& psi, auto impOp, int j, auto opj, const params &p) {
   Expects(p.impindex == 1);
@@ -473,7 +450,7 @@ auto sweeps(params &p)
 void solve_subspace(const subspace_t &sub, store &s, params &p) {
   std::cout << "\nSweeping in the sector " << sub << std::endl;
   auto [H, Eshift] = p.problem->initH(sub, p);
-  auto state = initState(sub, p.sites, p.impindex, p.sc_only, p);
+  auto state = p.problem->initState(sub, p);
   MPS psi_init(state);
   if (p.randomMPSb)
     psi_init = randomMPS(state);
