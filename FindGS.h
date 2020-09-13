@@ -482,7 +482,7 @@ namespace prob {
         double epseff = p.qd->eps() - 2.*p.sc->Ec()*(ntot-p.sc->n0()) + p.sc->Ec();
         double Ueff = p.qd->U() + 2.*p.sc->Ec();
         Fill_SCBath_MPO(H, eps, V, epseff, Ueff, p); // defined in SC_BathMPO.h, fills the MPO with the necessary entries
-        return std::make_tuple(H, Eshift);
+        return {H, Eshift};
       }
    };
 
@@ -493,7 +493,7 @@ namespace prob {
         MPO H(p.sites);
         double Eshift = p.sc->Ec()*pow(p.sc->n0(), 2) + p.qd->U()/2;
         Fill_SCBath_MPO_Ec(H, eps, V, p);
-        return std::make_tuple(H, Eshift);
+        return {H, Eshift};
       }
    };
 
@@ -506,7 +506,7 @@ namespace prob {
         double epseff = p.qd->eps() - p.V12 * p.sc->n0();
         double epsishift = -p.V12 * p.qd->nu();
         Fill_SCBath_MPO_Ec_V(H, eps, V, epseff, epsishift, p);
-        return std::make_tuple(H, Eshift);
+        return {H, Eshift};
       }
    };
 
@@ -520,7 +520,7 @@ namespace prob {
         double epseff = p.qd->eps() - 2.*p.sc->Ec()*(ntot-p.sc->n0()) + p.sc->Ec();
         double Ueff = p.qd->U() + 2.*p.sc->Ec();
         Fill_SCBath_MPO_MiddleImp(H, eps, V, epseff, Ueff, p);
-        return std::make_tuple(H, Eshift);
+        return {H, Eshift};
       }
    };
 
@@ -531,7 +531,7 @@ namespace prob {
         MPO H(p.sites);
         double Eshift = p.sc->Ec()*pow(p.sc->n0(), 2) + p.qd->U()/2;
         Fill_SCBath_MPO_MiddleImp_Ec(H, eps, V, p);
-        return std::make_tuple(H, Eshift);
+        return {H, Eshift};
       }
    };
 
@@ -548,7 +548,7 @@ namespace prob {
         p.sc1->set_NBath(p.NBath); // override!
         p.sc2->set_NBath(p.NBath);
         Fill_SCBath_MPO_MiddleImp_TwoChannel(H, eps, V, p);
-        return std::make_tuple(H, Eshift);
+        return {H, Eshift};
       }
    };
 
@@ -562,7 +562,7 @@ namespace prob {
         double Eshift = p.sc1->Ec()*pow(p.sc1->n0(), 2) + p.sc2->Ec()*pow(p.sc2->n0(), 2) + p.qd->U()/2;
         p.SCSCinteraction = 0.0; // IMPORTANT: separate baths
         Fill_SCBath_MPO_MiddleImp_TwoChannel(H, eps, V, p);
-        return std::make_tuple(H, Eshift);
+        return {H, Eshift};
       }
    };
 }
