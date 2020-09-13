@@ -75,8 +75,8 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   // parameters controlling the calculation
   p.verbose = input.getYesNo("verbose", false);
   p.nrsweeps = input.getInt("nrsweeps", 15);
-  p.Quiet = input.getYesNo("Quiet", false);
-  p.Silent = input.getYesNo("Silent", false);
+  p.Quiet = input.getYesNo("Quiet", true);
+  p.Silent = input.getYesNo("Silent", true);
   p.EnergyErrgoal = input.getReal("EnergyErrgoal", 1e-16);
   p.nrH = input.getInt("nrH", 5);
   p.sc_only = input.getYesNo("sc_only", false);

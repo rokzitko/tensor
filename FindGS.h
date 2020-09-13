@@ -352,15 +352,15 @@ class imp_middle : virtual public problem_type
 
 inline void add_imp_electron(const double Sz, const int impindex, auto & state, charge & tot, spin & Sztot)
 {
-    if (Sz == -1 || Sz == -0.5) {
-          state.set(impindex, "Dn");
-          Sztot -= 0.5;
-    }
-    if (Sz == 0 || Sz == +0.5 || Sz == +1) {
-          state.set(impindex, "Up");
-          Sztot += 0.5;
-    }
-    tot++;
+  if (Sz == -1 || Sz == -0.5) {
+    state.set(impindex, "Dn");
+    Sztot -= 0.5;
+  }
+  if (Sz == 0 || Sz == +0.5 || Sz == +1) {
+    state.set(impindex, "Up");
+    Sztot += 0.5;
+  }
+  tot++;
 }
 
 // nsc = number of electrons to add, Szadd = spin of the unpaired electron in the case of odd nsc
@@ -465,14 +465,22 @@ class two_channel : virtual public problem_type
      auto state = InitState(p.sites);
      const auto nimp = p.sc_only ? 0 : 1;        // number of electrons in the impurity level
      const auto nsc = p.sc_only ? ntot : ntot-1; // number of electrons in the bath
-     Ensures(nimp + nsc == ntot);
+     auto nsc1 = nsc/2;                          // number of electrons in bath 1
+     if (odd(nsc1) && nsc1) nsc1--;
+     const auto nsc2 = nsc-nsc1;                 // number of electrons in bath 2
+     Ensures(nimp + nsc1 + nsc2 == ntot);
      // ** Add electron to the impurity site
      if (nimp)
        add_imp_electron(Sz, p.impindex, state, tot, Sztot);
-     // ** Add electrons to the bath
-     if (nsc) {
-       ndx_t bath_sites = p.problem->bath_indexes(p.NBath);
-       add_bath_electrons(nsc, Sz-Sztot, bath_sites, state, tot, Sztot);
+     // ** Add electrons to bath 1
+     if (nsc1) {
+       Expects(even(nsc1));
+       ndx_t bath_sites = p.problem->bath_indexes(p.NBath, 1);
+       add_bath_electrons(nsc1, spin0, bath_sites, state, tot, Sztot);
+     }
+     if (nsc2) {
+       ndx_t bath_sites = p.problem->bath_indexes(p.NBath, 2);
+       add_bath_electrons(nsc2, Sz-Sztot, bath_sites, state, tot, Sztot);
      }
      Ensures(tot == ntot);
      Ensures(Sztot == Sz);
