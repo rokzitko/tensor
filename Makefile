@@ -1,4 +1,4 @@
-include ${HOME}/repos/itensor/options.mk
+include ${ITENSOR}/options.mk
 
 ITENSOR_LIBDIR=${ITENSOR}/lib
 PREFIX=${ITENSOR}
