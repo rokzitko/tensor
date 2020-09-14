@@ -1,0 +1,3 @@
+#!/bin/bash
+export ITENSOR=~/repos/ITensor
+make build

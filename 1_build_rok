@@ -1,6 +1,6 @@
 #!/bin/bash
 # RZ, Dec 2019
-ml purge
+#ml purge
 
 #ml gimkl/2018b
 
@@ -12,9 +12,9 @@ ml purge
 #ml imkl/2019.1.144-gompi-2019a
 #ml HDF5/1.10.5-gompi-2019a
 
-ml foss/2020a
-ml HDF5/1.10.6-gompi-2020a
-ml tbb/2020.1-GCCcore-9.3.0
+#ml foss/2020a
+#ml HDF5/1.10.6-gompi-2020a
+#ml tbb/2020.1-GCCcore-9.3.0
 
 g++ --version
 export ITENSOR=~/repos/itensor
