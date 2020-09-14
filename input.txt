@@ -1,0 +1,29 @@
+params{
+     alpha = -0.1
+     U=10
+     gamma = 0.1
+     NBath = 4
+     nrsweeps = 10
+}
+
+
+sweeps
+{
+
+sweeps
+     {
+     maxdim  mindim  cutoff  niter  noise
+     80      20      1E-7    3     0
+     80      20      1E-7    3     0
+     80      20      1E-7    3     0
+     80      20      1E-7    3     0
+     80      20      1E-7    3     0
+     160      1      1E-8    3     0
+     160      1      1E-8    3     0
+     160      1      1E-8    3     0
+     160      1      1E-8    3     0
+     160      1      1E-8    3     0
+     }
+
+
+}

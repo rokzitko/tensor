@@ -8,7 +8,6 @@ calcPT-middle
 2_build_local
 Makefile_luka
 Make_local
-input.txt
 rok
 solution*.h5
 old_tests
