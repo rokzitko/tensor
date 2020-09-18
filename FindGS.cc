@@ -480,11 +480,22 @@ void solve_all(const std::vector<subspace_t> &l, store &s, params &p) {
                 [&s,&p](const auto  &sub) { solve_subspace(sub, s, p); });
 }
   
+std::string Sz_string(spin Sz) // custom formatting
+{
+  Expects(Sz == -1.0 || Sz == -0.5 || Sz == 0.0 || Sz == +0.5 || Sz == +1.0);
+  if (Sz == -1.0) return "-1";
+  if (Sz == -0.5) return "-0.5";
+  if (Sz == 0.0) return "0";
+  if (Sz == 0.5) return "0.5";
+  if (Sz == 1.0) return "1.0";
+  return "xxx";
+}
+
 void calc_properties(state_t st, File &file, store &s, params &p)
 {
   const auto [ntot, Sz, i] = st;
-  const auto path = fmt::format("{}/{}/{}", ntot, Sz, i);
-  std::cout << fmt::format("\n\nRESULTS FOR THE SECTOR WITH {} PARTICLES, Sz {}, state {}:", ntot, Sz, i) << std::endl;
+  const auto path = fmt::format("{}/{}/{}", ntot, Sz_string(Sz), i);
+  std::cout << fmt::format("\n\nRESULTS FOR THE SECTOR WITH {} PARTICLES, Sz {}, state {}:", ntot, Sz_string(Sz), i) << std::endl;
   const auto E = s.eigen[st].E();
   std::cout << fmt::format("Energy = {}", E) << std::endl;
   dump(file, path + "/E", E);
@@ -508,7 +519,7 @@ auto find_global_GS(store &s, auto & file) {
   double E_GS = m->second.E();
   const auto [N_GS, Sz_GS, i] = GS;
   Expects(i == 0);
-  std::cout << fmt::format("\nN_GS = {}\nSZ_GS = {}\nE_GS = {}\n",N_GS, Sz_GS, E_GS);
+  std::cout << fmt::format("\nN_GS = {}\nSZ_GS = {}\nE_GS = {}\n",N_GS, Sz_string(Sz_GS), E_GS);
   dump(file, "/GS/N",  N_GS);
   dump(file, "/GS/Sz", Sz_GS);
   dump(file, "/GS/E",  E_GS);
