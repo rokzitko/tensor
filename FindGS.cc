@@ -78,10 +78,11 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.printTotSpinZ = input.getYesNo("printTotSpinZ", false);
 
   // parameters controlling the calculation
-  p.verbose = input.getYesNo("verbose", false);
   p.nrsweeps = input.getInt("nrsweeps", 15);
+  p.parallel = input.getYesNo("parallel", true); // parallel by default!
   p.Quiet = input.getYesNo("Quiet", true);
-  p.Silent = input.getYesNo("Silent", true);
+  p.Silent = input.getYesNo("Silent", p.parallel);
+  p.verbose = input.getYesNo("verbose", !p.parallel);
   p.EnergyErrgoal = input.getReal("EnergyErrgoal", 1e-16);
   p.nrH = input.getInt("nrH", 5);
   p.sc_only = input.getYesNo("sc_only", false);
@@ -476,8 +477,12 @@ void solve_subspace(const subspace_t &sub, store &s, params &p) {
 }
 
 void solve_all(const std::vector<subspace_t> &l, store &s, params &p) {
-  std::for_each(std::execution::par, l.cbegin(), l.cend(), 
-                [&s,&p](const auto  &sub) { solve_subspace(sub, s, p); });
+  if (p.parallel)
+    std::for_each(std::execution::par, l.cbegin(), l.cend(), 
+                  [&s,&p](const auto  &sub) { solve_subspace(sub, s, p); });
+  else
+    std::for_each(std::execution::seq, l.cbegin(), l.cend(), 
+                  [&s,&p](const auto  &sub) { solve_subspace(sub, s, p); });
 }
   
 std::string Sz_string(spin Sz) // custom formatting
@@ -487,7 +492,7 @@ std::string Sz_string(spin Sz) // custom formatting
   if (Sz == -0.5) return "-0.5";
   if (Sz == 0.0) return "0";
   if (Sz == 0.5) return "0.5";
-  if (Sz == 1.0) return "1.0";
+  if (Sz == 1.0) return "1";
   return "xxx";
 }
 

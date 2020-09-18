@@ -1,6 +1,5 @@
 params{
-    Silent = true
-    Quiet = true
+  parallel = true
 
      N = 10
 
@@ -14,7 +13,6 @@ params{
      n0 = 2.1
      EZ_bulk = 0.04
 
-     verbose = true
      band_level_shift = true
 
      nrange = 2

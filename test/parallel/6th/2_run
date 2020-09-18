@@ -1,6 +1,0 @@
-#!/bin/bash
-PATH=../../../..:../../..:../..:..:$PATH
-export OMP_NUM_THREADS=6
-export MKL_NUM_THREADS=1
-calcGS inputFile.txt >result.dat
-h5diff -d 1e-6 solution.h5 solution.h5.ref

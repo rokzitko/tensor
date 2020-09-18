@@ -272,6 +272,7 @@ struct params {
   int excited_states;    // compute n excited states
 
   int nrsweeps;          // number of DMRG sweeps to perform
+  bool parallel;         // execution policy (also affects some defaults)
   bool Quiet, Silent;    // control output in dmrg()
   bool refisn0;          // the energies will be computed in the sectors centered around the one with n = round(n0) + 1
   bool verbose;          // verbosity level
