@@ -48,10 +48,11 @@ inline state_t gs(const subspace_t &sub)
   return {std::get<charge>(sub), std::get<spin>(sub), 0}; // ground state in the subspace
 }
 
-inline state_t es(const subspace_t &sub)
+inline state_t es(const subspace_t &sub, int n = 1)
 {
-  return {std::get<charge>(sub), std::get<spin>(sub), 1}; // 1st excited state in the subspace
+  return {std::get<charge>(sub), std::get<spin>(sub), n}; // n-th excited state in the subspace
 }
+
 class problem_type;
 using type_ptr = std::unique_ptr<problem_type>;
 type_ptr set_problem(std::string);
@@ -267,7 +268,8 @@ struct params {
   bool printTotSpinZ;    // prints total Nup, Ndn and Sz
 
   bool calcweights;      // calculates the spectral weights of the two closes spectroscopically availabe excitations
-  bool excited_state;    // computes the first excited state
+  bool excited_state;    // computes excited state
+  int excited_states;    // compute n excited states
 
   int nrsweeps;          // number of DMRG sweeps to perform
   bool Quiet, Silent;    // control output in dmrg()

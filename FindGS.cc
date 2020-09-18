@@ -59,8 +59,13 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.nref = input.getInt("nref", -1);
   p.nrange = input.getInt("nrange", 1);
   p.refisn0 = input.getYesNo("refisn0", false);
-  p.excited_state = input.getYesNo("excited_state", false);
   p.spin1 = input.getYesNo("spin1", false);
+  p.excited_state = input.getYesNo("excited_state", false);
+  p.excited_states = input.getInt("excited_states", 0);
+  if (p.excited_states >= 1)
+    p.excited_state = true;
+  if (p.excited_state && p.excited_states == 0)
+    p.excited_states = 1; // override
 
   // parameters controlling the postprocessing and output
   p.computeEntropy = input.getYesNo("computeEntropy", false);
@@ -456,13 +461,17 @@ void solve_subspace(const subspace_t &sub, store &s, params &p) {
   s.eigen[gs(sub)] = eigenpair(GSenergy, psi);
   s.stats[gs(sub)] = psi_stats(psi, H);
   if (p.excited_state) {
-    auto wfs = std::vector<MPS>(1);
-    wfs.at(0) = psi;
-    auto [E1, psi1] = dmrg(H, wfs, psi, sweeps(p), {"Silent", p.Silent,
-        "Quiet", p.Quiet, "Weight", p.Weight});
-    const double ESenergy = E1+Eshift;
-    s.eigen[es(sub)] = eigenpair(ESenergy, psi1);
-    s.stats[es(sub)] = psi_stats(psi1, H);
+    std::vector<MPS> wfs;
+    MPS psi_prev = psi;
+    for (auto n = 1; n <= p.excited_states; n++) {
+      wfs.push_back(psi_prev);
+      auto [E_n, psi_n] = dmrg(H, wfs, psi_prev, sweeps(p), {"Silent", p.Silent,
+          "Quiet", p.Quiet, "Weight", p.Weight});
+      const double ESenergy = E_n+Eshift;
+      s.eigen[es(sub, n)] = eigenpair(ESenergy, psi_n);
+      s.stats[es(sub, n)] = psi_stats(psi_n, H);
+      psi_prev = psi_n;
+    }
   }
 }
 
