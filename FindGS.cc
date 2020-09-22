@@ -1,5 +1,43 @@
 #include "FindGS.h"
 
+inline void skip_line(std::ostream &o = std::cout)
+{
+  o << std::endl;
+}
+
+inline std::string Sz_string(spin Sz) // custom formatting
+{
+  Expects(Sz == -1.0 || Sz == -0.5 || Sz == 0.0 || Sz == +0.5 || Sz == +1.0);
+  if (Sz == -1.0) return "-1";
+  if (Sz == -0.5) return "-0.5";
+  if (Sz == 0.0) return "0";
+  if (Sz == 0.5) return "0.5";
+  if (Sz == 1.0) return "1";
+  return "xxx";
+}
+
+inline auto subspace_path(const charge ntot, const spin Sz)
+{
+  return  fmt::format("{}/{}", ntot, Sz_string(Sz));
+}
+
+inline auto state_path(const charge ntot, const spin Sz, const int i)
+{
+  return fmt::format("{}/{}/{}", ntot, Sz_string(Sz), i);
+}
+
+inline auto state_path(const state_t st)
+{
+  const auto [ntot, Sz, i] = st;
+  return state_path(ntot, Sz, i);
+}
+
+inline auto ij_path(const charge ntot, const spin Sz, const int i, const int j)
+{
+  return fmt::format("{}/{}/{}/{}", ntot, Sz_string(Sz), i, j);
+}
+
+
 std::vector<subspace_t> init_subspace_lists(params &p)
 {
   const int nhalf = p.N;  // total nr of electrons at half-filling
@@ -88,6 +126,7 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.sc_only = input.getYesNo("sc_only", false);
   p.randomMPSb = input.getYesNo("randomMPS", false);
   p.Weight = input.getReal("Weight", 11.0);
+  p.overlaps = input.getYesNo("overlaps", false);
 }
 
 // computes the correlation between operator impOp on impurity and operator opj on j
@@ -485,21 +524,10 @@ void solve_all(const std::vector<subspace_t> &l, store &s, params &p) {
                   [&s,&p](const auto  &sub) { solve_subspace(sub, s, p); });
 }
   
-std::string Sz_string(spin Sz) // custom formatting
-{
-  Expects(Sz == -1.0 || Sz == -0.5 || Sz == 0.0 || Sz == +0.5 || Sz == +1.0);
-  if (Sz == -1.0) return "-1";
-  if (Sz == -0.5) return "-0.5";
-  if (Sz == 0.0) return "0";
-  if (Sz == 0.5) return "0.5";
-  if (Sz == 1.0) return "1";
-  return "xxx";
-}
-
-void calc_properties(state_t st, File &file, store &s, params &p)
+void calc_properties(const state_t st, File &file, store &s, params &p)
 {
   const auto [ntot, Sz, i] = st;
-  const auto path = fmt::format("{}/{}/{}", ntot, Sz_string(Sz), i);
+  const auto path = state_path(st);
   std::cout << fmt::format("\n\nRESULTS FOR THE SECTOR WITH {} PARTICLES, Sz {}, state {}:", ntot, Sz_string(Sz), i) << std::endl;
   const auto E = s.eigen[st].E();
   std::cout << fmt::format("Energy = {}", E) << std::endl;
@@ -532,12 +560,13 @@ auto find_global_GS(store &s, auto & file) {
 }
 
 void print_energies(store &s, double EGS, params &p) {
-  std::cout << std::endl;
+  skip_line();
   for (const auto &st : s.eigen) {
     const auto [ntot, Sz, i] = st.first;
     const double E = st.second.E();
     const double Ediff = E-EGS;
-    std::cout << fmt::format(FMT_STRING("n = {:<5}  Sz = {:<4}  i = {:<3}  E = {:<22.15}  DeltaE = {:<22.15}"), ntot, Sz, i, E, Ediff) << std::endl;
+    std::cout << fmt::format(FMT_STRING("n = {:<5}  Sz = {:<4}  i = {:<3}  E = {:<22.15}  DeltaE = {:<22.15}"), 
+                             ntot, Sz_string(Sz), i, E, Ediff) << std::endl;
   }
 }
 
@@ -572,14 +601,34 @@ void calc_weight(store &s, state_t GS, state_t ES, int q, std::string sz, auto &
   dump(file, "weights/" + std::to_string(q) + "/" + sz, res);
 }
 
-void calculate_spectral_weights(store &s, state_t GS, auto & file, params &p) {
-  std::cout << std::endl << "Spectral weights:" << std::endl 
+void calculate_spectral_weights(store &s, state_t GS, auto &file, params &p) {
+  skip_line();
+  std::cout << "Spectral weights:" << std::endl 
     << "(Spectral weight is the square of the absolute value of the number.)" << std::endl;
   const auto [N_GS, Sz_GS, i] = GS;
   calc_weight(s, GS, {N_GS+1, Sz_GS+0.5, 0}, +1, "up", file, p);
   calc_weight(s, GS, {N_GS+1, Sz_GS-0.5, 0}, +1, "dn", file, p);
   calc_weight(s, GS, {N_GS-1, Sz_GS-0.5, 0}, -1, "up", file, p);
   calc_weight(s, GS, {N_GS-1, Sz_GS+0.5, 0}, -1, "dn", file, p);
+}
+
+auto calculate_overlap(const auto &psi1, const auto &psi2)
+{
+  return inner(psi1, psi2);
+}
+
+void calculate_overlaps(store &s, auto &file, params &p) {
+  skip_line();
+  for (const auto & [st1, st2] : itertools::product(s.eigen, s.eigen)) {
+    const auto [ntot1, Sz1, i] = st1.first;
+    const auto [ntot2, Sz2, j] = st2.first;
+    if (ntot1 == ntot2 && Sz1 == Sz2 && i < j) {
+      auto o = calculate_overlap(st1.second.psi(), st2.second.psi());
+      std::cout << fmt::format(FMT_STRING("n = {:<5}  Sz = {:4}  i = {:<3}  j = {:<3}  <i|j> = {:<22.15}"),
+                               ntot1, Sz_string(Sz1), i, j, o) << std::endl;
+      dump(file, "overlaps/" + ij_path(ntot1, Sz1, i, j), o);
+    }
+  }
 }
 
 void process_and_save_results(store &s, params &p, std::string h5_filename) {
@@ -590,4 +639,6 @@ void process_and_save_results(store &s, params &p, std::string h5_filename) {
   print_energies(s, EGS, p);
   if (p.calcweights) 
     calculate_spectral_weights(s, GS, file, p);
+  if (p.overlaps)
+    calculate_overlaps(s, file, p);
 }
