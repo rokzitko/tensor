@@ -1,43 +1,5 @@
 #include "FindGS.h"
 
-inline void skip_line(std::ostream &o = std::cout)
-{
-  o << std::endl;
-}
-
-inline std::string Sz_string(spin Sz) // custom formatting
-{
-  Expects(Sz == -1.0 || Sz == -0.5 || Sz == 0.0 || Sz == +0.5 || Sz == +1.0);
-  if (Sz == -1.0) return "-1";
-  if (Sz == -0.5) return "-0.5";
-  if (Sz == 0.0) return "0";
-  if (Sz == 0.5) return "0.5";
-  if (Sz == 1.0) return "1";
-  return "xxx";
-}
-
-inline auto subspace_path(const charge ntot, const spin Sz)
-{
-  return  fmt::format("{}/{}", ntot, Sz_string(Sz));
-}
-
-inline auto state_path(const charge ntot, const spin Sz, const int i)
-{
-  return fmt::format("{}/{}/{}", ntot, Sz_string(Sz), i);
-}
-
-inline auto state_path(const state_t st)
-{
-  const auto [ntot, Sz, i] = st;
-  return state_path(ntot, Sz, i);
-}
-
-inline auto ij_path(const charge ntot, const spin Sz, const int i, const int j)
-{
-  return fmt::format("{}/{}/{}/{}", ntot, Sz_string(Sz), i, j);
-}
-
-
 std::vector<subspace_t> init_subspace_lists(params &p)
 {
   const int nhalf = p.N;  // total nr of electrons at half-filling
@@ -483,7 +445,7 @@ auto sweeps(params &p)
 }
 
 void solve_subspace(const subspace_t &sub, store &s, params &p) {
-  std::cout << "\nSweeping in the sector " << sub << std::endl;
+  std::cout << "\nSweeping in the sector " << sub << ", ground state" << std::endl;
   auto [H, Eshift] = p.problem->initH(sub, p);
   auto state = p.problem->initState(sub, p);
   MPS psi_init(state);
@@ -504,6 +466,7 @@ void solve_subspace(const subspace_t &sub, store &s, params &p) {
     std::vector<MPS> wfs;
     MPS psi_prev = psi;
     for (auto n = 1; n <= p.excited_states; n++) {
+      std::cout << "\nSweeping in the sector " << sub << ", excited state n=" << n << std::endl;
       wfs.push_back(psi_prev);
       auto [E_n, psi_n] = dmrg(H, wfs, psi_prev, sweeps(p), {"Silent", p.Silent,
           "Quiet", p.Quiet, "Weight", p.Weight});

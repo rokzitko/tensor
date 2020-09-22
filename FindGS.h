@@ -55,6 +55,43 @@ inline state_t es(const subspace_t &sub, int n = 1)
   return {std::get<charge>(sub), std::get<spin>(sub), n}; // n-th excited state in the subspace
 }
 
+inline void skip_line(std::ostream &o = std::cout)
+{
+  o << std::endl;
+}
+
+inline std::string Sz_string(spin Sz) // custom formatting
+{
+    Expects(Sz == -1.0 || Sz == -0.5 || Sz == 0.0 || Sz == +0.5 || Sz == +1.0);
+    if (Sz == -1.0) return "-1";
+    if (Sz == -0.5) return "-0.5";
+    if (Sz == 0.0) return "0";
+    if (Sz == 0.5) return "0.5";
+    if (Sz == 1.0) return "1";
+    return "xxx";
+}
+
+inline auto subspace_path(const charge ntot, const spin Sz)
+{
+  return  fmt::format("{}/{}", ntot, Sz_string(Sz));
+}
+
+inline auto state_path(const charge ntot, const spin Sz, const int i)
+{
+  return fmt::format("{}/{}/{}", ntot, Sz_string(Sz), i);
+}
+
+inline auto state_path(const state_t st)
+{
+    const auto [ntot, Sz, i] = st;
+    return state_path(ntot, Sz, i);
+}
+
+inline auto ij_path(const charge ntot, const spin Sz, const int i, const int j)
+{
+  return fmt::format("{}/{}/{}/{}", ntot, Sz_string(Sz), i, j);
+}
+
 class problem_type;
 using type_ptr = std::unique_ptr<problem_type>;
 type_ptr set_problem(std::string);
