@@ -130,7 +130,7 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
 }
 
 // computes the correlation between operator impOp on impurity and operator opj on j
-double ImpurityCorrelator(MPS& psi, auto impOp, int j, auto opj, const params &p) {
+/*double ImpurityCorrelator(MPS& psi, auto impOp, int j, auto opj, const params &p) {
   Expects(p.impindex == 1);
   psi.position(p.impindex);
   MPS psidag = dag(psi);
@@ -147,6 +147,34 @@ double ImpurityCorrelator(MPS& psi, auto impOp, int j, auto opj, const params &p
   C *= prime(psidag(j),"Site");
   return elt(C);
 }
+*/
+
+double ImpurityCorrelator(MPS& psi, auto impOp, int j, auto opj, const params &p) {
+  //Expects(p.impindex == 1);
+  psi.position(p.impindex);
+  MPS psidag = dag(psi);
+  psidag.prime("Link");
+  
+
+  int first = std::min(p.impindex, j);
+  int second = std::max(p.impindex, j);
+  // apply the operator to the first site (wheter impurity or j)
+  auto li_1 = leftLinkIndex(psi,first);
+  auto C = prime(psi(first),li_1)*(first==j ? opj : impOp) ;
+  C *= prime(psidag(first),"Site");
+  
+  for (int k = first+1; k < second; ++k){
+    C *= psi(k);
+    C *= psidag(k);
+  }
+  auto lj = rightLinkIndex(psi,second);
+  C *= prime(psi(second),lj)*(first==j ? impOp : opj);
+  C *= prime(psidag(second),"Site");
+  return elt(C);
+}
+
+
+
 
 //CORRELATION FUNCTIONS BETWEEN THE IMPURITY AND ALL SC LEVELS:
 //according to: http://www.itensor.org/docs.cgi?vers=cppv3&page=formulas/correlator_mps
@@ -598,18 +626,18 @@ void calc_weight(store &s, state_t GS, state_t ES, int q, std::string sz, auto &
     res = std::numeric_limits<double>::quiet_NaN();
     std::cout <<  "ERROR: we don't have info about the state " << ES << std::endl;
   }
-  dump(file, "weights/" + std::to_string(q) + "/" + sz, res);
+  dump(file, "weights/" + std::to_string(std::get<2>(ES)) + "/" + std::to_string(q) + "/" + sz, res);
 }
 
-void calculate_spectral_weights(store &s, state_t GS, auto &file, params &p) {
+void calculate_spectral_weights(store &s, state_t GS, auto &file, params &p, int excited) {
   skip_line();
-  std::cout << "Spectral weights:" << std::endl 
+  std::cout << "Spectral weights, " << (excited==0 ? "ground" : "excited") <<  " states:" << std::endl 
     << "(Spectral weight is the square of the absolute value of the number.)" << std::endl;
   const auto [N_GS, Sz_GS, i] = GS;
-  calc_weight(s, GS, {N_GS+1, Sz_GS+0.5, 0}, +1, "up", file, p);
-  calc_weight(s, GS, {N_GS+1, Sz_GS-0.5, 0}, +1, "dn", file, p);
-  calc_weight(s, GS, {N_GS-1, Sz_GS-0.5, 0}, -1, "up", file, p);
-  calc_weight(s, GS, {N_GS-1, Sz_GS+0.5, 0}, -1, "dn", file, p);
+  calc_weight(s, GS, {N_GS+1, Sz_GS+0.5, excited}, +1, "up", file, p);
+  calc_weight(s, GS, {N_GS+1, Sz_GS-0.5, excited}, +1, "dn", file, p);
+  calc_weight(s, GS, {N_GS-1, Sz_GS-0.5, excited}, -1, "up", file, p);
+  calc_weight(s, GS, {N_GS-1, Sz_GS+0.5, excited}, -1, "dn", file, p);
 }
 
 auto calculate_overlap(const auto &psi1, const auto &psi2)
@@ -637,8 +665,10 @@ void process_and_save_results(store &s, params &p, std::string h5_filename) {
     calc_properties(st, file, s, p);
   const auto [GS, EGS] = find_global_GS(s, file);
   print_energies(s, EGS, p);
-  if (p.calcweights) 
-    calculate_spectral_weights(s, GS, file, p);
+  if (p.calcweights) {
+    calculate_spectral_weights(s, GS, file, p, 0);
+    if (p.excited_state) calculate_spectral_weights(s, GS, file, p, 1);
+  }  
   if (p.overlaps)
     calculate_overlaps(s, file, p);
 }
