@@ -86,7 +86,8 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.EnergyErrgoal = input.getReal("EnergyErrgoal", 1e-16);
   p.nrH = input.getInt("nrH", 5);
   p.sc_only = input.getYesNo("sc_only", false);
-  p.randomMPSb = input.getYesNo("randomMPS", false);
+  p.randomMPS_GS = input.getYesNo("randomMPS_GS", false);
+  p.randomMPS_ES = input.getYesNo("randomMPS_ES", false);
   p.Weight = input.getReal("Weight", 11.0);
   p.overlaps = input.getYesNo("overlaps", false);
 }
@@ -449,7 +450,7 @@ void solve_subspace(const subspace_t &sub, store &s, params &p) {
   auto [H, Eshift] = p.problem->initH(sub, p);
   auto state = p.problem->initState(sub, p);
   MPS psi_init(state);
-  if (p.randomMPSb)
+  if (p.randomMPS_GS)
     psi_init = randomMPS(state);
   Args args; // args is used to store and transport parameters between various functions
   // Apply the MPO a couple of times to get DMRG started, otherwise it might not converge.
@@ -468,7 +469,12 @@ void solve_subspace(const subspace_t &sub, store &s, params &p) {
     for (auto n = 1; n <= p.excited_states; n++) {
       std::cout << "\nSweeping in the sector " << sub << ", excited state n=" << n << std::endl;
       wfs.push_back(psi_prev);
-      auto [E_n, psi_n] = dmrg(H, wfs, psi_prev, sweeps(p), {"Silent", p.Silent,
+      MPS psi_init_es = psi_prev;
+      if (p.randomMPS_ES) {
+        psi_init_es = randomMPS(state);
+        psi_init_es.normalize();
+      }
+      auto [E_n, psi_n] = dmrg(H, wfs, psi_init_es, sweeps(p), {"Silent", p.Silent,
           "Quiet", p.Quiet, "Weight", p.Weight});
       const double ESenergy = E_n+Eshift;
       s.eigen[es(sub, n)] = eigenpair(ESenergy, psi_n);
