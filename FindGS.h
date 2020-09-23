@@ -26,10 +26,7 @@ using namespace itensor;
 #define FMT_HEADER_ONLY
 #include <fmt/format.h>
 
-#include <omp.h>
-
 #include <highfive/H5Easy.hpp>
-using namespace H5Easy;
 
 using complex_t = std::complex<double>;
 
@@ -100,25 +97,25 @@ using H_t = std::tuple<MPO, double>;
 using ndx_t = std::vector<int>;
 
 template <typename T>
-inline DataSet dumpreal(File& file,
+  inline H5Easy::DataSet dumpreal(H5Easy::File& file,
                         const std::string& path,
                         const std::complex<T>& data,
-                        DumpMode mode = DumpMode::Create)
+                        H5Easy::DumpMode mode = H5Easy::DumpMode::Create)
 {
   const T realdata = std::real(data);
-  return dump(file, path, realdata, mode);
+  return H5Easy::dump(file, path, realdata, mode);
 }
 
 template <typename T>
-inline DataSet dumpreal(File& file,
+  inline H5Easy::DataSet dumpreal(H5Easy::File& file,
                         const std::string& path,
                         const std::vector<std::complex<T>>& data,
-                        DumpMode mode = DumpMode::Create)
+                        H5Easy::DumpMode mode = H5Easy::DumpMode::Create)
 {
   std::vector<T> realdata;
   for (const auto &z : data)
     realdata.push_back(std::real(z));
-  return dump(file, path, realdata, mode);
+  return H5Easy::dump(file, path, realdata, mode);
 }
 
 inline bool even(int i) { return i%2 == 0; }

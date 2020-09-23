@@ -162,8 +162,8 @@ void MeasureChargeCorrelation(MPS& psi, auto & file, std::string path, const par
   const auto [r, tot] = calcChargeCorrelation(psi, range(1, p.N), p);
   std::cout << "charge correlation = " << std::setprecision(full) << r << std::endl;
   std::cout << "charge correlation tot = " << tot << std::endl;
-  dump(file, path + "/charge_correlation", r);
-  dump(file, path + "/charge_correlation_total", tot);
+  H5Easy::dump(file, path + "/charge_correlation", r);
+  H5Easy::dump(file, path + "/charge_correlation_total", tot);
 }
 
 // <S_imp S_i> = <Sz_imp Sz_i> + 1/2 ( <S+_imp S-_i> + <S-_imp S+_i> )
@@ -219,7 +219,7 @@ auto calcSpinCorrelation(MPS& psi, const ndx_t &sites, const params &p) {
   return std::make_tuple(onSiteSzSz, onSiteSpSm, onSiteSmSp, rzz, rpm, rmp, tot);
 }
 
-void MeasureSpinCorrelation(MPS& psi, File & file, std::string path, const params &p) {
+void MeasureSpinCorrelation(MPS& psi, H5Easy::File & file, std::string path, const params &p) {
   const auto [onSiteSzSz, onSiteSpSm, onSiteSmSp, rzz, rpm, rmp, tot] = calcSpinCorrelation(psi, range(1, p.N), p);
   std::cout << "spin correlations:\n";
   std::cout << "SzSz correlations: ";
@@ -232,13 +232,13 @@ void MeasureSpinCorrelation(MPS& psi, File & file, std::string path, const param
   std::cout << std::setprecision(full) << onSiteSmSp << " ";
   std::cout << std::setprecision(full) << rmp << std::endl;
   std::cout << "spin correlation tot = " << tot << "\n";
-  dump(file, path + "/spin_correlation_imp/zz", onSiteSzSz);
-  dump(file, path + "/spin_correlation_imp/pm", onSiteSpSm);
-  dump(file, path + "/spin_correlation_imp/mp", onSiteSmSp);
-  dump(file, path + "/spin_correlation/zz", rzz);
-  dump(file, path + "/spin_correlation/pm", rpm);
-  dump(file, path + "/spin_correlation/mp", rmp);
-  dump(file, path + "/spin_correlation_total", tot);
+  H5Easy::dump(file, path + "/spin_correlation_imp/zz", onSiteSzSz);
+  H5Easy::dump(file, path + "/spin_correlation_imp/pm", onSiteSpSm);
+  H5Easy::dump(file, path + "/spin_correlation_imp/mp", onSiteSmSp);
+  H5Easy::dump(file, path + "/spin_correlation/zz", rzz);
+  H5Easy::dump(file, path + "/spin_correlation/pm", rpm);
+  H5Easy::dump(file, path + "/spin_correlation/mp", rmp);
+  H5Easy::dump(file, path + "/spin_correlation_total", tot);
 }
 
 auto calcPairCorrelation(MPS& psi, const ndx_t &sites, const params &p) {
@@ -256,12 +256,12 @@ auto calcPairCorrelation(MPS& psi, const ndx_t &sites, const params &p) {
   return std::make_pair(r, tot);
 }
 
-void MeasurePairCorrelation(MPS& psi, File & file, std::string path, const params &p) {
+void MeasurePairCorrelation(MPS& psi, H5Easy::File & file, std::string path, const params &p) {
   const auto [r, tot] = calcPairCorrelation(psi, range(1, p.N), p);
   std::cout << "pair correlation = " << std::setprecision(full) << r << std::endl;
   std::cout << "pair correlation tot = " << tot << std::endl;
-  dump(file, path + "/pair_correlation", r);
-  dump(file, path + "/pair_correlation_total", tot);
+  H5Easy::dump(file, path + "/pair_correlation", r);
+  H5Easy::dump(file, path + "/pair_correlation_total", tot);
 }
 
 //Prints <d^dag c_i + c_i^dag d> for each i. the sum of this expected value, weighted by 1/sqrt(N)
@@ -301,7 +301,7 @@ auto calcHopping(MPS& psi, const ndx_t &sites, const params &p) {
   return std::make_tuple(rup, rdn, totup, totdn);
 }
 
-void MeasureHopping(MPS& psi, File & file, std::string path, const params &p) {
+void MeasureHopping(MPS& psi, H5Easy::File & file, std::string path, const params &p) {
   const auto [rup, rdn, totup, totdn] = calcHopping(psi, range(1, p.N), p);
   std::cout << "hopping spin up = " << std::setprecision(full) << rup << std::endl;
   std::cout << "hopping correlation up tot = " << totup << std::endl;
@@ -309,11 +309,11 @@ void MeasureHopping(MPS& psi, File & file, std::string path, const params &p) {
   std::cout << "hopping correlation down tot = " << totdn << std::endl;
   const auto tot = totup+totdn;
   std::cout << "total hopping correlation = " << tot << std::endl;
-  dump(file, path + "/hopping/up", rup);
-  dump(file, path + "/hopping/dn", rdn);
-  dump(file, path + "/hopping_total/up",  totup);
-  dump(file, path + "/hopping_total/dn",  totdn);
-  dump(file, path + "/hopping_total/sum", tot);
+  H5Easy::dump(file, path + "/hopping/up", rup);
+  H5Easy::dump(file, path + "/hopping/dn", rdn);
+  H5Easy::dump(file, path + "/hopping_total/up",  totup);
+  H5Easy::dump(file, path + "/hopping_total/dn",  totdn);
+  H5Easy::dump(file, path + "/hopping_total/sum", tot);
 }
 
 //prints the occupation number Nup and Ndn at the impurity
@@ -328,9 +328,9 @@ void MeasureImpurityUpDn(MPS& psi, auto &file, std::string path, const params &p
   const auto [up, dn] = calc_NUp_NDn(psi, p.impindex, p);
   const auto sz = 0.5*(up-dn);
   std::cout << "impurity nup ndn = " << std::setprecision(full) << up << " " << dn << " sz = " << sz << std::endl;
-  dump(file, path + "/impurity_Nup", up);
-  dump(file, path + "/impurity_Ndn", dn);
-  dump(file, path + "/impurity_Sz",  sz);
+  H5Easy::dump(file, path + "/impurity_Nup", up);
+  H5Easy::dump(file, path + "/impurity_Ndn", dn);
+  H5Easy::dump(file, path + "/impurity_Sz",  sz);
 }
 
 // total Sz of the state
@@ -348,12 +348,12 @@ auto calcTotalSpinz(MPS& psi, const ndx_t &sites, const params &p) {
   return std::make_tuple(totNup, totNdn, totSz);
 }
 
-void MeasureTotalSpinz(MPS& psi, File &file, std::string path, const params &p) {
+void MeasureTotalSpinz(MPS& psi, H5Easy::File &file, std::string path, const params &p) {
   const auto [totNup, totNdn, totSz] = calcTotalSpinz(psi, range(1, p.N), p);
   std::cout << std::setprecision(full) << "Total spin z: " << " Nup = " << totNup << " Ndn = " << totNdn << " Sztot = " << totSz << std::endl;
-  dump(file, path + "/total_Nup", totNup);
-  dump(file, path + "/total_Ndn", totNdn);
-  dump(file, path + "/total_Sz",  totSz);
+  H5Easy::dump(file, path + "/total_Nup", totNup);
+  H5Easy::dump(file, path + "/total_Ndn", totNdn);
+  H5Easy::dump(file, path + "/total_Sz",  totSz);
 }
 
 // occupation numbers of levels 'sites'
@@ -373,8 +373,8 @@ void MeasureOccupancy(MPS& psi, auto & file, std::string path, const params &p) 
   const auto tot = std::accumulate(r.cbegin(), r.cend(), 0.0);
   std::cout << "site occupancies = " << std::setprecision(full) << r << std::endl;
   std::cout << "tot = " << tot << std::endl;
-  dump(file, path + "/site_occupancies", r);
-  dump(file, path + "/total_occupancy", tot);
+  H5Easy::dump(file, path + "/site_occupancies", r);
+  H5Easy::dump(file, path + "/total_occupancy", tot);
 }
 
 // This is actually sqrt of local charge correlation, <n_up n_down>-<n_up><n_down>, summed over all bath levels.
@@ -463,7 +463,7 @@ auto calcEntropy(MPS& psi, const params &p) {
 void MeasureEntropy(MPS& psi, auto & file, std::string path, const params &p) {
   const auto SvN = calcEntropy(psi, p);
   std::cout << fmt::format("Entanglement entropy across impurity bond b={}, SvN = {:10}", p.impindex, SvN) << std::endl;
-  dump(file, path + "/entanglement_entropy_imp", SvN);
+  H5Easy::dump(file, path + "/entanglement_entropy_imp", SvN);
 }
 
 auto sweeps(params &p)
@@ -500,7 +500,7 @@ void solve_subspace(const subspace_t &sub, store &s, params &p) {
       MPS psi_init_es = psi_prev;
       if (p.randomMPS_ES) {
         psi_init_es = randomMPS(state);
-        psi_init_es.normalize();
+        psi_init_es.noPrime().normalize();
       }
       auto [E_n, psi_n] = dmrg(H, wfs, psi_init_es, sweeps(p), {"Silent", p.Silent,
           "Quiet", p.Quiet, "Weight", p.Weight});
@@ -521,14 +521,14 @@ void solve_all(const std::vector<subspace_t> &l, store &s, params &p) {
                   [&s,&p](const auto  &sub) { solve_subspace(sub, s, p); });
 }
   
-void calc_properties(const state_t st, File &file, store &s, params &p)
+void calc_properties(const state_t st, H5Easy::File &file, store &s, params &p)
 {
   const auto [ntot, Sz, i] = st;
   const auto path = state_path(st);
   std::cout << fmt::format("\n\nRESULTS FOR THE SECTOR WITH {} PARTICLES, Sz {}, state {}:", ntot, Sz_string(Sz), i) << std::endl;
   const auto E = s.eigen[st].E();
   std::cout << fmt::format("Energy = {}", E) << std::endl;
-  dump(file, path + "/E", E);
+  H5Easy::dump(file, path + "/E", E);
   auto psi = s.eigen[st].psi();
   MeasureOccupancy(psi, file, path, p);
   MeasurePairing(psi, file, path, p);
@@ -550,9 +550,9 @@ auto find_global_GS(store &s, auto & file) {
   const auto [N_GS, Sz_GS, i] = GS;
   Expects(i == 0);
   std::cout << fmt::format("\nN_GS = {}\nSZ_GS = {}\nE_GS = {}\n",N_GS, Sz_string(Sz_GS), E_GS);
-  dump(file, "/GS/N",  N_GS);
-  dump(file, "/GS/Sz", Sz_GS);
-  dump(file, "/GS/E",  E_GS);
+  H5Easy::dump(file, "/GS/N",  N_GS);
+  H5Easy::dump(file, "/GS/Sz", Sz_GS);
+  H5Easy::dump(file, "/GS/E",  E_GS);
   return std::make_pair(GS, E_GS);
 }
 
@@ -595,7 +595,7 @@ void calc_weight(store &s, state_t GS, state_t ES, int q, std::string sz, auto &
     res = std::numeric_limits<double>::quiet_NaN();
     std::cout <<  "ERROR: we don't have info about the state " << ES << std::endl;
   }
-  dump(file, "weights/" + std::to_string(std::get<2>(ES)) + "/" + std::to_string(q) + "/" + sz, res);
+  H5Easy::dump(file, "weights/" + std::to_string(std::get<2>(ES)) + "/" + std::to_string(q) + "/" + sz, res);
 }
 
 void calculate_spectral_weights(store &s, state_t GS, auto &file, params &p, int excited) {
@@ -623,13 +623,13 @@ void calculate_overlaps(store &s, auto &file, params &p) {
       auto o = calculate_overlap(st1.second.psi(), st2.second.psi());
       std::cout << fmt::format(FMT_STRING("n = {:<5}  Sz = {:4}  i = {:<3}  j = {:<3}  <i|j> = {:<22.15}"),
                                ntot1, Sz_string(Sz1), i, j, o) << std::endl;
-      dump(file, "overlaps/" + ij_path(ntot1, Sz1, i, j), o);
+      H5Easy::dump(file, "overlaps/" + ij_path(ntot1, Sz1, i, j), o);
     }
   }
 }
 
 void process_and_save_results(store &s, params &p, std::string h5_filename) {
-  File file(h5_filename, File::Overwrite);
+  H5Easy::File file(h5_filename, H5Easy::File::Overwrite);
   for(const auto & [st, e]: s.eigen)
     calc_properties(st, file, s, p);
   const auto [GS, EGS] = find_global_GS(s, file);
