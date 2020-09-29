@@ -47,8 +47,9 @@ inline state_t gs(const subspace_t &sub)
   return {std::get<charge>(sub), std::get<spin>(sub), 0}; // ground state in the subspace
 }
 
-inline state_t es(const subspace_t &sub, int n = 1)
+inline state_t es(const subspace_t &sub, int n = 1) // es(sub,0) is the ground state!
 {
+  Expects(0 <= n);
   return {std::get<charge>(sub), std::get<spin>(sub), n}; // n-th excited state in the subspace
 }
 
@@ -259,6 +260,7 @@ class eigenpair {
    eigenpair(Real E, MPS psi) : _E(E), _psi(psi) {}
    auto E() const { return _E; }
    MPS & psi() { return _psi; } // not const !
+   const MPS & psi() const { return _psi; }
 };
 
 class psi_stats {
@@ -268,7 +270,7 @@ class psi_stats {
    double _deltaE2 = 0;
  public:
    psi_stats() {}
-   psi_stats(MPS &psi, MPO &H) {
+   psi_stats(const MPS &psi, MPO &H) {
      _norm = inner(psi, psi);
      _E = inner(psi, H, psi);
      _deltaE2 = inner(H, psi, H, psi) - pow(_E,2);
@@ -308,6 +310,8 @@ struct params {
   bool excited_state;    // computes excited state
   int excited_states;    // compute n excited states
 
+  bool save;             // store computed energy/psi pair(s)
+  int solve_ndx = -1;    // which subproblem to solve [parsed directly from command line]
   int nrsweeps;          // number of DMRG sweeps to perform
   bool parallel;         // execution policy (also affects some defaults)
   bool Quiet, Silent;    // control output in dmrg()
@@ -639,7 +643,7 @@ inline type_ptr set_problem(std::string str)
 
 void parse_cmd_line(int, char * [], params &);
 std::vector<subspace_t> init_subspace_lists(params &p);
-void solve_all(const std::vector<subspace_t> &l, store &s, params &);
+void solve(const std::vector<subspace_t> &l, store &s, params &);
 void process_and_save_results(store &, params &, std::string = "solution.h5");
 
 #endif

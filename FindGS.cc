@@ -20,8 +20,10 @@ std::vector<subspace_t> init_subspace_lists(params &p)
 }
 
 void parse_cmd_line(int argc, char *argv[], params &p) {
-  if (argc != 2)
-    throw std::runtime_error("Please provide input file. Usage: executable <input file>");
+
+  if (!(argc == 2 || argc == 3))
+    throw std::runtime_error("Please provide input file. Usage: executable <input file> [solve_ndx]");
+  p.solve_ndx = argc == 3 ? atoi(argv[2]) : -1;
   p.inputfn = { argv[1] };                                 // read parameters from the input file
   auto input = InputGroup{p.inputfn, "params"};            // get input parameters using InputGroup from itensor
   p.problem = set_problem(input.getString("MPO", "std"));  // problem type
@@ -78,6 +80,7 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.printTotSpinZ = input.getYesNo("printTotSpinZ", false);
 
   // parameters controlling the calculation
+  p.save = input.getYesNo("save", false) || (p.solve_ndx >= 0);
   p.nrsweeps = input.getInt("nrsweeps", 15);
   p.parallel = input.getYesNo("parallel", true); // parallel by default!
   p.Quiet = input.getYesNo("Quiet", true);
@@ -135,9 +138,6 @@ double ImpurityCorrelator(MPS& psi, auto impOp, int j, auto opj, const params &p
   C *= prime(psidag(second),"Site");
   return elt(C);
 }
-
-
-
 
 //CORRELATION FUNCTIONS BETWEEN THE IMPURITY AND ALL SC LEVELS:
 //according to: http://www.itensor.org/docs.cgi?vers=cppv3&page=formulas/correlator_mps
@@ -473,6 +473,9 @@ auto sweeps(params &p)
   return Sweeps(p.nrsweeps, sw_table);
 }
 
+void save(const state_t &st, double energy, MPS & psi)
+{}
+
 void solve_subspace(const subspace_t &sub, store &s, params &p) {
   std::cout << "\nSweeping in the sector " << sub << ", ground state" << std::endl;
   auto [H, Eshift] = p.problem->initH(sub, p);
@@ -490,7 +493,6 @@ void solve_subspace(const subspace_t &sub, store &s, params &p) {
       "Quiet", p.Quiet, "EnergyErrgoal", p.EnergyErrgoal});
   const double GSenergy = E+Eshift;
   s.eigen[gs(sub)] = eigenpair(GSenergy, psi);
-  s.stats[gs(sub)] = psi_stats(psi, H);
   if (p.excited_state) {
     std::vector<MPS> wfs;
     MPS psi_prev = psi;
@@ -506,19 +508,77 @@ void solve_subspace(const subspace_t &sub, store &s, params &p) {
           "Quiet", p.Quiet, "Weight", p.Weight});
       const double ESenergy = E_n+Eshift;
       s.eigen[es(sub, n)] = eigenpair(ESenergy, psi_n);
-      s.stats[es(sub, n)] = psi_stats(psi_n, H);
       psi_prev = psi_n;
     }
   }
 }
 
-void solve_all(const std::vector<subspace_t> &l, store &s, params &p) {
-  if (p.parallel)
-    std::for_each(std::execution::par, l.cbegin(), l.cend(), 
-                  [&s,&p](const auto  &sub) { solve_subspace(sub, s, p); });
-  else
-    std::for_each(std::execution::seq, l.cbegin(), l.cend(), 
-                  [&s,&p](const auto  &sub) { solve_subspace(sub, s, p); });
+void get_stats(store &s, params &p)
+{
+  std::cout << "get_stats" << std::endl;
+  for (const auto &[state, ep] : s.eigen) {
+    std::cout << "get_stats" << state << std::endl;
+    const auto &[n, sz, i] = state;
+    auto [H, Eshift] = p.problem->initH(subspace_t(n, sz), p);
+    s.stats[state] = psi_stats(ep.psi(), H);
+  }
+}
+
+void save(const state_t &st, const eigenpair &ep)
+{
+  // XXX: posnami v file
+}
+
+eigenpair load(const state_t &st)
+{
+  // XXX: nalozi iz fajla
+  throw std::runtime_error("nope");
+  return eigenpair();
+}
+
+void load_subspace(const subspace_t &sub, store &s, params &p)
+{
+  for (int n =0; n <= p.excited_states; n++) {
+    auto st = es(sub, n);
+    s.eigen[st] = load(st);
+  }
+}
+
+void save(store &s, params &p)
+{
+  for (const auto &[state, ep] : s.eigen) 
+    save(state, ep);
+}
+
+void obtain_result(const subspace_t &sub, store &s, params &p)
+{
+  try { 
+    std::cout << "load=" << sub << std::endl;
+    load_subspace(sub, s, p);
+  }
+  catch (...) {
+    std::cout << "solve=" << sub << std::endl;
+    solve_subspace(sub, s, p);   // fallback: compute
+  }
+  get_stats(s, p);
+  if (p.save)
+    save(s, p);
+}
+
+void solve(const std::vector<subspace_t> &l, store &s, params &p) {
+  Expects(p.solve_ndx == -1 || (0 <= p.solve_ndx && p.solve_ndx < int(l.size())));
+          
+  auto obtain_result_l = [&s,&p](const auto  &sub) { obtain_result(sub, s, p); };
+  
+  std::cout << "ndx=" << p.solve_ndx << std::endl;
+  if (p.solve_ndx == -1) { // solve all
+    if (p.parallel)
+      std::for_each(std::execution::par, l.cbegin(), l.cend(), obtain_result_l);
+    else
+      std::for_each(std::execution::seq, l.cbegin(), l.cend(), obtain_result_l);
+  } else { // solve one (ndx)
+    obtain_result_l(l[p.solve_ndx]);
+  }
 }
   
 void calc_properties(const state_t st, H5Easy::File &file, store &s, params &p)
