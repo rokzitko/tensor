@@ -20,10 +20,10 @@ std::vector<subspace_t> init_subspace_lists(params &p)
 }
 
 void parse_cmd_line(int argc, char *argv[], params &p) {
-
-  if (!(argc == 2 || argc == 3))
-    throw std::runtime_error("Please provide input file. Usage: executable <input file> [solve_ndx]");
-  p.solve_ndx = argc == 3 ? atoi(argv[2]) : -1;
+  if (!(argc == 2 || argc == 3 || argc == 4))
+    throw std::runtime_error("Please provide input file. Usage: executable <input file> [solve_ndx] [stop_n]");
+  p.solve_ndx = argc >= 3 ? atoi(argv[2]) : -1;
+  p.stop_n = argc >= 4 ? atoi(argv[3]) : INT_MAX;
   p.inputfn = { argv[1] };                                 // read parameters from the input file
   auto input = InputGroup{p.inputfn, "params"};            // get input parameters using InputGroup from itensor
   p.problem = set_problem(input.getString("MPO", "std"));  // problem type
@@ -93,32 +93,10 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.overlaps = input.getYesNo("overlaps", false);
 }
 
-// computes the correlation between operator impOp on impurity and operator opj on j
-/*double ImpurityCorrelator(MPS& psi, auto impOp, int j, auto opj, const params &p) {
-  Expects(p.impindex == 1);
-  psi.position(p.impindex);
-  MPS psidag = dag(psi);
-  psidag.prime("Link");
-  auto li_1 = leftLinkIndex(psi,p.impindex);
-  auto C = prime(psi(p.impindex),li_1)*impOp;
-  C *= prime(psidag(p.impindex),"Site");
-  for (int k = p.impindex+1; k < j; ++k){
-    C *= psi(k);
-    C *= psidag(k);
-  }
-  auto lj = rightLinkIndex(psi,j);
-  C *= prime(psi(j),lj)*opj;
-  C *= prime(psidag(j),"Site");
-  return elt(C);
-}
-*/
-
 double ImpurityCorrelator(MPS& psi, auto impOp, int j, auto opj, const params &p) {
-  //Expects(p.impindex == 1);
   psi.position(p.impindex);
   MPS psidag = dag(psi);
   psidag.prime("Link");
-  
 
   int first = std::min(p.impindex, j);
   int second = std::max(p.impindex, j);
@@ -476,39 +454,33 @@ void save(const state_t &st, double energy, MPS & psi)
 
 void solve_gs(const subspace_t &sub, store &s, params &p) {
   std::cout << "\nSweeping in the sector " << sub << ", ground state" << std::endl;
-  auto [H, Eshift] = p.problem->initH(sub, p);
+  auto H = p.problem->initH(sub, p);
   auto state = p.problem->initState(sub, p);
   MPS psi_init(state);
-//  Args args; // args is used to store and transport parameters between various functions
-  // Apply the MPO a couple of times to get DMRG started, otherwise it might not converge.
   for(auto i : range1(p.nrH)){
-//    psi_init = applyMPO(H,psi_init,args);
     psi_init = applyMPO(H,psi_init);
     psi_init.noPrime().normalize();
   }
-  auto [E, psi] = dmrg(H, psi_init, sweeps(p), {"Silent", p.Silent, 
-      "Quiet", p.Quiet, "EnergyErrgoal", p.EnergyErrgoal});
-  const double GSenergy = E+Eshift;
+  auto [GSenergy, psi] = dmrg(H, psi_init, sweeps(p), 
+                            {"Silent", p.Silent, 
+                             "Quiet", p.Quiet, 
+                             "EnergyErrgoal", p.EnergyErrgoal});
   s.eigen[gs(sub)] = eigenpair(GSenergy, psi);
 }
 
 void solve_es(const subspace_t &sub, store &s, params &p, int n) {
   std::cout << "\nSweeping in the sector " << sub << ", excited state n=" << n << std::endl;
-  auto [H, Eshift] = p.problem->initH(sub, p);
+  auto H = p.problem->initH(sub, p);
   MPS psi_init_es = s.eigen[es(sub, n-1)].psi();
   std::vector<MPS> wfs(n);
   for (auto m = 0; m < n; m++)
     wfs[m] = s.eigen[es(sub, m)].psi();
-  auto [E_n, psi_n] = dmrg(H, wfs, psi_init_es, sweeps(p), {"Silent", p.Silent,
-      "Quiet", p.Quiet, "Weight", p.Weight});
-  const double ESenergy = E_n+Eshift;
-  s.eigen[es(sub, n)] = eigenpair(ESenergy, psi_n);
-}
-
-void solve_subspace(const subspace_t &sub, store &s, params &p) {
-  solve_gs(sub, s, p);
-  for (auto n = 1; n <= p.excited_states; n++)
-    solve_es(sub, s, p, n);
+  auto [ESenergy, psi] = dmrg(H, wfs, psi_init_es, sweeps(p), 
+                            {"Silent", p.Silent,
+                             "Quiet", p.Quiet,
+                             "EnergyErrgoal", p.EnergyErrgoal,
+                             "Weight", p.Weight});
+  s.eigen[es(sub, n)] = eigenpair(ESenergy, psi);
 }
 
 void get_stats(store &s, params &p)
@@ -517,7 +489,7 @@ void get_stats(store &s, params &p)
   for (const auto &[state, ep] : s.eigen) {
     std::cout << "get_stats" << state << std::endl;
     const auto &[n, sz, i] = state;
-    auto [H, Eshift] = p.problem->initH(subspace_t(n, sz), p);
+    auto H = p.problem->initH(subspace_t(n, sz), p);
     s.stats[state] = psi_stats(ep.psi(), H);
   }
 }
@@ -534,33 +506,32 @@ eigenpair load(const state_t &st)
   return eigenpair();
 }
 
-void load_subspace(const subspace_t &sub, store &s, params &p)
+void solve_state(const subspace_t &sub, store &s, params &p, int n)
 {
-  for (int n =0; n <= p.excited_states; n++) {
+  if (n == 0)
+    solve_gs(sub, s, p);
+  else
+    solve_es(sub, s, p, n);
+  if (p.save) {
     auto st = es(sub, n);
-    s.eigen[st] = load(st);
+    save(st, s.eigen[st]);
   }
 }
-
-void save(store &s, params &p)
-{
-  for (const auto &[state, ep] : s.eigen) 
-    save(state, ep);
-}
-
+  
 void obtain_result(const subspace_t &sub, store &s, params &p)
 {
-  try { 
-    std::cout << "load=" << sub << std::endl;
-    load_subspace(sub, s, p);
-  }
-  catch (...) {
-    std::cout << "solve=" << sub << std::endl;
-    solve_subspace(sub, s, p);   // fallback: compute
+  for (int n =0; n <= std::min(p.excited_states, p.stop_n); n++) {
+    auto st = es(sub, n);
+    try {
+      std::cout << "load=" << sub << std::endl;
+      s.eigen[st] = load(st);
+    }
+    catch (...) {
+      std::cout << "solve=" << sub << std::endl;
+      solve_state(sub, s, p, n);   // fallback: compute
+    }
   }
   get_stats(s, p);
-  if (p.save)
-    save(s, p);
 }
 
 void solve(const std::vector<subspace_t> &l, store &s, params &p) {

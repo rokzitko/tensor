@@ -1,4 +1,4 @@
-inline void Fill_SCBath_MPO_MiddleImp_TwoChannel(MPO& H, const std::vector<double>& eps_,
+inline void Fill_SCBath_MPO_MiddleImp_TwoChannel(MPO& H, const double Eshift, const std::vector<double>& eps_,
                                                  const std::vector<double>& v_, const params &p)
 {
   Expects(odd(length(H)));
@@ -9,7 +9,7 @@ inline void Fill_SCBath_MPO_MiddleImp_TwoChannel(MPO& H, const std::vector<doubl
     cdnC = - div( p.sites.op( "Cdagdn",  1) ),
     cupA = - div( p.sites.op( "Cup",     1) ),
     cdnA = - div( p.sites.op( "Cdn",     1) );
-  
+
   std::cout << "g1="  << p.sc1->g() << std::endl;
   std::cout << "Ec1=" << p.sc1->Ec() << std::endl;
   std::cout << "g2="  << p.sc2->g() << std::endl;
@@ -17,7 +17,7 @@ inline void Fill_SCBath_MPO_MiddleImp_TwoChannel(MPO& H, const std::vector<doubl
 
   std::vector<Index> links;
   links.push_back( Index() );
-  
+
     //first we create the link indices which carry quantum number information
     for(auto i : range1( p.impindex-1 )){
         links.push_back(Index(  qn0,       2,
@@ -137,6 +137,7 @@ inline void Fill_SCBath_MPO_MiddleImp_TwoChannel(MPO& H, const std::vector<doubl
         W += p.sites.op("Nup",i)   * setElt(left(1), right(2)) * p.qd->EZ()/2.0;
         W += p.sites.op("Ndn",i)   * setElt(left(1), right(2)) * (-1) * p.qd->EZ()/2.0;
         W += p.sites.op("Nupdn",i) * setElt(left(1), right(2)) * p.qd->U();
+        W += p.sites.op("Id",i)    * setElt(left(1), right(2)) * Eshift;
 
         // hybridizations
         W += p.sites.op("Cup*F",    i)*setElt(left(1),right(3)) * (-1);

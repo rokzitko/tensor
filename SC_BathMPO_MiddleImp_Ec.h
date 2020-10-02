@@ -1,4 +1,4 @@
-inline void Fill_SCBath_MPO_MiddleImp_Ec(MPO& H, const std::vector<double>& eps_,
+inline void Fill_SCBath_MPO_MiddleImp_Ec(MPO& H, const double Eshift, const std::vector<double>& eps_,
                                          const std::vector<double>& v_, const params &p)
 {
   Expects(odd(length(H)));
@@ -135,6 +135,7 @@ inline void Fill_SCBath_MPO_MiddleImp_Ec(MPO& H, const std::vector<double>& eps_
         W += p.sites.op("Nup",i)   * setElt(left(1), right(2)) * p.qd->EZ()/2.0;
         W += p.sites.op("Ndn",i)   * setElt(left(1), right(2)) * (-1) * p.qd->EZ()/2.0;
         W += p.sites.op("Nupdn",i) * setElt(left(1), right(2)) * p.qd->U();
+        W += p.sites.op("Id",i)    * setElt(left(1), right(2)) * Eshift;
 
         // hybridizations
         W += p.sites.op("Cup*F",    i)*setElt(left(1),right(3)) * (-1);

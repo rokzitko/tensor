@@ -94,7 +94,6 @@ class problem_type;
 using type_ptr = std::unique_ptr<problem_type>;
 type_ptr set_problem(std::string);
 
-using H_t = std::tuple<MPO, double>;
 using ndx_t = std::vector<int>;
 
 template <typename T>
@@ -311,7 +310,8 @@ struct params {
   int excited_states;    // compute n excited states
 
   bool save;             // store computed energy/psi pair(s)
-  int solve_ndx = -1;    // which subproblem to solve [parsed directly from command line]
+  int solve_ndx;         // which subproblem to solve [parsed directly from command line]
+  int stop_n;            // stop calculation after level 'stop_n' has been computed
   int nrsweeps;          // number of DMRG sweeps to perform
   bool parallel;         // execution policy (also affects some defaults)
   bool Quiet, Silent;    // control output in dmrg()
@@ -351,7 +351,7 @@ class problem_type {
    virtual int imp_index(int) = 0;
    virtual ndx_t bath_indexes(int) = 0;          // all bath indexes
    virtual ndx_t bath_indexes(int, int) = 0;     // per channel bath indexes
-   virtual H_t initH(subspace_t, params &) = 0;
+   virtual MPO initH(subspace_t, params &) = 0;
    virtual InitState initState(subspace_t, params &) = 0;
 };
 
@@ -534,64 +534,64 @@ class two_channel : virtual public problem_type
 namespace prob {
    class Std : public imp_first, public single_channel { // Note: avoid lowercase 'std'!!
     public:
-      H_t initH(subspace_t sub, params &p) override {
+      MPO initH(subspace_t sub, params &p) override {
         auto [ntot, Sz] = sub;
         auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
         MPO H(p.sites); // MPO is the hamiltonian in the "MPS-form"
         double Eshift = p.sc->Ec()*pow(ntot-p.sc->n0(),2) + p.qd->U()/2; // occupancy dependent effective energy shift
         double epseff = p.qd->eps() - 2.*p.sc->Ec()*(ntot-p.sc->n0()) + p.sc->Ec();
         double Ueff = p.qd->U() + 2.*p.sc->Ec();
-        Fill_SCBath_MPO(H, eps, V, epseff, Ueff, p); // defined in SC_BathMPO.h, fills the MPO with the necessary entries
-        return {H, Eshift};
+        Fill_SCBath_MPO(H, Eshift, eps, V, epseff, Ueff, p); // defined in SC_BathMPO.h, fills the MPO with the necessary entries
+        return H;
       }
    };
 
    class Ec : public imp_first, public single_channel {
     public:
-      H_t initH(subspace_t sub, params &p) override {
+      MPO initH(subspace_t sub, params &p) override {
         auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
         MPO H(p.sites);
         double Eshift = p.sc->Ec()*pow(p.sc->n0(), 2) + p.qd->U()/2;
-        Fill_SCBath_MPO_Ec(H, eps, V, p);
-        return {H, Eshift};
+        Fill_SCBath_MPO_Ec(H, Eshift, eps, V, p);
+        return H;
       }
    };
 
    class Ec_V : public imp_first, public single_channel {
     public:
-      H_t initH(subspace_t sub, params &p) override {
+      MPO initH(subspace_t sub, params &p) override {
         auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
         MPO H(p.sites);
         double Eshift = p.sc->Ec()*pow(p.sc->n0(), 2) + p.V12 * p.sc->n0() * p.qd->nu() + p.qd->U()/2;
         double epseff = p.qd->eps() - p.V12 * p.sc->n0();
         double epsishift = -p.V12 * p.qd->nu();
-        Fill_SCBath_MPO_Ec_V(H, eps, V, epseff, epsishift, p);
-        return {H, Eshift};
+        Fill_SCBath_MPO_Ec_V(H, Eshift, eps, V, epseff, epsishift, p);
+        return H;
       }
    };
 
    class middle : public imp_middle, public single_channel {
     public:
-      H_t initH(subspace_t sub, params &p) override {
+      MPO initH(subspace_t sub, params &p) override {
         auto [ntot, Sz] = sub;
         auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
         MPO H(p.sites);
         double Eshift = p.sc->Ec()*pow(ntot-p.sc->n0(),2) + p.qd->U()/2;
         double epseff = p.qd->eps() - 2.*p.sc->Ec()*(ntot-p.sc->n0()) + p.sc->Ec();
         double Ueff = p.qd->U() + 2.*p.sc->Ec();
-        Fill_SCBath_MPO_MiddleImp(H, eps, V, epseff, Ueff, p);
-        return {H, Eshift};
+        Fill_SCBath_MPO_MiddleImp(H, Eshift, eps, V, epseff, Ueff, p);
+        return H;
       }
    };
 
    class middle_Ec : public imp_middle, public single_channel {
     public:
-      H_t initH(subspace_t sub, params &p) override {
+      MPO initH(subspace_t sub, params &p) override {
         auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
         MPO H(p.sites);
         double Eshift = p.sc->Ec()*pow(p.sc->n0(), 2) + p.qd->U()/2;
-        Fill_SCBath_MPO_MiddleImp_Ec(H, eps, V, p);
-        return {H, Eshift};
+        Fill_SCBath_MPO_MiddleImp_Ec(H, Eshift, eps, V, p);
+        return H;
       }
    };
 
@@ -600,29 +600,29 @@ namespace prob {
    // channel parameters. Use with care!
    class middle_2channel : public imp_middle, public single_channel {
     public:
-      H_t initH(subspace_t sub, params &p) override {
+      MPO initH(subspace_t sub, params &p) override {
         auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
         MPO H(p.sites);
         double Eshift = p.sc1->Ec()*pow(p.sc1->n0(), 2) + p.qd->U()/2;
         p.SCSCinteraction = 1.0; // IMPORTANT: single bath
         p.sc1->set_NBath(p.NBath); // override!
         p.sc2->set_NBath(p.NBath);
-        Fill_SCBath_MPO_MiddleImp_TwoChannel(H, eps, V, p);
-        return {H, Eshift};
+        Fill_SCBath_MPO_MiddleImp_TwoChannel(H, Eshift, eps, V, p);
+        return H;
       }
    };
 
    class twoch : public imp_middle, public two_channel {
     public:
-      H_t initH(subspace_t sub, params &p) override {
+      MPO initH(subspace_t sub, params &p) override {
         Expects(even(p.NBath)); // in 2-ch problems, NBath is the total number of bath sites in both SCs !!
         Expects(p.sc1->NBath() + p.sc2->NBath() == p.NBath);
         auto [eps, V] = get_eps_V(p.sc1, p.Gamma1, p.sc2, p.Gamma2, p);
         MPO H(p.sites);
         double Eshift = p.sc1->Ec()*pow(p.sc1->n0(), 2) + p.sc2->Ec()*pow(p.sc2->n0(), 2) + p.qd->U()/2;
         p.SCSCinteraction = 0.0; // IMPORTANT: separate baths
-        Fill_SCBath_MPO_MiddleImp_TwoChannel(H, eps, V, p);
-        return {H, Eshift};
+        Fill_SCBath_MPO_MiddleImp_TwoChannel(H, Eshift, eps, V, p);
+        return H;
       }
    };
 }

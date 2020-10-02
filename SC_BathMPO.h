@@ -1,4 +1,4 @@
-inline void Fill_SCBath_MPO(MPO& H, const std::vector<double>& eps_,
+inline void Fill_SCBath_MPO(MPO& H, const double Eshift, const std::vector<double>& eps_,
                 const std::vector<double>& v_, double epseff, double Ueff, const params &p)
 {
       //QN objects are necessary to have abelian symmetries in MPS
@@ -43,6 +43,7 @@ inline void Fill_SCBath_MPO(MPO& H, const std::vector<double>& eps_,
         W += p.sites.op("Nup",i)  * setElt(right(2)) * p.qd->EZ()/2.0;
         W += p.sites.op("Ndn",i)  * setElt(right(2)) * (-1) * p.qd->EZ()/2.0;
         W += p.sites.op("Nupdn",i) * setElt(right(2)) * Ueff;
+        W += p.sites.op("Id",i)    * setElt(right(2)) * Eshift;
 
         W += p.sites.op("Cup*F",i) * setElt(right(3))    * (-1);
         W += p.sites.op("Cdn*F",i) * setElt(right(4))    * (-1);
