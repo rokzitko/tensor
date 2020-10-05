@@ -335,9 +335,11 @@ void MeasureTotalSpinz(MPS& psi, H5Easy::File &file, std::string path, const par
 // occupation numbers of levels 'sites'
 auto calcOccupancy(MPS &psi, const ndx_t &sites, const params &p) {
   std::vector<double> r;
+
   for(const auto i : sites) {
     // position call very important! otherwise one would need to contract the whole tensor network of <psi|O|psi> this way, only the local operator at site i is needed
-    psi.position(i);
+    
+  	psi.position(i);
     const auto val = psi.A(i) * p.sites.op("Ntot",i) * dag(prime(psi.A(i),"Site"));
     r.push_back(std::real(val.cplx()));
   }
@@ -449,9 +451,6 @@ auto sweeps(params &p)
   return Sweeps(p.nrsweeps, sw_table);
 }
 
-void save(const state_t &st, double energy, MPS & psi)
-{}
-
 void solve_gs(const subspace_t &sub, store &s, params &p) {
   std::cout << "\nSweeping in the sector " << sub << ", ground state" << std::endl;
   auto H = p.problem->initH(sub, p);
@@ -467,6 +466,7 @@ void solve_gs(const subspace_t &sub, store &s, params &p) {
                              "EnergyErrgoal", p.EnergyErrgoal});
   s.eigen[gs(sub)] = eigenpair(GSenergy, psi);
 }
+
 
 void solve_es(const subspace_t &sub, store &s, params &p, int n) {
   std::cout << "\nSweeping in the sector " << sub << ", excited state n=" << n << std::endl;
@@ -485,7 +485,6 @@ void solve_es(const subspace_t &sub, store &s, params &p, int n) {
 
 void get_stats(store &s, params &p)
 {
-  std::cout << "get_stats" << std::endl;
   for (const auto &[state, ep] : s.eigen) {
     std::cout << "get_stats" << state << std::endl;
     const auto &[n, sz, i] = state;
@@ -494,16 +493,44 @@ void get_stats(store &s, params &p)
   }
 }
 
-void save(const state_t &st, const eigenpair &ep)
+void save(const state_t &st, const eigenpair &ep, params &p)
 {
-  // XXX: posnami v file
-}
+  // SAVE p.sites AS WELL, CHECK load() FOR INFO.
+  writeToFile(fmt::format("MPS_n{}_S{}_i{}", std::get<0>(st), std::get<1>(st), std::get<2>(st)), ep.psi());
+  writeToFile(fmt::format("SITES_n{}_S{}_i{}", std::get<0>(st), std::get<1>(st), std::get<2>(st)), p.sites);
+  }
 
-eigenpair load(const state_t &st)
+eigenpair load(const state_t &st, params &p, const subspace_t &sub)
 {
-  // XXX: nalozi iz fajla
-  throw std::runtime_error("nope");
-  return eigenpair();
+  std::string path = fmt::format("n{}_S{}_i{}", std::get<0>(st), std::get<1>(st), std::get<2>(st));
+
+  /* 
+  THIS IS CRITICAL!
+  iTensor tensors (MPS, MPO, sites objects, ...) have indeces, labeled by QN etc, and an id - a random number attributed at creation.
+  In order to be able to contract two tensors, their indeces must match, including the randomly generated id!
+  To achieve this, along with psi, you save the p.sites object psi was created with, to match the indices. When loading, psi has to be 
+  initiated with the exact same sites object. Also, this exact object has to be used when applying operators etc., so the p.sites has 
+  to be overwritten with the loaded one. 
+  */
+
+  Hubbard sites;
+  readFromFile("SITES_"+path,sites);
+  p.sites = sites;
+  
+  MPS psi(p.sites);
+  readFromFile("MPS_"+path, psi);
+
+  std::cout<<"psi loaded\n";
+  
+  // At this point one could load the energy from the hdf5 file, but multiple simultaneous lookups (when doing this in parallel) break stuff. 
+  //HighFive::File file("solution.h5", HighFive::File::ReadOnly);
+  //auto E = H5Easy::load<double>(file, "/"+state_path(st)+"/E");
+
+  // Alternatively, initialize H and calculate E directly:
+  auto H = p.problem->initH(sub, p);
+  auto E = inner(psi, H, psi);
+
+  return eigenpair(E, psi);
 }
 
 void solve_state(const subspace_t &sub, store &s, params &p, int n)
@@ -514,7 +541,7 @@ void solve_state(const subspace_t &sub, store &s, params &p, int n)
     solve_es(sub, s, p, n);
   if (p.save) {
     auto st = es(sub, n);
-    save(st, s.eigen[st]);
+    save(st, s.eigen[st], p);
   }
 }
   
@@ -522,16 +549,16 @@ void obtain_result(const subspace_t &sub, store &s, params &p)
 {
   for (int n =0; n <= std::min(p.excited_states, p.stop_n); n++) {
     auto st = es(sub, n);
+      
     try {
+      s.eigen[st] = load(st, p, sub);
       std::cout << "load=" << sub << std::endl;
-      s.eigen[st] = load(st);
     }
     catch (...) {
       std::cout << "solve=" << sub << std::endl;
       solve_state(sub, s, p, n);   // fallback: compute
     }
   }
-  get_stats(s, p);
 }
 
 void solve(const std::vector<subspace_t> &l, store &s, params &p) {
@@ -548,6 +575,8 @@ void solve(const std::vector<subspace_t> &l, store &s, params &p) {
   } else { // solve one (ndx)
     obtain_result_l(l[p.solve_ndx]);
   }
+  get_stats(s, p);
+
 }
   
 void calc_properties(const state_t st, H5Easy::File &file, store &s, params &p)
