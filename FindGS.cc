@@ -496,13 +496,15 @@ void get_stats(store &s, params &p)
 void save(const state_t &st, const eigenpair &ep, params &p)
 {
   // SAVE p.sites AS WELL, CHECK load() FOR INFO.
-  writeToFile(fmt::format("MPS_n{}_S{}_i{}", std::get<0>(st), std::get<1>(st), std::get<2>(st)), ep.psi());
-  writeToFile(fmt::format("SITES_n{}_S{}_i{}", std::get<0>(st), std::get<1>(st), std::get<2>(st)), p.sites);
+  const auto &[n, S, i] = st;
+  writeToFile(fmt::format("MPS_n{}_S{}_i{}", n, S, i), ep.psi());
+  writeToFile(fmt::format("SITES_n{}_S{}_i{}", n, S, i), p.sites);
   }
 
 eigenpair load(const state_t &st, params &p, const subspace_t &sub)
 {
-  std::string path = fmt::format("n{}_S{}_i{}", std::get<0>(st), std::get<1>(st), std::get<2>(st));
+  const auto &[n, S, i] = st;
+  std::string path = fmt::format("n{}_S{}_i{}", n, S, i);
 
   /* 
   THIS IS CRITICAL!
@@ -616,9 +618,9 @@ auto find_global_GS(store &s, auto & file) {
 
 void print_energies(store &s, double EGS, params &p) {
   skip_line();
-  for (const auto &st : s.eigen) {
-    const auto [ntot, Sz, i] = st.first;
-    const double E = st.second.E();
+  for (const auto &[state, ep] : s.eigen) {
+    const auto [ntot, Sz, i] = state;
+    const double E = ep.E();
     const double Ediff = E-EGS;
     std::cout << fmt::format(FMT_STRING("n = {:<5}  Sz = {:<4}  i = {:<3}  E = {:<22.15}  DeltaE = {:<22.15}"), 
                              ntot, Sz_string(Sz), i, E, Ediff) << std::endl;
