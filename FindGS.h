@@ -277,7 +277,8 @@ class psi_stats {
    void dump() const {
      std::cout << fmt::format("norm: <psi|psi> = {}", _norm) << std::endl
        << fmt::format("E: <psi|H|psi> = {}", _E) << std::endl
-       << fmt::format("deltaE^2: <psi|H^2|psi> - <psi|H|psi>^2 = {}", _deltaE2) << std::endl;
+       << fmt::format("deltaE^2: <psi|H^2|psi> - <psi|H|psi>^2 = {}", _deltaE2) << std::endl
+       << fmt::format("rel error: (<psi|H^2|psi> - <psi|H|psi>^2)/<psi|H|psi>^2 = {}", _deltaE2/pow(_E,2)) << std::endl;
    }
 };
 
