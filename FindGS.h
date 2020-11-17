@@ -14,6 +14,7 @@
 #include <utility>
 #include <algorithm>
 #include <execution>
+#include <optional>
 
 #include <gsl/gsl_assert>
 

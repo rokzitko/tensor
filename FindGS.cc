@@ -499,12 +499,18 @@ void save(const state_t &st, const eigenpair &ep, params &p)
   const auto &[n, S, i] = st;
   writeToFile(fmt::format("MPS_n{}_S{}_i{}", n, S, i), ep.psi());
   writeToFile(fmt::format("SITES_n{}_S{}_i{}", n, S, i), p.sites);
-  }
+}
 
-eigenpair load(const state_t &st, params &p, const subspace_t &sub)
+auto file_exists(const std::string &fn)
+{
+  std::ifstream F(fn);
+  return bool(F);
+}
+
+std::optional<eigenpair> load(const state_t &st, params &p, const subspace_t &sub)
 {
   const auto &[n, S, i] = st;
-  std::string path = fmt::format("n{}_S{}_i{}", n, S, i);
+  const auto path = fmt::format("n{}_S{}_i{}", n, S, i);
 
   /* 
   THIS IS CRITICAL!
@@ -515,20 +521,19 @@ eigenpair load(const state_t &st, params &p, const subspace_t &sub)
   to be overwritten with the loaded one. 
   */
 
+  const auto fn_sites = "SITES_" + path;
   Hubbard sites;
-  readFromFile("SITES_"+path,sites);
+  if (!file_exists(fn_sites)) return std::nullopt;
+  readFromFile(fn_sites, sites);
   p.sites = sites;
   
+  const auto fn_mps = "MPS_" + path;
+  if (!file_exists(fn_mps)) return std::nullopt;
   MPS psi(p.sites);
-  readFromFile("MPS_"+path, psi);
+  readFromFile(fn_mps, psi);
 
   std::cout<<"psi loaded\n";
   
-  // At this point one could load the energy from the hdf5 file, but multiple simultaneous lookups (when doing this in parallel) break stuff. 
-  //HighFive::File file("solution.h5", HighFive::File::ReadOnly);
-  //auto E = H5Easy::load<double>(file, "/"+state_path(st)+"/E");
-
-  // Alternatively, initialize H and calculate E directly:
   auto H = p.problem->initH(sub, p);
   auto E = inner(psi, H, psi);
 
@@ -553,10 +558,15 @@ void obtain_result(const subspace_t &sub, store &s, params &p)
     auto st = es(sub, n);
       
     try {
-      s.eigen[st] = load(st, p, sub);
-      std::cout << "load=" << sub << std::endl;
+      const auto res = load(st, p, sub);
+      if (res) {
+        s.eigen[st] = res.value();
+        std::cout << "load=" << sub << std::endl;
+      }
     }
-    catch (...) {
+    catch (...) {}
+    
+    if (s.eigen.count(st) == 0) {
       std::cout << "solve=" << sub << std::endl;
       solve_state(sub, s, p, n);   // fallback: compute
     }
