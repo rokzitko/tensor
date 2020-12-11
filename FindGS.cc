@@ -455,11 +455,13 @@ void solve_gs(const subspace_t &sub, store &s, params &p) {
   std::cout << "\nSweeping in the sector " << sub << ", ground state" << std::endl;
   auto H = p.problem->initH(sub, p);
   auto state = p.problem->initState(sub, p);
+
   MPS psi_init(state);
   for(auto i : range1(p.nrH)){
     psi_init = applyMPO(H,psi_init);
     psi_init.noPrime().normalize();
   }
+
   auto [GSenergy, psi] = dmrg(H, psi_init, sweeps(p), 
                             {"Silent", p.Silent, 
                              "Quiet", p.Quiet, 
@@ -536,7 +538,7 @@ std::optional<eigenpair> load(const state_t &st, params &p, const subspace_t &su
   
   auto H = p.problem->initH(sub, p);
   auto E = inner(psi, H, psi);
-
+  
   return eigenpair(E, psi);
 }
 

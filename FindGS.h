@@ -368,8 +368,9 @@ class imp_first : virtual public problem_type
      return l;
    }
    ndx_t bath_indexes(int NBath, int ch) override { 
-     Expects(ch == 1);
-     return bath_indexes(NBath);
+     Expects(ch == 1 || ch == 2);
+     auto ndx = bath_indexes(NBath);
+     return ch == 1 ? ndx_t(ndx.begin(), ndx.begin() + NBath/2) : ndx_t(ndx.begin() + NBath/2, ndx.begin() + NBath);
    }
 };
 
@@ -436,6 +437,7 @@ inline void add_bath_electrons(const int nsc, const spin & Szadd, const ndx_t &b
 #include "SC_BathMPO_MiddleImp.h"
 #include "SC_BathMPO_MiddleImp_Ec.h"
 #include "SC_BathMPO_MiddleImp_TwoChannel.h"
+#include "SC_BathMPO_ImpFirst_TwoChannel.h"
 
 class single_channel : virtual public problem_type
 {
@@ -502,18 +504,21 @@ class two_channel : virtual public problem_type
      return std::make_pair(eps, V);
    }
    InitState initState(subspace_t sub, params &p) override {
+    
      const auto [ntot, Sz] = sub; // Sz is the z-component of the total spin.
      Expects(0 <= ntot && ntot <= 2*p.N);
      Expects(Sz == -1 || Sz == -0.5 || Sz == 0 || Sz == +0.5 || Sz == +1);
      int tot = 0;      // electron counter, for assertion test
      double Sztot = 0; // SZ counter, for assertion test
      auto state = InitState(p.sites);
+
      const auto nimp = p.sc_only ? 0 : 1;        // number of electrons in the impurity level
      const auto nsc = p.sc_only ? ntot : ntot-1; // number of electrons in the bath
      auto nsc1 = nsc/2;                          // number of electrons in bath 1
      if (odd(nsc1) && nsc1) nsc1--;
      const auto nsc2 = nsc-nsc1;                 // number of electrons in bath 2
      Ensures(nimp + nsc1 + nsc2 == ntot);
+
      // ** Add electron to the impurity site
      if (nimp)
        add_imp_electron(Sz, p.impindex, state, tot, Sztot);
@@ -522,11 +527,16 @@ class two_channel : virtual public problem_type
        Expects(even(nsc1));
        ndx_t bath_sites = p.problem->bath_indexes(p.NBath, 1);
        add_bath_electrons(nsc1, spin0, bath_sites, state, tot, Sztot);
+       std::cout<< "BATH SITES 1: "<< bath_sites;
      }
      if (nsc2) {
        ndx_t bath_sites = p.problem->bath_indexes(p.NBath, 2);
+      std::cout<< "BATH SITES 2: "<< bath_sites;
        add_bath_electrons(nsc2, Sz-Sztot, bath_sites, state, tot, Sztot);
      }
+
+     
+
      Ensures(tot == ntot);
      Ensures(Sztot == Sz);
      return state;
@@ -627,6 +637,25 @@ namespace prob {
         return H;
       }
    };
+
+   class twoch_impfirst : public imp_first, public two_channel {
+    public:
+      MPO initH(subspace_t sub, params &p) override {
+        
+        Expects(even(p.NBath)); // in 2-ch problems, NBath is the total number of bath sites in both SCs !!
+        Expects(p.sc1->NBath() + p.sc2->NBath() == p.NBath);
+        Expects(p.sc1->NBath() == p.sc2->NBath());
+        auto [eps, V] = get_eps_V(p.sc1, p.Gamma1, p.sc2, p.Gamma2, p);
+        MPO H(p.sites);
+        double Eshift = p.sc1->Ec()*pow(p.sc1->n0(), 2) + p.sc2->Ec()*pow(p.sc2->n0(), 2) + p.qd->U()/2;
+        std::cout<<"OLA\n";
+        Fill_SCBath_MPO_ImpFirst_TwoChannel(H, Eshift, eps, V, p);
+        return H;
+      }
+   };
+
+
+
 }
 
 inline type_ptr set_problem(std::string str)
@@ -638,6 +667,7 @@ inline type_ptr set_problem(std::string str)
   if (str == "middle_Ec") return std::make_unique<prob::middle_Ec>();
   if (str == "middle_2channel") return std::make_unique<prob::middle_2channel>();
   if (str == "2ch") return std::make_unique<prob::twoch>();
+  if (str == "2ch_impFirst") return std::make_unique<prob::twoch_impfirst>();
   throw std::runtime_error("Unknown MPO type");
 }
 
