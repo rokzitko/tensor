@@ -527,11 +527,9 @@ class two_channel : virtual public problem_type
        Expects(even(nsc1));
        ndx_t bath_sites = p.problem->bath_indexes(p.NBath, 1);
        add_bath_electrons(nsc1, spin0, bath_sites, state, tot, Sztot);
-       std::cout<< "BATH SITES 1: "<< bath_sites;
      }
      if (nsc2) {
        ndx_t bath_sites = p.problem->bath_indexes(p.NBath, 2);
-      std::cout<< "BATH SITES 2: "<< bath_sites;
        add_bath_electrons(nsc2, Sz-Sztot, bath_sites, state, tot, Sztot);
      }
 
@@ -648,7 +646,6 @@ namespace prob {
         auto [eps, V] = get_eps_V(p.sc1, p.Gamma1, p.sc2, p.Gamma2, p);
         MPO H(p.sites);
         double Eshift = p.sc1->Ec()*pow(p.sc1->n0(), 2) + p.sc2->Ec()*pow(p.sc2->n0(), 2) + p.qd->U()/2;
-        std::cout<<"OLA\n";
         Fill_SCBath_MPO_ImpFirst_TwoChannel(H, Eshift, eps, V, p);
         return H;
       }
