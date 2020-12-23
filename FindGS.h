@@ -355,6 +355,7 @@ class problem_type {
    virtual ndx_t bath_indexes(int, int) = 0;     // per channel bath indexes
    virtual MPO initH(subspace_t, params &) = 0;
    virtual InitState initState(subspace_t, params &) = 0;
+   virtual int numChannels() = 0;
 };
 
 class imp_first : virtual public problem_type
@@ -442,6 +443,7 @@ inline void add_bath_electrons(const int nsc, const spin & Szadd, const ndx_t &b
 class single_channel : virtual public problem_type
 {
  public:
+
    auto get_eps_V(auto & sc, auto & Gamma, params &p) {
      auto eps0 = sc->eps(p.band_level_shift);
      auto V0 = Gamma->V(sc->NBath());
@@ -475,6 +477,11 @@ class single_channel : virtual public problem_type
      Ensures(Sztot == Sz);
      return state;
    }
+   int numChannels() {
+    return 1;
+   }
+  
+
 };
 
 template <class T>
@@ -533,12 +540,14 @@ class two_channel : virtual public problem_type
        add_bath_electrons(nsc2, Sz-Sztot, bath_sites, state, tot, Sztot);
      }
 
-     
-
      Ensures(tot == ntot);
      Ensures(Sztot == Sz);
      return state;
    }
+   int numChannels() {
+    return 2;
+   }
+  
 };
 
 namespace prob {

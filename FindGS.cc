@@ -1,4 +1,5 @@
 #include "FindGS.h"
+#include <cxxabi.h>
 
 std::vector<subspace_t> init_subspace_lists(params &p)
 {
@@ -6,9 +7,11 @@ std::vector<subspace_t> init_subspace_lists(params &p)
   int nref = nhalf;       // default
   if (p.nref >= 0)        // override
     nref = p.nref;
-  else if (p.refisn0)     // adaptable
-    nref = round(p.sc->n0() + 0.5 - (p.qd->eps()/p.qd->U())); // calculation of the energies is centered around this n
-
+  else if (p.refisn0){   // adaptable
+    if (p.problem->numChannels() == 1) nref = round(p.sc->n0() + 0.5 - (p.qd->eps()/p.qd->U())); // calculation of the energies is centered around this n
+    else if (p.problem->numChannels() == 2) nref = round(p.sc1->n0() + p.sc2->n0() + 0.5 - (p.qd->eps()/p.qd->U()));
+  }
+   
   std::vector<subspace_t> l;
   for (const auto &ntot : n_list(nref, p.nrange)) {
     spin szmax = even(ntot) ? (p.spin1 ? 1 : 0) : 0.5;
