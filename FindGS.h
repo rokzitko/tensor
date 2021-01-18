@@ -221,16 +221,18 @@ class SCbath : public bath { // superconducting island bath
  private:
    double _alpha; // pairing strength
    double _Ec;    // charging energy
-   double _n0;    // offset
+   double _n0;    // offset 
    double _EZ;    // Zeeman energy
+   double _t;     // nearest neighbour hopping in SC
  public:
-   SCbath(int NBath, double alpha, double Ec, double n0, double EZ) :
-     bath(NBath), _alpha(alpha), _Ec(Ec), _n0(n0), _EZ(EZ) {};
+   SCbath(int NBath, double alpha, double Ec, double n0, double EZ, double t) :
+     bath(NBath), _alpha(alpha), _Ec(Ec), _n0(n0), _EZ(EZ), _t(t) {};
    auto alpha() const { return _alpha; }
    auto Ec() const { return _Ec; }
    auto n0() const { return _n0; }
    auto EZ() const { return _EZ; }
    auto g() const { return _alpha*d(); }
+   auto t() const { return _t;}
    auto eps(bool band_level_shift = true) const {
      auto eps = bath::eps();
      if (band_level_shift)
@@ -320,7 +322,7 @@ struct params {
   bool refisn0;          // the energies will be computed in the sectors centered around the one with n = round(n0) + 1
   bool verbose;          // verbosity level
   bool band_level_shift; // shifts the band levels for a constant in order to make H particle-hole symmetric
-  bool sc_only;          // do not put any electrons on the SC in the initial state
+  bool sc_only;          // do not put any electrons on the QD in the initial state
   double Weight;         // parameter 'Weight' for the calculaiton of excited states
 
   double EnergyErrgoal;  // convergence value at which dmrg() will stop the sweeps; default is machine precision
@@ -437,6 +439,8 @@ inline void add_bath_electrons(const int nsc, const spin & Szadd, const ndx_t &b
 #include "SC_BathMPO_Ec_V.h"
 #include "SC_BathMPO_MiddleImp.h"
 #include "SC_BathMPO_MiddleImp_Ec.h"
+#include "SC_BathMPO_t_SConly.h"
+#include "SC_BathMPO_Ec_t.h"
 #include "SC_BathMPO_MiddleImp_TwoChannel.h"
 #include "SC_BathMPO_ImpFirst_TwoChannel.h"
 
@@ -614,6 +618,28 @@ namespace prob {
       }
    };
 
+   class t_SConly : public imp_first, public single_channel {
+    public:
+      MPO initH(subspace_t sub, params &p) override {
+        Expects(p.sc_only);
+        auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
+        MPO H(p.sites);
+        double Eshift = p.sc->Ec()*pow(p.sc->n0(), 2);
+        Fill_SCBath_MPO_t_SConly(H, Eshift, eps, V, p);
+        return H;
+      }
+   };
+
+   class Ec_t : public imp_first, public single_channel {
+    public:
+      MPO initH(subspace_t sub, params &p) override {
+        auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
+        MPO H(p.sites);
+        double Eshift = p.sc->Ec()*pow(p.sc->n0(), 2);
+        Fill_SCBath_MPO_Ec_t(H, Eshift, eps, V, p);
+        return H;
+      }
+   };
    // For testing only!! This is the same as 'middle_Ec', but using the MPO for the
    // 2-ch problem. It uses Gamma for hybridisation, but alpha1,alpha2, etc. for
    // channel parameters. Use with care!
@@ -671,6 +697,8 @@ inline type_ptr set_problem(std::string str)
   if (str == "Ec_V") return std::make_unique<prob::Ec_V>();
   if (str == "middle") return std::make_unique<prob::middle>();
   if (str == "middle_Ec") return std::make_unique<prob::middle_Ec>();
+  if (str == "t_SConly") return std::make_unique<prob::t_SConly>();
+  if (str == "Ec_t") return std::make_unique<prob::Ec_t>();
   if (str == "middle_2channel") return std::make_unique<prob::middle_2channel>();
   if (str == "2ch") return std::make_unique<prob::twoch>();
   if (str == "2ch_impFirst") return std::make_unique<prob::twoch_impfirst>();
