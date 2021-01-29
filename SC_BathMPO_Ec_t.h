@@ -79,8 +79,8 @@ inline void Fill_SCBath_MPO_Ec_t(MPO& H, const double Eshift, const std::vector<
 
         W += p.sites.op("Cup", i)          * setElt(left(1),right(10)) * (-1.) * p.sc->t();
         W += p.sites.op("Cdn", i)          * setElt(left(1),right(11)) * (-1.) * p.sc->t();
-        W += p.sites.op("Cdagup", i)          * setElt(left(1),right(12)) * (-1.) * p.sc->t();
-        W += p.sites.op("Cdagdn", i)          * setElt(left(1),right(13)) * (-1.) * p.sc->t();
+        W += p.sites.op("Cdagup", i)          * setElt(left(1),right(12)) * p.sc->t();
+        W += p.sites.op("Cdagdn", i)          * setElt(left(1),right(13)) * p.sc->t();
 
 
         W += p.sites.op("Id",i)*setElt(left(2),right(2));
@@ -92,12 +92,7 @@ inline void Fill_SCBath_MPO_Ec_t(MPO& H, const double Eshift, const std::vector<
         W += p.sites.op("Id",i)*setElt(left(8),right(8));
         W += p.sites.op("Id",i)*setElt(left(9),right(9));
 
-        W += p.sites.op("Id",i)*setElt(left(10),right(10));
-        W += p.sites.op("Id",i)*setElt(left(11),right(11));
-        W += p.sites.op("Id",i)*setElt(left(12),right(12));
-        W += p.sites.op("Id",i)*setElt(left(13),right(13));
-
-
+ 
         W += p.sites.op("Cdagup",i)*setElt(left(3),right(2))* v_[i-1];
         W += p.sites.op("Cdagdn",i)*setElt(left(4),right(2))* v_[i-1];
         W += p.sites.op("Cup",   i)*setElt(left(5),right(2))* v_[i-1];

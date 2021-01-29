@@ -208,10 +208,11 @@ class bath { // normal-state bath
    auto d() const { // inter-level spacing
      return 2.0*_D/_NBath;
    }
-   auto eps() const {
+   auto eps(bool flat_band = false) const { 
      std::vector<double> eps;
      for (auto k: range1(_NBath))
-       eps.push_back( -_D + (k-0.5)*d() );
+       if (flat_band) eps.push_back( k <= _NBath/2 ? -0.5 : 0.5 );
+       else eps.push_back( -_D + (k-0.5)*d() );
      return eps;
    }
    void set_NBath(int NBath) { _NBath = NBath; }
@@ -233,8 +234,8 @@ class SCbath : public bath { // superconducting island bath
    auto EZ() const { return _EZ; }
    auto g() const { return _alpha*d(); }
    auto t() const { return _t;}
-   auto eps(bool band_level_shift = true) const {
-     auto eps = bath::eps();
+   auto eps(bool band_level_shift = true, bool flat_band = false) const {
+     auto eps = bath::eps(flat_band);
      if (band_level_shift)
        for (auto &x: eps)
          x += -g()/2.0;
@@ -330,6 +331,7 @@ struct params {
   int nref;              // central value of the occupancy.
   int nrange;            // number of occupancies considered is 2*nrange + 1, i.e. [nref-nrange:nref+nrange]
   bool spin1;            // include sz=1 for even charge sectors.
+  bool flat_band;        // set energies of all levels to -1/2 or 1/2
 
   std::unique_ptr<imp>    qd;
   std::unique_ptr<SCbath> sc;
@@ -449,7 +451,7 @@ class single_channel : virtual public problem_type
  public:
 
    auto get_eps_V(auto & sc, auto & Gamma, params &p) {
-     auto eps0 = sc->eps(p.band_level_shift);
+     auto eps0 = sc->eps(p.band_level_shift, p.flat_band);
      auto V0 = Gamma->V(sc->NBath());
      if (p.verbose) {
        std::cout << "eps=" << eps0 << std::endl;
@@ -502,8 +504,8 @@ class two_channel : virtual public problem_type
 {
  public:
    auto get_eps_V(auto & sc1, auto & Gamma1, auto & sc2, auto & Gamma2, params &p) {
-     auto eps1 = sc1->eps(p.band_level_shift);
-     auto eps2 = sc2->eps(p.band_level_shift);
+     auto eps1 = sc1->eps(p.band_level_shift, p.flat_band);
+     auto eps2 = sc2->eps(p.band_level_shift, p.flat_band);
      auto V1 = Gamma1->V(sc1->NBath());
      auto V2 = Gamma2->V(sc2->NBath());
      if (p.verbose) {
@@ -621,11 +623,11 @@ namespace prob {
    class t_SConly : public imp_first, public single_channel {
     public:
       MPO initH(subspace_t sub, params &p) override {
-        Expects(p.sc_only);
+        //Expects(p.sc_only);
         auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
         MPO H(p.sites);
         double Eshift = p.sc->Ec()*pow(p.sc->n0(), 2);
-        Fill_SCBath_MPO_t_SConly(H, Eshift, eps, V, p);
+        Fill_SCBath_MPO_t_SConly(H, Eshift, eps, p);
         return H;
       }
    };
@@ -635,7 +637,7 @@ namespace prob {
       MPO initH(subspace_t sub, params &p) override {
         auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
         MPO H(p.sites);
-        double Eshift = p.sc->Ec()*pow(p.sc->n0(), 2);
+        double Eshift = p.sc->Ec()*pow(p.sc->n0(), 2) + p.qd->U()/2;
         Fill_SCBath_MPO_Ec_t(H, Eshift, eps, V, p);
         return H;
       }

@@ -1,5 +1,4 @@
-inline void Fill_SCBath_MPO_t_SConly(MPO& H, const double Eshift, const std::vector<double>& eps_,
-                const std::vector<double>& v_, const params &p)
+inline void Fill_SCBath_MPO_t_SConly(MPO& H, const double Eshift, const std::vector<double>& eps_, const params &p)
 {
       //QN objects are necessary to have abelian symmetries in MPS
       QN    qn0  ( {"Sz",  0},{"Nf", 0} ),
@@ -72,11 +71,11 @@ inline void Fill_SCBath_MPO_t_SConly(MPO& H, const double Eshift, const std::vec
         W += p.sites.op("Id",i)*setElt(left(7),right(7));
         W += p.sites.op("Id",i)*setElt(left(8),right(8));
         W += p.sites.op("Id",i)*setElt(left(9),right(9));
-
-        W += p.sites.op("Cdagup",i)*setElt(left(3),right(2))* v_[i-1];
-        W += p.sites.op("Cdagdn",i)*setElt(left(4),right(2))* v_[i-1];
-        W += p.sites.op("Cup",   i)*setElt(left(5),right(2))* v_[i-1];
-        W += p.sites.op("Cdn",   i)*setElt(left(6),right(2))* v_[i-1];
+        
+        W += p.sites.op("Cdagup",i)*setElt(left(3),right(2));
+        W += p.sites.op("Cdagdn",i)*setElt(left(4),right(2));
+        W += p.sites.op("Cup",   i)*setElt(left(5),right(2));
+        W += p.sites.op("Cdn",   i)*setElt(left(6),right(2));
 
         W += p.sites.op("Cdagup*Cdagdn",i)*setElt(left(7),right(2));
         W += p.sites.op("Cdn*Cup",i)      *setElt(left(8),right(2));
