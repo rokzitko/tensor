@@ -208,10 +208,11 @@ class bath { // normal-state bath
    auto d() const { // inter-level spacing
      return 2.0*_D/_NBath;
    }
-   auto eps(bool flat_band = false) const { 
+   auto eps(bool flat_band = false, bool zero_eps = false) const { 
      std::vector<double> eps;
      for (auto k: range1(_NBath))
        if (flat_band) eps.push_back( k <= _NBath/2 ? -0.5 : 0.5 );
+   	   else if (zero_eps)	eps.push_back( 0 );
        else eps.push_back( -_D + (k-0.5)*d() );
      return eps;
    }
@@ -234,8 +235,8 @@ class SCbath : public bath { // superconducting island bath
    auto EZ() const { return _EZ; }
    auto g() const { return _alpha*d(); }
    auto t() const { return _t;}
-   auto eps(bool band_level_shift = true, bool flat_band = false) const {
-     auto eps = bath::eps(flat_band);
+   auto eps(bool band_level_shift = true, bool flat_band = false, bool zero_eps = false) const {
+     auto eps = bath::eps(flat_band, zero_eps);
      if (band_level_shift)
        for (auto &x: eps)
          x += -g()/2.0;
@@ -332,6 +333,7 @@ struct params {
   int nrange;            // number of occupancies considered is 2*nrange + 1, i.e. [nref-nrange:nref+nrange]
   bool spin1;            // include sz=1 for even charge sectors.
   bool flat_band;        // set energies of all levels to -1/2 or 1/2
+  bool zero_eps;         // set energies of all levels to 0
 
   std::unique_ptr<imp>    qd;
   std::unique_ptr<SCbath> sc;
@@ -451,7 +453,7 @@ class single_channel : virtual public problem_type
  public:
 
    auto get_eps_V(auto & sc, auto & Gamma, params &p) {
-     auto eps0 = sc->eps(p.band_level_shift, p.flat_band);
+     auto eps0 = sc->eps(p.band_level_shift, p.flat_band, p.zero_eps);
      auto V0 = Gamma->V(sc->NBath());
      if (p.verbose) {
        std::cout << "eps=" << eps0 << std::endl;
@@ -504,8 +506,8 @@ class two_channel : virtual public problem_type
 {
  public:
    auto get_eps_V(auto & sc1, auto & Gamma1, auto & sc2, auto & Gamma2, params &p) {
-     auto eps1 = sc1->eps(p.band_level_shift, p.flat_band);
-     auto eps2 = sc2->eps(p.band_level_shift, p.flat_band);
+     auto eps1 = sc1->eps(p.band_level_shift, p.flat_band, p.zero_eps);
+     auto eps2 = sc2->eps(p.band_level_shift, p.flat_band, p.zero_eps);
      auto V1 = Gamma1->V(sc1->NBath());
      auto V2 = Gamma2->V(sc2->NBath());
      if (p.verbose) {

@@ -95,6 +95,7 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.Weight = input.getReal("Weight", 11.0);
   p.overlaps = input.getYesNo("overlaps", false);
   p.flat_band = input.getYesNo("flat_band", false);
+  p.zero_eps = input.getYesNo("zero_eps", false);
 }
 
 double ImpurityCorrelator(MPS& psi, auto impOp, int j, auto opj, const params &p) {
