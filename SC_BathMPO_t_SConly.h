@@ -57,10 +57,10 @@ inline void Fill_SCBath_MPO_t_SConly(MPO& H, const double Eshift, const std::vec
         W += p.sites.op("Ndn",i)            * setElt(left(1),right(2)) * (-1.) * p.sc->EZ()/2.0; // bulk Zeeman energy
         W += p.sites.op("Nupdn",i)          * setElt(left(1),right(2)) * (p.sc->g() + 2.0*p.sc->Ec()); // !
 
-        W += p.sites.op("Cup",i)            * setElt(left(1),right(3)) * (-1.)*p.sc->t();
-        W += p.sites.op("Cdn",i)            * setElt(left(1),right(4)) * (-1.)*p.sc->t();
-        W += p.sites.op("Cdagup",i)         * setElt(left(1),right(5)) * p.sc->t();
-        W += p.sites.op("Cdagdn",i)         * setElt(left(1),right(6)) * p.sc->t();
+        W += p.sites.op("Cup*F",i)            * setElt(left(1),right(3)) * (-1.)*p.sc->t();
+        W += p.sites.op("Cdn*F",i)            * setElt(left(1),right(4)) * (-1.)*p.sc->t();
+        W += p.sites.op("Cdagup*F",i)         * setElt(left(1),right(5)) * p.sc->t();
+        W += p.sites.op("Cdagdn*F",i)         * setElt(left(1),right(6)) * p.sc->t();
 
 
         W += p.sites.op("Cdn*Cup",i)        * setElt(left(1),right(7)) * p.sc->g();

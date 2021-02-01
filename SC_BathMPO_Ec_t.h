@@ -25,9 +25,7 @@ inline void Fill_SCBath_MPO_Ec_t(MPO& H, const double Eshift, const std::vector<
                                 cupC,      1,
                                 cdnC,      1,
                                 cupA,      1,
-                                cdnA,      1,    
-                                
-                                Out, "Link" ));
+                                cdnA,      1,    Out, "Link" ));
 
     }
 
@@ -77,10 +75,10 @@ inline void Fill_SCBath_MPO_Ec_t(MPO& H, const double Eshift, const std::vector<
         W += p.sites.op("Cdagup*Cdagdn",i)  * setElt(left(1),right(8)) * p.sc->g();
         W += p.sites.op("Ntot", i)          * setElt(left(1),right(9)) * 2.0*p.sc->Ec(); // !
 
-        W += p.sites.op("Cup", i)          * setElt(left(1),right(10)) * (-1.) * p.sc->t();
-        W += p.sites.op("Cdn", i)          * setElt(left(1),right(11)) * (-1.) * p.sc->t();
-        W += p.sites.op("Cdagup", i)          * setElt(left(1),right(12)) * p.sc->t();
-        W += p.sites.op("Cdagdn", i)          * setElt(left(1),right(13)) * p.sc->t();
+        W += p.sites.op("Cup*F", i)          * setElt(left(1),right(10)) * (-1.) * p.sc->t();
+        W += p.sites.op("Cdn*F", i)          * setElt(left(1),right(11)) * (-1.) * p.sc->t();
+        W += p.sites.op("Cdagup*F", i)          * setElt(left(1),right(12)) * p.sc->t();
+        W += p.sites.op("Cdagdn*F", i)          * setElt(left(1),right(13)) * p.sc->t();
 
 
         W += p.sites.op("Id",i)*setElt(left(2),right(2));
