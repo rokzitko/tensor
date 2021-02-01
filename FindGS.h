@@ -447,6 +447,7 @@ inline void add_bath_electrons(const int nsc, const spin & Szadd, const ndx_t &b
 #include "SC_BathMPO_Ec_t.h"
 #include "SC_BathMPO_MiddleImp_TwoChannel.h"
 #include "SC_BathMPO_ImpFirst_TwoChannel.h"
+#include "autoMPO.h"
 
 class single_channel : virtual public problem_type
 {
@@ -661,6 +662,17 @@ namespace prob {
       }
    };
 
+    class autoH : public imp_first, public single_channel {
+    public:
+      MPO initH(subspace_t sub, params &p) override {
+        auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
+        MPO H(p.sites);
+        double Eshift = p.qd->U()/2;
+        get_MPO_hopping(H, Eshift, eps, V, p);
+        return H;
+      }
+   };
+
    class twoch : public imp_middle, public two_channel {
     public:
       MPO initH(subspace_t sub, params &p) override {
@@ -703,6 +715,7 @@ inline type_ptr set_problem(std::string str)
   if (str == "middle_Ec") return std::make_unique<prob::middle_Ec>();
   if (str == "t_SConly") return std::make_unique<prob::t_SConly>();
   if (str == "Ec_t") return std::make_unique<prob::Ec_t>();
+  if (str == "autoH") return std::make_unique<prob::autoH>();
   if (str == "middle_2channel") return std::make_unique<prob::middle_2channel>();
   if (str == "2ch") return std::make_unique<prob::twoch>();
   if (str == "2ch_impFirst") return std::make_unique<prob::twoch_impfirst>();
