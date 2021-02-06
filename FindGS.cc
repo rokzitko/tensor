@@ -89,13 +89,13 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.Quiet = input.getYesNo("Quiet", true);
   p.Silent = input.getYesNo("Silent", p.parallel);
   p.verbose = input.getYesNo("verbose", !p.parallel);
-  p.EnergyErrgoal = input.getReal("EnergyErrgoal", 1e-16);
+  p.EnergyErrgoal = input.getReal("EnergyErrgoal", 0);
   p.nrH = input.getInt("nrH", 5);
   p.sc_only = input.getYesNo("sc_only", false);
   p.Weight = input.getReal("Weight", 11.0);
   p.overlaps = input.getYesNo("overlaps", false);
   p.flat_band = input.getYesNo("flat_band", false);
-  p.zero_eps = input.getYesNo("zero_eps", false);
+  p.flat_band_factor = input.getReal("flat_band_factor", 0);
 }
 
 double ImpurityCorrelator(MPS& psi, auto impOp, int j, auto opj, const params &p) {
@@ -621,11 +621,13 @@ void calc_properties(const state_t st, H5Easy::File &file, store &s, params &p)
 }
 
 auto find_global_GS(store &s, auto & file) {
+  std::cout << "AA \n";
   auto m = std::min_element(begin(s.eigen), end(s.eigen), [](const auto &p1, const auto &p2) { return p1.second.E() < p2.second.E(); });
   state_t GS = m->first;
   double E_GS = m->second.E();
   const auto [N_GS, Sz_GS, i] = GS;
-  Expects(i == 0);
+  //Expects(i == 0);
+  if (i!=0) std::cout << "\nPossible problem! Global GS is an excited state!\n";
   std::cout << fmt::format("\nN_GS = {}\nSZ_GS = {}\nE_GS = {}\n",N_GS, Sz_string(Sz_GS), E_GS);
   H5Easy::dump(file, "/GS/N",  N_GS);
   H5Easy::dump(file, "/GS/Sz", Sz_GS);
@@ -714,7 +716,7 @@ void process_and_save_results(store &s, params &p, std::string h5_filename) {
   if (p.calcweights) {
     calculate_spectral_weights(s, GS, file, p, 0);
     if (p.excited_state) calculate_spectral_weights(s, GS, file, p, 1);
-  }  
+  }
   if (p.overlaps)
     calculate_overlaps(s, file, p);
 }
