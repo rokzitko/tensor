@@ -450,7 +450,9 @@ inline void add_bath_electrons(const int nsc, const spin & Szadd, const ndx_t &b
 #include "SC_BathMPO_Ec_t.h"
 #include "SC_BathMPO_MiddleImp_TwoChannel.h"
 #include "SC_BathMPO_ImpFirst_TwoChannel.h"
-#include "autoMPO.h"
+#include "SC_BathMPO_ImpFirst_TwoChannel_hopping.h"
+#include "autoMPO_1ch.h"
+#include "autoMPO_2ch.h"
 
 class single_channel : virtual public problem_type
 {
@@ -665,13 +667,24 @@ namespace prob {
       }
    };
 
-    class autoH : public imp_first, public single_channel {
+    class autoH_1ch : public imp_first, public single_channel {
     public:
       MPO initH(subspace_t sub, params &p) override {
         auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
         MPO H(p.sites);
         double Eshift = p.qd->U()/2;
-        get_MPO_hopping(H, Eshift, eps, V, p);
+        get_autoMPO_1ch(H, Eshift, eps, V, p);
+        return H;
+      }
+   };
+
+    class autoH_2ch : public imp_first, public two_channel {
+    public:
+      MPO initH(subspace_t sub, params &p) override {
+        auto [eps, V] = get_eps_V(p.sc1, p.Gamma1, p.sc2, p.Gamma2, p);
+        MPO H(p.sites);
+        double Eshift = p.qd->U()/2;
+        get_autoMPO_2ch(H, Eshift, eps, V, p);
         return H;
       }
    };
@@ -705,6 +718,20 @@ namespace prob {
       }
    };
 
+   class twoch_hopping : public imp_first, public two_channel {
+    public:
+      MPO initH(subspace_t sub, params &p) override {
+        
+        Expects(even(p.NBath)); // in 2-ch problems, NBath is the total number of bath sites in both SCs !!
+        Expects(p.sc1->NBath() + p.sc2->NBath() == p.NBath);
+        Expects(p.sc1->NBath() == p.sc2->NBath());
+        auto [eps, V] = get_eps_V(p.sc1, p.Gamma1, p.sc2, p.Gamma2, p);
+        MPO H(p.sites);
+        double Eshift = p.sc1->Ec()*pow(p.sc1->n0(), 2) + p.sc2->Ec()*pow(p.sc2->n0(), 2) + p.qd->U()/2;
+        Fill_SCBath_MPO_ImpFirst_TwoChannel_hopping(H, Eshift, eps, V, p);
+        return H;
+      }
+   };
 
 
 }
@@ -718,10 +745,12 @@ inline type_ptr set_problem(std::string str)
   if (str == "middle_Ec") return std::make_unique<prob::middle_Ec>();
   if (str == "t_SConly") return std::make_unique<prob::t_SConly>();
   if (str == "Ec_t") return std::make_unique<prob::Ec_t>();
-  if (str == "autoH") return std::make_unique<prob::autoH>();
+  if (str == "autoH") return std::make_unique<prob::autoH_1ch>();
+  if (str == "autoH_2ch") return std::make_unique<prob::autoH_2ch>();
   if (str == "middle_2channel") return std::make_unique<prob::middle_2channel>();
   if (str == "2ch") return std::make_unique<prob::twoch>();
   if (str == "2ch_impFirst") return std::make_unique<prob::twoch_impfirst>();
+  if (str == "2ch_t") return std::make_unique<prob::twoch_hopping>();
   throw std::runtime_error("Unknown MPO type");
 }
 
