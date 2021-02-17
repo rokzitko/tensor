@@ -92,8 +92,9 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.EnergyErrgoal = input.getReal("EnergyErrgoal", 0);
   p.nrH = input.getInt("nrH", 5);
   p.sc_only = input.getYesNo("sc_only", false);
-  p.Weight = input.getReal("Weight", 11.0);
+  p.Weight = input.getReal("Weight", p.N);  // weight is implemented as the energy cost of the overlap between the GS and the ES; as energy of the GS is on the order of -N/2, the default weight should probs be on this scale.  
   p.overlaps = input.getYesNo("overlaps", false);
+  p.charge_susceptibility = input.getYesNo("charge_susceptibility", false);
   p.flat_band = input.getYesNo("flat_band", false);
   p.flat_band_factor = input.getReal("flat_band_factor", 0);
 }
@@ -695,6 +696,7 @@ auto calculate_overlap(const auto &psi1, const auto &psi2)
 
 void calculate_overlaps(store &s, auto &file, params &p) {
   skip_line();
+  std::cout << "Overlaps:\n" ;
   for (const auto & [st1, st2] : itertools::product(s.eigen, s.eigen)) {
     const auto [ntot1, Sz1, i] = st1.first;
     const auto [ntot2, Sz2, j] = st2.first;
@@ -706,6 +708,30 @@ void calculate_overlaps(store &s, auto &file, params &p) {
     }
   }
 }
+
+auto calculate_charge_susceptibility(MPS &psi1, MPS &psi2, const params &p)
+{
+  psi2.position(p.impindex);                                                    // set orthogonality center
+  auto newTensor = noPrime(op(p.sites,"Ntot", p.impindex)*psi2(p.impindex));    // apply the local operator
+  psi2.set(p.impindex,newTensor);                                               // plug in the new tensor, with the operator applied
+  return inner(psi1, psi2);
+}
+
+void calculate_charge_susceptibilities(store &s, auto &file, params &p) {
+  skip_line();
+  std::cout << "Charge susceptibility:\n";
+  for (const auto & [st1, st2] : itertools::product(s.eigen, s.eigen)) {
+      const auto [ntot1, Sz1, i] = st1.first;
+      const auto [ntot2, Sz2, j] = st2.first;
+      if (ntot1 == ntot2 && Sz1 == Sz2 && i < j) {
+        auto o = calculate_charge_susceptibility(st1.second.psi(), st2.second.psi(), p);
+        std::cout << fmt::format(FMT_STRING("n = {:<5}  Sz = {:4}  i = {:<3}  j = {:<3}  <i|nimp|j> = {:<22.15}"),
+                                 ntot1, Sz_string(Sz1), i, j, o) << std::endl;
+        H5Easy::dump(file, "charge_susceptibilty/" + ij_path(ntot1, Sz1, i, j), o);
+    }
+  }
+}
+
 
 void process_and_save_results(store &s, params &p, std::string h5_filename) {
   H5Easy::File file(h5_filename, H5Easy::File::Overwrite);
@@ -719,4 +745,6 @@ void process_and_save_results(store &s, params &p, std::string h5_filename) {
   }
   if (p.overlaps)
     calculate_overlaps(s, file, p);
+  if (p.charge_susceptibility)
+    calculate_charge_susceptibilities(s, file, p);
 }

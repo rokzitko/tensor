@@ -313,7 +313,8 @@ struct params {
   bool hoppingExpectation;//compute the hopping expectation value 1/sqrt(N) \sum_sigma \sum_i <d^dag c_i> + <c^dag_i d>
   bool printTotSpinZ;    // prints total Nup, Ndn and Sz
   bool overlaps;         // compute <i|j> overlap table in each subspace
-
+  bool charge_susceptibility; // compute <i|nimp|j> overlap table in each subspace
+       
   bool calcweights;      // calculates the spectral weights of the two closes spectroscopically availabe excitations
   bool excited_state;    // computes excited state
   int excited_states;    // compute n excited states
