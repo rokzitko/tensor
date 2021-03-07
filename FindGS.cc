@@ -450,6 +450,29 @@ void MeasureEntropy(MPS& psi, auto & file, std::string path, const params &p) {
   H5Easy::dump(file, path + "/entanglement_entropy_imp", SvN);
 }
 
+//contract all other tensors except the impurity one. The diagonal terms are the squares of the amplitudes for the impurity states |0>, |up>, |dn>, |2>. 
+auto calculate_imp_density_matrix(MPS &psi, const params &p)
+{
+  psi.position(p.impindex);
+  auto psidag = dag(psi);
+  auto imp_psipsi = psi(p.impindex)*prime(psidag(p.impindex),"Site");
+
+  return imp_psipsi;
+}
+ 
+
+void MeasureImpDensityMatrix(MPS& psi, auto & file, std::string path, const params &p){
+    const auto psipsi = calculate_imp_density_matrix(psi, p); 
+
+    std::cout << "imp amplitudes: " << psipsi.real(1,1) << " " << psipsi.real(2,2) << " " << psipsi.real(3,3) << " " << psipsi.real(4,4) << "\n";      
+
+    H5Easy::dump(file, path + "/imp_amplitudes/0",    sqrt(psipsi.real(1,1)));
+    H5Easy::dump(file, path + "/imp_amplitudes/up",   sqrt(psipsi.real(2,2)));
+    H5Easy::dump(file, path + "/imp_amplitudes/down", sqrt(psipsi.real(3,3)));
+    H5Easy::dump(file, path + "/imp_amplitudes/2",    sqrt(psipsi.real(4,4)));
+}
+
+
 auto sweeps(params &p)
 {
   auto inputsw = InputGroup(p.inputfn, "sweeps");
@@ -611,6 +634,7 @@ void calc_properties(const state_t st, H5Easy::File &file, store &s, params &p)
   MeasureOccupancy(psi, file, path, p);
   MeasurePairing(psi, file, path, p);
   MeasureAmplitudes(psi, file, path, p);
+  MeasureImpDensityMatrix(psi, file, path, p);
   if (p.computeEntropy) MeasureEntropy(psi, file, path, p);
   if (p.impNupNdn) MeasureImpurityUpDn(psi, file, path, p);
   if (p.chargeCorrelation) MeasureChargeCorrelation(psi, file, path, p);
@@ -731,7 +755,7 @@ void calculate_charge_susceptibilities(store &s, auto &file, params &p) {
     }
   }
 }
-
+ 
 
 void process_and_save_results(store &s, params &p, std::string h5_filename) {
   H5Easy::File file(h5_filename, H5Easy::File::Overwrite);
