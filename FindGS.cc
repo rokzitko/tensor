@@ -82,7 +82,6 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.calcweights = input.getYesNo("calcweights", false);
   p.printTotSpinZ = input.getYesNo("printTotSpinZ", false);
   p.charge_susceptibility = input.getYesNo("charge_susceptibility", false);
-  p.channel_parity = input.getYesNo("channel_parity", false);
   // parameters controlling the calculation
   p.save = input.getYesNo("save", false) || (p.solve_ndx >= 0);
   p.nrsweeps = input.getInt("nrsweeps", 15);
@@ -475,188 +474,6 @@ void MeasureImpDensityMatrix(MPS& psi, auto & file, std::string path, const para
 
 
 
-//////// FROM HERE ON UP TO NEXT SUCH LINE IS STUFF RELATED TO PARITY OP
-
-// create a map from indices of psi to their parity transformation
-void fill_index_map(std::map<int, int> &ndx_map, std::vector<int> ch1ndx, std::vector<int> ch2ndx, const params &p){
-
-    //impindex goes to itself
-    ndx_map.insert(std::pair<int, int>(p.impindex, p.impindex));
-
-    // ch1 indeces go to corresponding ch2 indeces
-    for (auto [x, y] : zip(ch1ndx, ch2ndx)){
-      ndx_map.insert(std::pair<int, int>(x, y));
-    } 
-
-    // and the oppposite, ch2 to ch1
-    for (auto [x, y] : zip(ch2ndx, ch1ndx)){
-      ndx_map.insert(std::pair<int, int>(x, y));
-    }   
-}
-
-
-
-void contract_by_map(MPS &newTensor, std::map<int, int> &ndx_map, MPS &psi, const params &p){
-
-  for (auto const& [key, val] : ndx_map){
-
-    ITensor T1 = dag(psi(key));
-    ITensor T2 = psi(val);
-
-    auto siteInd1 = IndexSet(siteIndex(psi, key));
-    auto siteInd2 = IndexSet(siteIndex(psi, val));
-
-    T2.swapInds(siteInd1, siteInd2);
-
-    T1.noPrime();
-    T2.noPrime();
-    
-    newTensor.set(key, T1*T2 );
-
-
-    //std::cout << "key, val: " << key << " " << val << "\n";
-    //std::cout << "psi(key): " << T1 << "\n";
-    //std::cout << "psi(val): " << T2 << "\n";
-    //std::cout << "res: " << T1*T2 << "\n";
-
-  }
-}
-
-void swap_indeces(MPS &newPsi, MPS psi, std::map<int, int> &ndx_map, const params &p){
-
-  for (auto const& [key, val] : ndx_map){
-    
-    psi.position(key);  
-
-    std::cout << "key, val: " << key << " " << val << "\n";
-    std::cout << "psi(key): " << psi(key) << "\n";
-    
-    newPsi.set(val, psi(key));
-  }
-
-  std::cout << "oldpsi\n";
-  println(psi);
-    
-  std::cout << "newpsi 1\n";
-  println(newPsi);
-
-  newPsi.replaceLinkInds(linkInds(psi));
-    
-  std::cout << "newpsi 2\n";
-  println(newPsi);
-
-  std::cout << "psi link indices\n";
-  println(linkInds(psi));
-  std::cout << "newpsi link indices\n";
-  println(linkInds(newPsi));
- 
-
-  std::cout << "psi site indices\n";
-  println(siteInds(psi));
-  std::cout << "newpsi site indices\n";
-  println(siteInds(newPsi));
-
-  newPsi.replaceSiteInds(siteInds(psi));
-  std::cout << "C\n";
-
-}
-
-ITensor contract_along_mps(MPS &psi,const params &p){
-
-  auto res = psi(1);
-
-  for (int i = 2; i <= length(psi); i++){
-
-    std::cout << "res \n";      
-    println(res);
-
-    std::cout << "psi(" << i << ") \n";      
-    println(psi(i));
-
-
-    res *= psi(i);
-
-
-  }
-
-  return res;
-}
-
-MPS reflectedPsi(MPS &psi, const params &p){
-
-  MPS newPsi = MPS(p.sites);
-
-  for(int i = 1; i <= p.N; ++i){
-
-    std::cout << "i: " << i << "\n";    
-    std::cout << "psi(i): " << psi(i) << "\n";
-
-
-    std::cout << "A\n";    
-    newPsi.set(i, psi(p.N+1-i));
-    std::cout << "B\n";
-    
-    if (p.N+1-i != i) newPsi.ref(i) *= delta(dag(p.sites(p.N+1-i)),p.sites(i));
-  }
-
-  return newPsi;
-}
-
-
-
-// The idea is that a parity operator between two channels would just mirror all energy levels of channel 2 into levels of channel 1, and opposite. The impurity remains the same.
-// Parity <P> is then <psi|Ppsi>, where in Ppsi one takes the tensors from psi in channel 1 and shift them by N/2 into channel 2.  
-void MeasureChannelParity(MPS& psi, auto & file, std::string path, const params &p){
-
-
-
-  /*
-  std::vector<int> ndx1 = p.problem->bath_indexes(p.NBath, 1);
-  std::vector<int> ndx2 = p.problem->bath_indexes(p.NBath, 2);
-
-  std::map<int, int> ndx_map;
-  fill_index_map(ndx_map, ndx1, ndx2, p);
-
-  MPS newPsi = MPS(p.sites);
-  swap_indeces(newPsi, psi, ndx_map, p);
-  std::cout << "D\n";
-
-  //contract_by_map(newTensor, ndx_map, psi, p);
-
-  std::cout << "psi----------------------------------------- \n";      
-
-  println(psi);
-
-  std::cout << "newTensor----------------------------------------- \n";      
-
-  println(newPsi);
-
-  std::cout << "res----------------------------------------- \n";      
-
-  auto res = inner(psi, newPsi);
-
-  //auto res = contract_along_mps(newTensor, p);
-
-  //std::cout << "real res----------------------------------------- \n";      
-
-  //println(res);
-  */
-  std::cout << "START----------------------------------------- \n";      
-
-  MPS rpsi = reflectedPsi(psi, p);
-   
-  auto parity = inner(psi, rpsi);  
-
-
-  std::cout << "F \n";      
-  
- 
-  std::cout << "channel parity: " << parity  << "\n";      
-  H5Easy::dump(file, path + "/channel_parity", parity);
-}
-
-
-//////// NEXT SUCH LINE
 
 auto sweeps(params &p)
 {
@@ -827,7 +644,6 @@ void calc_properties(const state_t st, H5Easy::File &file, store &s, params &p)
   if (p.pairCorrelation) MeasurePairCorrelation(psi, file, path, p);
   if (p.hoppingExpectation) MeasureHopping(psi, file, path, p);
   if (p.printTotSpinZ) MeasureTotalSpinz(psi, file, path, p);
-  if (p.channel_parity && p.problem->numChannels() == 2) MeasureChannelParity(psi, file, path, p);
   s.stats[st].dump();
 }
 
