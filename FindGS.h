@@ -305,6 +305,7 @@ struct params {
   Hubbard sites;        // itensor object
 
   // all bools have default value false
+  bool totalSpin;        // measure total spin of the state - uses autoMPO
   bool computeEntropy;   // von Neumann entropy at the bond between impurity and next site. Works as intended if p.impindex=1.
   bool impNupNdn;        // print the number of up and dn electrons on the impurity
   bool chargeCorrelation;// compute the impurity-superconductor correlation <n_imp n_i>
@@ -760,5 +761,6 @@ void parse_cmd_line(int, char * [], params &);
 std::vector<subspace_t> init_subspace_lists(params &p);
 void solve(const std::vector<subspace_t> &l, store &s, params &);
 void process_and_save_results(store &, params &, std::string = "solution.h5");
+
 
 #endif

@@ -73,6 +73,7 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
     p.excited_states = 1; // override
 
   // parameters controlling the postprocessing and output
+  p.totalSpin = input.getYesNo("totalSpin", false);
   p.computeEntropy = input.getYesNo("computeEntropy", false);
   p.impNupNdn = input.getYesNo("impNupNdn", false);
   p.chargeCorrelation = input.getYesNo("chargeCorrelation", false);
@@ -96,6 +97,27 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.overlaps = input.getYesNo("overlaps", false);
   p.flat_band = input.getYesNo("flat_band", false);
   p.flat_band_factor = input.getReal("flat_band_factor", 0);
+}
+
+
+//#include "MPO_totalSpin.h"  // WORK IN PROGRESS - problems with indeces. 
+#include "autoMPO_S2.h"
+
+
+//Measures the total spin of a site using a MPO
+void MeasureTotalSpin(MPS& psi, auto & file, std::string path, const params &p) {
+
+  MPO S2(p.sites);
+  makeS2_MPO(S2, p);
+
+  // res2 is the result of \hat{S}^2 = S(S+1)
+  // Actual S is obtained by solving the quadratic equation, always taking the largest result.
+
+  auto res2 = inner(psi, S2, psi);
+  auto res = 0.5 * std::max( -1 + std::sqrt(1 + 4*res2), -1 - std::sqrt(1 + 4*res2) );  
+
+  std::cout << std::setprecision(full) << "Total S = " <<  res << ", S2 = " << res2 << std::endl;
+  H5Easy::dump(file, path + "/S2", res);
 }
 
 double ImpurityCorrelator(MPS& psi, auto impOp, int j, auto opj, const params &p) {
@@ -637,6 +659,7 @@ void calc_properties(const state_t st, H5Easy::File &file, store &s, params &p)
   MeasurePairing(psi, file, path, p);
   MeasureAmplitudes(psi, file, path, p);
   MeasureImpDensityMatrix(psi, file, path, p);
+  if (p.totalSpin) MeasureTotalSpin(psi, file, path, p);
   if (p.computeEntropy) MeasureEntropy(psi, file, path, p);
   if (p.impNupNdn) MeasureImpurityUpDn(psi, file, path, p);
   if (p.chargeCorrelation) MeasureChargeCorrelation(psi, file, path, p);
@@ -648,7 +671,6 @@ void calc_properties(const state_t st, H5Easy::File &file, store &s, params &p)
 }
 
 auto find_global_GS(store &s, auto & file) {
-  std::cout << "AA \n";
   auto m = std::min_element(begin(s.eigen), end(s.eigen), [](const auto &p1, const auto &p2) { return p1.second.E() < p2.second.E(); });
   state_t GS = m->first;
   double E_GS = m->second.E();
