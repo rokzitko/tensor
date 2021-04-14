@@ -100,8 +100,8 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
 }
 
 
-//#include "MPO_totalSpin.h"  // WORK IN PROGRESS - problems with indeces. 
-#include "autoMPO_S2.h"
+#include "MPO_totalSpin.h"  // WORK IN PROGRESS - problems with indeces. 
+//#include "autoMPO_S2.h"
 
 
 //Measures the total spin of a site using a MPO

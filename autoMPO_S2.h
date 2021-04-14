@@ -14,6 +14,6 @@ inline void makeS2_MPO(MPO& S2, const params &p)
         }
     }
 
-    S2 = toMPO(ampo);
+    S2 = toMPO(ampo, {"Cutoff=", 1E-20});
 
 }
