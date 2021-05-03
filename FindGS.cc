@@ -760,10 +760,11 @@ void calculate_overlaps(store &s, auto &file, params &p) {
 
 auto calculate_charge_susceptibility(MPS &psi1, MPS &psi2, const params &p)
 {
-  psi2.position(p.impindex);                                                    // set orthogonality center
-  auto newTensor = noPrime(op(p.sites,"Ntot", p.impindex)*psi2(p.impindex));    // apply the local operator
-  psi2.set(p.impindex,newTensor);                                               // plug in the new tensor, with the operator applied
-  return inner(psi1, psi2);
+  auto psi2new = psi2;
+  psi2new.position(p.impindex);                                                    // set orthogonality center
+  auto newTensor = noPrime(op(p.sites,"Ntot", p.impindex)*psi2new(p.impindex));    // apply the local operator
+  psi2new.set(p.impindex,newTensor);                                               // plug in the new tensor, with the operator applied
+  return inner(psi1, psi2new);
 }
 
 void calculate_charge_susceptibilities(store &s, auto &file, params &p) {
