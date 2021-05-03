@@ -1,3 +1,5 @@
 #!/bin/bash
-PATH=$HOME/repos/tensor:$PATH
-calcGS inputFile.txt | tee result.dat
+PATH=../../..:../..:$PATH
+calcGS inputFile.txt >result.dat
+h5diff -d 1e-6 solution.h5 solution.h5.ref
+

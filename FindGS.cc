@@ -52,6 +52,7 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.sc = std::make_unique<SCbath>(p.NBath, input.getReal("alpha", 0), input.getReal("Ec", 0), input.getReal("n0", p.N-1), input.getReal("EZ_bulk", 0.), input.getReal("t", 0.));
   p.Gamma = std::make_unique<hyb>(input.getReal("gamma", 0));
   p.V12 = input.getReal("V", 0); // handled in a special way
+  p.eta = input.getReal("eta", 1.0);
   p.band_level_shift = input.getYesNo("band_level_shift", false);
 
   // parameters for the 2-channel problem

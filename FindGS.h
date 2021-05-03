@@ -208,7 +208,7 @@ class bath { // normal-state bath
    auto d() const { // inter-level spacing
      return 2.0*_D/_NBath;
    }
-   auto eps(bool flat_band = false, float flat_band_factor = 0) const { 
+   auto eps(bool flat_band = false, double flat_band_factor = 0) const {
      std::vector<double> eps;
      for (auto k: range1(_NBath))
        if (flat_band) {
@@ -238,7 +238,7 @@ class SCbath : public bath { // superconducting island bath
    auto EZ() const { return _EZ; }
    auto g() const { return _alpha*d(); }
    auto t() const { return _t;}
-   auto eps(bool band_level_shift = true, bool flat_band = false, float flat_band_factor = 0) const {
+   auto eps(bool band_level_shift = true, bool flat_band = false, double flat_band_factor = 0) const {
      auto eps = bath::eps(flat_band, flat_band_factor);
      if (band_level_shift)
        for (auto &x: eps)
@@ -344,7 +344,8 @@ struct params {
   std::unique_ptr<imp>    qd;
   std::unique_ptr<SCbath> sc;
   std::unique_ptr<hyb>    Gamma;
-  double V12;            // QD-SC capacitive coupling
+  double V12;            // QD-SC capacitive coupling, for MPO_Ec_V
+  double eta;            // coupling reduction factor, 0<=eta<=1, for MPO_Ec_eta
 
   bool magnetic_field() { return qd->EZ() != 0 || sc->EZ() != 0; } // true if there is magnetic field
 
@@ -451,6 +452,7 @@ inline void add_bath_electrons(const int nsc, const spin & Szadd, const ndx_t &b
 #include "SC_BathMPO_MiddleImp_Ec.h"
 #include "SC_BathMPO_t_SConly.h"
 #include "SC_BathMPO_Ec_t.h"
+#include "SC_BathMPO_Ec_eta.h"
 #include "SC_BathMPO_MiddleImp_TwoChannel.h"
 #include "SC_BathMPO_ImpFirst_TwoChannel.h"
 #include "SC_BathMPO_ImpFirst_TwoChannel_hopping.h"
@@ -461,7 +463,7 @@ class single_channel : virtual public problem_type
 {
  public:
 
-   auto get_eps_V(auto & sc, auto & Gamma, params &p) {
+   auto get_eps_V(auto & sc, auto & Gamma, params &p) const {
      auto eps0 = sc->eps(p.band_level_shift, p.flat_band, p.flat_band_factor);
      auto V0 = Gamma->V(sc->NBath());
      if (p.verbose) {
@@ -501,6 +503,38 @@ class single_channel : virtual public problem_type
 
 };
 
+class single_channel_eta : public single_channel
+{
+ public:
+   
+   double y(const int i, const params &p) const {
+     const auto L = p.NBath;
+     assert(0.0 <= p.eta <= 1.0);
+     assert(i >= 1 && i <= L); // 1 is special site, 2,3,...,L are regular sites
+     return i == 1 ? p.eta : sqrt( (L-p.eta*p.eta)/(L-1.) );
+   }
+
+   auto get_eps_V(auto & sc, auto & Gamma, params &p) const {
+     auto eps0 = sc->eps(false, p.flat_band, p.flat_band_factor); // no band_level_shift here
+     if (p.band_level_shift) { // we do it here, in a site-dependent way
+       const auto L = p.NBath;
+       for (unsigned int i = 0; i < eps0.size(); i++) 
+         eps0[i] += -sc->g()/2.0 * pow(y(i+1, p), 2);
+     }
+     auto V0 = Gamma->V(sc->NBath());
+     if (p.verbose) {
+       std::cout << "eta=" << p.eta << std::endl;
+       std::cout << "eps=" << eps0 << std::endl;
+       std::cout << "V=" << V0 << std::endl;
+     }
+     auto eps = shift1(eps0);
+     auto V = shift1(V0);
+     return std::make_pair(eps, V);
+   }
+
+};
+
+
 template <class T>
   auto concat(const std::vector<T> &t1, const std::vector<T> &t2)
 {
@@ -514,7 +548,7 @@ template <class T>
 class two_channel : virtual public problem_type
 {
  public:
-   auto get_eps_V(auto & sc1, auto & Gamma1, auto & sc2, auto & Gamma2, params &p) {
+   auto get_eps_V(auto & sc1, auto & Gamma1, auto & sc2, auto & Gamma2, params &p) const {
      auto eps1 = sc1->eps(p.band_level_shift, p.flat_band, p.flat_band_factor);
      auto eps2 = sc2->eps(p.band_level_shift, p.flat_band, p.flat_band_factor);
      auto V1 = Gamma1->V(sc1->NBath());
@@ -653,6 +687,16 @@ namespace prob {
         return H;
       }
    };
+   class Ec_eta : public imp_first, public single_channel_eta {
+    public:
+      MPO initH(subspace_t sub, params &p) override {
+        auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
+        MPO H(p.sites);
+        double Eshift = p.sc->Ec()*pow(p.sc->n0(), 2) + p.qd->U()/2;
+        Fill_SCBath_MPO_Ec_eta(H, Eshift, eps, V, p);
+        return H;
+      }
+   };
    // For testing only!! This is the same as 'middle_Ec', but using the MPO for the
    // 2-ch problem. It uses Gamma for hybridisation, but alpha1,alpha2, etc. for
    // channel parameters. Use with care!
@@ -748,6 +792,7 @@ inline type_ptr set_problem(std::string str)
   if (str == "middle_Ec") return std::make_unique<prob::middle_Ec>();
   if (str == "t_SConly") return std::make_unique<prob::t_SConly>();
   if (str == "Ec_t") return std::make_unique<prob::Ec_t>();
+  if (str == "Ec_eta") return std::make_unique<prob::Ec_eta>();
   if (str == "autoH") return std::make_unique<prob::autoH_1ch>();
   if (str == "autoH_2ch") return std::make_unique<prob::autoH_2ch>();
   if (str == "middle_2channel") return std::make_unique<prob::middle_2channel>();
