@@ -1,6 +1,9 @@
 .DS_Store
+._.DS_Store
+000_*
 *.o
 calcGS
+calcGS-g
 calcGS-middle
 calcPT
 calcPT-middle

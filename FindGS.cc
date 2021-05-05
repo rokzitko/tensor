@@ -11,7 +11,7 @@ std::vector<subspace_t> init_subspace_lists(params &p)
     if (p.problem->numChannels() == 1) nref = round(p.sc->n0() + 0.5 - (p.qd->eps()/p.qd->U())); // calculation of the energies is centered around this n
     else if (p.problem->numChannels() == 2) nref = round(p.sc1->n0() + p.sc2->n0() + 0.5 - (p.qd->eps()/p.qd->U()));
   }
-   
+
   std::vector<subspace_t> l;
   for (const auto &ntot : n_list(nref, p.nrange)) {
     spin szmax = even(ntot) ? (p.spin1 ? 1 : 0) : 0.5;
@@ -36,7 +36,7 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
     p.NBath = p.N-p.NImp;
   else { // N not specified, try NBath
     p.NBath = input.getInt("NBath", 0);
-    if (p.NBath == 0) 
+    if (p.NBath == 0)
       throw std::runtime_error("specify either N or NBath!");
     p.N = p.NBath+p.NImp;
   }
@@ -91,6 +91,7 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.Quiet = input.getYesNo("Quiet", true);
   p.Silent = input.getYesNo("Silent", p.parallel);
   p.verbose = input.getYesNo("verbose", !p.parallel);
+  p.debug = input.getYesNo("debug", false);
   p.EnergyErrgoal = input.getReal("EnergyErrgoal", 0);
   p.nrH = input.getInt("nrH", 5);
   p.sc_only = input.getYesNo("sc_only", false);
@@ -98,6 +99,13 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.overlaps = input.getYesNo("overlaps", false);
   p.flat_band = input.getYesNo("flat_band", false);
   p.flat_band_factor = input.getReal("flat_band_factor", 0);
+
+  // dynamical charge susceptibility calculations
+  p.chi = input.getYesNo("chi", false);
+  p.omega_r = input.getReal("omega_r", 0);
+  p.eta_r = input.getReal("eta_r", 0.01);
+  p.tau_max = input.getReal("tau_max", 1.0);
+  p.tau_step = input.getReal("tau_step", 0.1);
 }
 
 
@@ -115,7 +123,7 @@ void MeasureTotalSpin(MPS& psi, auto & file, std::string path, const params &p) 
   // Actual S is obtained by solving the quadratic equation, always taking the largest result.
 
   auto res2 = inner(psi, S2, psi);
-  auto res = 0.5 * std::max( -1 + std::sqrt(1 + 4*res2), -1 - std::sqrt(1 + 4*res2) );  
+  auto res = 0.5 * std::max( -1 + std::sqrt(1 + 4*res2), -1 - std::sqrt(1 + 4*res2) );
 
   std::cout << std::setprecision(full) << "Total S = " <<  res << ", S2 = " << res2 << std::endl;
   H5Easy::dump(file, path + "/S2", res);
@@ -132,7 +140,7 @@ double ImpurityCorrelator(MPS& psi, auto impOp, int j, auto opj, const params &p
   auto li_1 = leftLinkIndex(psi,first);
   auto C = prime(psi(first),li_1)*(first==j ? opj : impOp) ;
   C *= prime(psidag(first),"Site");
-  
+
   for (int k = first+1; k < second; ++k){
     C *= psi(k);
     C *= psidag(k);
@@ -175,7 +183,7 @@ auto calcSpinCorrelation(MPS& psi, const ndx_t &sites, const params &p) {
   std::vector<double> rzz, rpm, rmp;
   //squares of the impurity operators; for on-site terms
   double tot = 0;
-    
+
   //impurity spin operators
   auto impSz = 0.5*( op(p.sites, "Nup", p.impindex) - op(p.sites, "Ndn", p.impindex) );
   auto impSp = op(p.sites, "Cdagup*Cdn", p.impindex);
@@ -198,7 +206,7 @@ auto calcSpinCorrelation(MPS& psi, const ndx_t &sites, const params &p) {
   psi.position(p.impindex);
   //on site term
   auto onSiteSpSm = elt(psi(p.impindex) * op(p.sites, "Cdagup*Cdn*Cdagdn*Cup", p.impindex) * dag(prime(psi(p.impindex),"Site")));
-  tot += 0.5*onSiteSpSm; 
+  tot += 0.5*onSiteSpSm;
   for(const auto j: sites) {
     if (j != p.impindex) {
       auto scSm = op(p.sites, "Cdagdn*Cup", j);
@@ -211,7 +219,7 @@ auto calcSpinCorrelation(MPS& psi, const ndx_t &sites, const params &p) {
   psi.position(p.impindex);
   //on site term
   auto onSiteSmSp = elt(psi(p.impindex) * op(p.sites, "Cdagdn*Cup*Cdagup*Cdn", p.impindex) * dag(prime(psi(p.impindex),"Site")));
-  tot += 0.5*onSiteSmSp; 
+  tot += 0.5*onSiteSmSp;
   for(const auto j: sites) {
     if (j != p.impindex) {
       auto scSp = op(p.sites, "Cdagup*Cdn", j);
@@ -366,8 +374,8 @@ auto calcOccupancy(MPS &psi, const ndx_t &sites, const params &p) {
 
   for(const auto i : sites) {
     // position call very important! otherwise one would need to contract the whole tensor network of <psi|O|psi> this way, only the local operator at site i is needed
-    
-  	psi.position(i);
+
+    psi.position(i);
     const auto val = psi.A(i) * p.sites.op("Ntot",i) * dag(prime(psi.A(i),"Site"));
     r.push_back(std::real(val.cplx()));
   }
@@ -482,21 +490,17 @@ auto calculate_imp_density_matrix(MPS &psi, const params &p)
 
   return imp_psipsi;
 }
- 
 
 void MeasureImpDensityMatrix(MPS& psi, auto & file, std::string path, const params &p){
-    const auto psipsi = calculate_imp_density_matrix(psi, p); 
+    const auto psipsi = calculate_imp_density_matrix(psi, p);
 
-    std::cout << "imp amplitudes: " << psipsi.real(1,1) << " " << psipsi.real(2,2) << " " << psipsi.real(3,3) << " " << psipsi.real(4,4) << "\n";      
+    std::cout << "imp amplitudes: " << psipsi.real(1,1) << " " << psipsi.real(2,2) << " " << psipsi.real(3,3) << " " << psipsi.real(4,4) << "\n";
 
     H5Easy::dump(file, path + "/imp_amplitudes/0",    sqrt(psipsi.real(1,1)));
     H5Easy::dump(file, path + "/imp_amplitudes/up",   sqrt(psipsi.real(2,2)));
     H5Easy::dump(file, path + "/imp_amplitudes/down", sqrt(psipsi.real(3,3)));
     H5Easy::dump(file, path + "/imp_amplitudes/2",    sqrt(psipsi.real(4,4)));
 }
-
-
-
 
 auto sweeps(params &p)
 {
@@ -516,9 +520,9 @@ void solve_gs(const subspace_t &sub, store &s, params &p) {
     psi_init.noPrime().normalize();
   }
 
-  auto [GSenergy, psi] = dmrg(H, psi_init, sweeps(p), 
-                            {"Silent", p.Silent, 
-                             "Quiet", p.Quiet, 
+  auto [GSenergy, psi] = dmrg(H, psi_init, sweeps(p),
+                            {"Silent", p.Silent,
+                             "Quiet", p.Quiet,
                              "EnergyErrgoal", p.EnergyErrgoal});
   s.eigen[gs(sub)] = eigenpair(GSenergy, psi);
 }
@@ -531,7 +535,7 @@ void solve_es(const subspace_t &sub, store &s, params &p, int n) {
   std::vector<MPS> wfs(n);
   for (auto m = 0; m < n; m++)
     wfs[m] = s.eigen[es(sub, m)].psi();
-  auto [ESenergy, psi] = dmrg(H, wfs, psi_init_es, sweeps(p), 
+  auto [ESenergy, psi] = dmrg(H, wfs, psi_init_es, sweeps(p),
                             {"Silent", p.Silent,
                              "Quiet", p.Quiet,
                              "EnergyErrgoal", p.EnergyErrgoal,
@@ -568,13 +572,13 @@ std::optional<eigenpair> load(const state_t &st, params &p, const subspace_t &su
   const auto &[n, S, i] = st;
   const auto path = fmt::format("n{}_S{}_i{}", n, S, i);
 
-  /* 
+  /*
   THIS IS CRITICAL!
   iTensor tensors (MPS, MPO, sites objects, ...) have indeces, labeled by QN etc, and an id - a random number attributed at creation.
   In order to be able to contract two tensors, their indeces must match, including the randomly generated id!
-  To achieve this, along with psi, you save the p.sites object psi was created with, to match the indices. When loading, psi has to be 
-  initiated with the exact same sites object. Also, this exact object has to be used when applying operators etc., so the p.sites has 
-  to be overwritten with the loaded one. 
+  To achieve this, along with psi, you save the p.sites object psi was created with, to match the indices. When loading, psi has to be
+  initiated with the exact same sites object. Also, this exact object has to be used when applying operators etc., so the p.sites has
+  to be overwritten with the loaded one.
   */
 
   const auto fn_sites = "SITES_" + path;
@@ -582,17 +586,17 @@ std::optional<eigenpair> load(const state_t &st, params &p, const subspace_t &su
   if (!file_exists(fn_sites)) return std::nullopt;
   readFromFile(fn_sites, sites);
   p.sites = sites;
-  
+
   const auto fn_mps = "MPS_" + path;
   if (!file_exists(fn_mps)) return std::nullopt;
   MPS psi(p.sites);
   readFromFile(fn_mps, psi);
 
   std::cout<<"psi loaded\n";
-  
+
   auto H = p.problem->initH(sub, p);
   auto E = inner(psi, H, psi);
-  
+
   return eigenpair(E, psi);
 }
 
@@ -607,12 +611,12 @@ void solve_state(const subspace_t &sub, store &s, params &p, int n)
     save(st, s.eigen[st], p);
   }
 }
-  
+
 void obtain_result(const subspace_t &sub, store &s, params &p)
 {
   for (int n =0; n <= std::min(p.excited_states, p.stop_n); n++) {
     auto st = es(sub, n);
-      
+
     try {
       const auto res = load(st, p, sub);
       if (res) {
@@ -621,7 +625,7 @@ void obtain_result(const subspace_t &sub, store &s, params &p)
       }
     }
     catch (...) {}
-    
+
     if (s.eigen.count(st) == 0) {
       std::cout << "solve=" << sub << std::endl;
       solve_state(sub, s, p, n);   // fallback: compute
@@ -631,9 +635,9 @@ void obtain_result(const subspace_t &sub, store &s, params &p)
 
 void solve(const std::vector<subspace_t> &l, store &s, params &p) {
   Expects(p.solve_ndx == -1 || (0 <= p.solve_ndx && p.solve_ndx < int(l.size())));
-          
+
   auto obtain_result_l = [&s,&p](const auto  &sub) { obtain_result(sub, s, p); };
-  
+
   std::cout << "ndx=" << p.solve_ndx << std::endl;
   if (p.solve_ndx == -1) { // solve all
     if (p.parallel)
@@ -646,7 +650,7 @@ void solve(const std::vector<subspace_t> &l, store &s, params &p) {
   get_stats(s, p);
 
 }
-  
+
 void calc_properties(const state_t st, H5Easy::File &file, store &s, params &p)
 {
   const auto [ntot, Sz, i] = st;
@@ -691,7 +695,7 @@ void print_energies(store &s, double EGS, params &p) {
     const auto [ntot, Sz, i] = state;
     const double E = ep.E();
     const double Ediff = E-EGS;
-    std::cout << fmt::format(FMT_STRING("n = {:<5}  Sz = {:<4}  i = {:<3}  E = {:<22.15}  DeltaE = {:<22.15}"), 
+    std::cout << fmt::format(FMT_STRING("n = {:<5}  Sz = {:<4}  i = {:<3}  E = {:<22.15}  DeltaE = {:<22.15}"),
                              ntot, Sz_string(Sz), i, E, Ediff) << std::endl;
   }
 }
@@ -729,7 +733,7 @@ void calc_weight(store &s, state_t GS, state_t ES, int q, std::string sz, auto &
 
 void calculate_spectral_weights(store &s, state_t GS, auto &file, params &p, int excited) {
   skip_line();
-  std::cout << "Spectral weights, " << (excited==0 ? "ground" : "excited") <<  " states:" << std::endl 
+  std::cout << "Spectral weights, " << (excited==0 ? "ground" : "excited") <<  " states:" << std::endl
     << "(Spectral weight is the square of the absolute value of the number.)" << std::endl;
   const auto [N_GS, Sz_GS, i] = GS;
   calc_weight(s, GS, {N_GS+1, Sz_GS+0.5, excited}, +1, "up", file, p);
@@ -751,7 +755,8 @@ void calculate_overlaps(store &s, auto &file, params &p) {
     const auto [ntot2, Sz2, j] = st2.first;
     if (ntot1 == ntot2 && Sz1 == Sz2 && i < j) {
       auto o = calculate_overlap(st1.second.psi(), st2.second.psi());
-      std::cout << fmt::format(FMT_STRING("n = {:<5}  Sz = {:4}  i = {:<3}  j = {:<3}  <i|j> = {:<22.15}"),
+      o = abs(o); // because of random global phases!!
+      std::cout << fmt::format(FMT_STRING("n = {:<5}  Sz = {:4}  i = {:<3}  j = {:<3}  |<i|j>| = {:<22.15}"),
                                ntot1, Sz_string(Sz1), i, j, o) << std::endl;
       H5Easy::dump(file, "overlaps/" + ij_path(ntot1, Sz1, i, j), o);
     }
@@ -775,13 +780,156 @@ void calculate_charge_susceptibilities(store &s, auto &file, params &p) {
       const auto [ntot2, Sz2, j] = st2.first;
       if (ntot1 == ntot2 && Sz1 == Sz2 && i < j) {
         auto o = calculate_charge_susceptibility(st1.second.psi(), st2.second.psi(), p);
-        std::cout << fmt::format(FMT_STRING("n = {:<5}  Sz = {:4}  i = {:<3}  j = {:<3}  <i|nimp|j> = {:<22.15}"),
+        o = abs(o); // ABSOLUTE VALUE! (because global signs of wavefunctions are arbitrary!)
+        std::cout << fmt::format(FMT_STRING("n = {:<5}  Sz = {:4}  i = {:<3}  j = {:<3}  |<i|nimp|j>| = {:<22.15}"),
                                  ntot1, Sz_string(Sz1), i, j, o) << std::endl;
         H5Easy::dump(file, "charge_susceptibilty/" + ij_path(ntot1, Sz1, i, j), o);
     }
   }
 }
- 
+
+void evolve(MPS &psiAtau, const MPO &H2, const double tau, params &p) {
+  auto sweeps = Sweeps(1);
+  sweeps.maxdim() = 2000;
+  sweeps.niter() = 10;
+  std::vector<Real> epsilonK = { 1e-12, 1e-12 };
+  addBasis(psiAtau, H2, epsilonK, {
+      "Cutoff", 1E-8,
+      "Method", "DensityMatrix",
+      "KrylovOrd", 3,
+      "DoNormalize", false,
+      "Quiet", !p.debug
+  });
+  tdvp(psiAtau, H2, -tau, sweeps, {
+    "DoNormalize", false,
+      "Quiet", !p.debug,
+      "Silent", !p.debug,
+      "DebugLevel", (p.debug ? 2 : -1),
+      "NumCenter", 1
+  });
+}
+
+void calculate_dynamical_charge_susceptibility(store &s, const state_t GS, const double EGS, auto &file, params &p) {
+  const auto psi0 = s.eigen[GS].psi();
+  if (p.debug) {
+    const auto norm = inner(psi0, psi0);
+    std::cout << "norm=" << norm << std::endl;
+  }
+
+  const auto id = MPO(p.sites); // identity operator
+  if (p.debug) {
+    const auto norm = inner(psi0, id, psi0);
+    std::cout << "norm=" << norm << std::endl;
+  }
+
+  auto psiA = psi0;
+  psiA.position(p.impindex);                                                    // set orthogonality center
+  auto newTensor = noPrime(op(p.sites, "Ntot", p.impindex) * psiA(p.impindex)); // apply the local operator
+  psiA.set(p.impindex, newTensor);
+  psiA.position(1);
+  if (p.debug) {
+    const auto AA = inner(psiA, psiA);
+    std::cout << "<A|A>=<psi|n^2|psi>=" << AA << std::endl;
+  }
+
+  const auto w0 = EGS + p.omega_r;
+  const auto w0p = EGS - p.omega_r;
+  if (p.debug)
+    std::cout << "omega_0=" << w0 << " omega'_0=" << w0p << std::endl;
+
+  auto H = p.problem->initH(subspace(GS), p);
+  if (p.debug) {
+    const auto E0 = inner(psi0, H, psi0);
+    std::cout << "E0=" << E0 << " EGS=" << EGS << std::endl;
+  }
+
+  auto psiB = applyMPO(H, psiA);
+  psiB.noPrime();
+  psiB *= -1.0;
+  psiB.plusEq(w0*psiA);
+  if (p.debug) {
+    const auto BA = inner(psiB, psiA);
+    std::cout << "<B|A>=" << BA << std::endl;
+  }
+
+  auto psiBp = applyMPO(H, psiA);
+  psiBp.noPrime();
+  psiBp *= -1.0;
+  psiBp.plusEq(w0p*psiA);
+  if (p.debug) {
+    const auto BpA = inner(psiBp, psiA);
+    std::cout << "<B'|A>=" << BpA << std::endl;
+  }
+
+  auto minus_w0id = id;
+  minus_w0id *= -w0;
+  auto H1 = H;
+  H1.plusEq(minus_w0id);             // H1 = H-w0*I
+  auto H2 = nmultMPO(prime(H1), H1); // H2 = H1^2
+  H2.mapPrime(2,1);
+  if (p.debug) {
+    const auto AH2A = inner(psiA, H2, psiA);
+    std::cout << "<A|(H-omega_0)^2|A>=" << AH2A << std::endl;
+  }
+
+  auto minus_w0pid = id;
+  minus_w0pid *= -w0p;
+  auto H1p = H;
+  H1p.plusEq(minus_w0pid);
+  auto H2p = nmultMPO(prime(H1p), H1p);
+  H2p.mapPrime(2,1);
+  if (p.debug) {
+    const auto AH2pA = inner(psiA, H2p, psiA);
+    std::cout << "<A|(H-omega'_0)^2|A>=" << AH2pA << std::endl;
+  }
+  
+  auto psiAtau = psiA;
+  auto psiAptau = psiA;
+
+  int cnt = 0;
+  std::vector<double> table;
+  const double tau_max = p.tau_max * (1.0 + 1.0e-8); // avoid round-off problems
+  for (double tau = 0; tau <= tau_max; tau += p.tau_step, cnt++) {
+    const auto scpdt = inner(psiB, psiAtau) + inner(psiBp, psiAptau);
+    const auto intg = exp(-pow(p.eta_r,2) * tau) * scpdt;
+    table.push_back(intg);
+    std::cout << fmt::format(FMT_STRING("cnt = {:<5}  tau = {:<10.5}  scpdt = {:<22.15}  intg = {:<22.15}"),
+                             cnt, tau, scpdt, intg) << std::endl;
+    H5Easy::dump(file, "dynamical_charge_susceptibilty/tau/"   + std::to_string(cnt), tau);
+    H5Easy::dump(file, "dynamical_charge_susceptibilty/scpdt/" + std::to_string(cnt), scpdt);
+    H5Easy::dump(file, "dynamical_charge_susceptibilty/intg/"  + std::to_string(cnt), intg);
+
+    if (tau + p.tau_step <= tau_max) {
+      evolve(psiAtau, H2, p.tau_step, p);
+      if (p.debug) {
+        const auto AtauAtau = inner(psiAtau, psiAtau);
+        std::cout << "<A(tau)|A(tau)>=" << AtauAtau << std::endl;
+        const auto BAtau = inner(psiB, psiAtau);
+        std::cout << "<B|A(tau)>=" << BAtau << std::endl;
+      }
+      
+      evolve(psiAptau, H2p, p.tau_step, p);
+      if (p.debug) {
+        const auto AptauAptau = inner(psiAptau, psiAptau);
+        std::cout << "<A'(tau)|A'(tau)>=" << AptauAptau << std::endl;
+        const auto BpAptau = inner(psiBp, psiAptau);
+        std::cout << "<B'|A'(tau)>=" << BpAptau << std::endl;
+      }
+    }
+  }
+  H5Easy::dump(file, "dynamical_charge_susceptibilty/nr", cnt);
+  
+  boost::math::interpolators::cardinal_cubic_b_spline<double> spline(table.begin(), table.end(), 0.0, p.tau_step);
+  if (p.debug)
+    std::cout << "intg(" << p.tau_max/2 << ")=" << spline(p.tau_max/2) << std::endl;
+  
+  double error {};
+  const auto rechi = boost::math::quadrature::gauss_kronrod<double, 15>::integrate(spline, 0, p.tau_max, 5, 1e-9, &error);
+
+  std::cout << fmt::format(FMT_STRING("\nRe[chi] = {:<22.15}   error = {:10.5}"), rechi, error) << std::endl;
+  H5Easy::dump(file, "dynamical_charge_susceptibilty/rechi",       rechi);
+  H5Easy::dump(file, "dynamical_charge_susceptibilty/rechi_error", error);
+}
 
 void process_and_save_results(store &s, params &p, std::string h5_filename) {
   H5Easy::File file(h5_filename, H5Easy::File::Overwrite);
@@ -797,4 +945,6 @@ void process_and_save_results(store &s, params &p, std::string h5_filename) {
     calculate_overlaps(s, file, p);
   if (p.charge_susceptibility)
     calculate_charge_susceptibilities(s, file, p);
+  if (p.chi)
+    calculate_dynamical_charge_susceptibility(s, GS, EGS, file, p);
 }

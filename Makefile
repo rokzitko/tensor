@@ -5,7 +5,7 @@ PREFIX=${ITENSOR}
 
 TENSOR_HEADERS=$(PREFIX)/itensor/all.h
 CCFLAGS= -I. -I./include $(ITENSOR_INCLUDEFLAGS) $(CPPFLAGS) $(OPTIMIZATIONS) -Wno-unused-variable -fconcepts
-CCGFLAGS= -I. -I./include $(ITENSOR_INCLUDEFLAGS) $(DEBUGFLAGS) -fconcepts
+CCGFLAGS= -I. -I./include $(ITENSOR_INCLUDEFLAGS) $(DEBUGFLAGS) -Wno-unused-variable -fconcepts
 LIBFLAGS=-L'$(ITENSOR_LIBDIR)' $(ITENSOR_LIBFLAGS) -lhdf5 -ltbb $(myRPATH)
 LIBGFLAGS=-L'$(ITENSOR_LIBDIR)' $(ITENSOR_LIBGFLAGS) -lhdf5 -ltbb -Wl,-rpath,$(myRPATH)
 MPOFILES = $(wildcard SC_BathMPO*.h)
@@ -26,6 +26,9 @@ FindGS.o: FindGS.cc FindGS.h $(ITENSOR_LIBS) $(TENSOR_HEADERS) $(MPOFILES)
 calcGS: calcGS.o FindGS.o $(ITENSOR_LIBS) $(TENSOR_HEADERS)
 	$(CCCOM) $(CCFLAGS) calcGS.o FindGS.o -o calcGS $(LIBFLAGS)
 
+calcGS-g: mkdebugdir .debug_objs/calcGS.o .debug_objs/FindGS.o $(ITENSOR_GLIBS) $(TENSOR_HEADERS)
+	$(CCCOM) $(CCGFLAGS) .debug_objs/calcGS.o .debug_objs/FindGS.o -o calcGS-g $(LIBGFLAGS)
+
 # calcPT targets -----------------
 
 calcPT: calcPT.o FindGS.o $(ITENSOR_LIBS) $(TENSOR_HEADERS)
@@ -34,6 +37,10 @@ calcPT: calcPT.o FindGS.o $(ITENSOR_LIBS) $(TENSOR_HEADERS)
 buildPT: calcPT
 buildGS: calcGS
 build: calcGS
+debug: calcGS-g
 
 clean:
 	rm -v *.o calcGS calcPT
+
+mkdebugdir:
+	mkdir -p .debug_objs

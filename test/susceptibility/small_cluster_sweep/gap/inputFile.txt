@@ -2,18 +2,17 @@ params{
      parallel = false
      alpha = -1
      U=10
+     epsimp = 2.5
      gamma = 1
      N = 3
-     nrange = 0
-     excited_states = 8
+     nrange = 1
+     excited_states = 0
      Weight = 1000
      verbose = true
 
 #    calc_weights = true
      charge_susceptibility = true
      overlaps = true
-
-     MPO = middle
 }
 
 

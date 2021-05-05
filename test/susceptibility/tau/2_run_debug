@@ -1,0 +1,5 @@
+#!/bin/bash
+export PATH=..:../..:../../..:../../../..:$PATH
+gdb --args calcGS-g inputFile.txt
+
+

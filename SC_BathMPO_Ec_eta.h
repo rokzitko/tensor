@@ -4,7 +4,7 @@
 inline double y(const int i, const params &p)
 {
   const auto L = p.NBath;
-  assert(0.0 <= p.eta <= 1.0);
+  assert(0.0 <= p.eta && p.eta <= 1.0);
   assert(i >= 2 && i <= L+1); // 1 is impurity site, 2 is special SC site, 3,4,... are regular SC sites
   return i == 2 ? p.eta : sqrt( (L-p.eta*p.eta)/(L-1) );
 }

@@ -2,18 +2,17 @@ params{
      parallel = false
      alpha = -1
      U=10
+     epsimp = -5
      gamma = 1
-     N = 3
+     N = 5
      nrange = 0
      excited_states = 8
-     Weight = 1000
+     Weight = 10000
      verbose = true
 
 #    calc_weights = true
      charge_susceptibility = true
      overlaps = true
-
-     MPO = middle
 }
 
 
@@ -40,8 +39,8 @@ sweeps
      1600     1      1E-12   5      0
      2400     1      1E-12   5      0
      2400     1      1E-12   5      0
-     2400     1      1E-12   5      0
-     4000     1      1E-12   5      0
-     4000     1      1E-12   5      0
+     2400     1      1E-14   5      0
+     4000     1      1E-14   5      0
+     4000     1      1E-14   5      0
      }
 }

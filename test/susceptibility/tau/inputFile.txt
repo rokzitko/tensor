@@ -5,13 +5,22 @@ params{
      gamma = 1
      N = 3
      nrange = 0
-     excited_states = 8
-     Weight = 1000
-     verbose = true
+#    excited_states = 8
+#    Weight = 1000
+#    verbose = true
+     verbose = false
+     Silent = true
 
 #    calc_weights = true
-     charge_susceptibility = true
-     overlaps = true
+#    charge_susceptibility = true
+#    overlaps = true
+
+#    debug = true
+     chi = true
+     omega_r = 0.25
+     eta_r = 0.1
+     tau_max = 1.0
+     tau_step = 0.01
 
      MPO = middle
 }

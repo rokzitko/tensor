@@ -2,6 +2,7 @@ params{
      parallel = false
      alpha = -1
      U=10
+     epsimp = -5
      gamma = 1
      N = 3
      nrange = 0
@@ -12,8 +13,6 @@ params{
 #    calc_weights = true
      charge_susceptibility = true
      overlaps = true
-
-     MPO = middle
 }
 
 

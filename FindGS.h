@@ -22,12 +22,19 @@
 
 #include <itensor/all.h>
 #include <itensor/util/args.h>
+#include <itensor/util/print_macro.h>
 using namespace itensor;
+
+#include "tdvp.h"
+#include "basisextension.h"
 
 #define FMT_HEADER_ONLY
 #include <fmt/format.h>
 
 #include <highfive/H5Easy.hpp>
+
+#include <boost/math/interpolators/cardinal_cubic_b_spline.hpp>
+#include <boost/math/quadrature/gauss_kronrod.hpp>
 
 using complex_t = std::complex<double>;
 
@@ -52,6 +59,10 @@ inline state_t es(const subspace_t &sub, int n = 1) // es(sub,0) is the ground s
 {
   Expects(0 <= n);
   return {std::get<charge>(sub), std::get<spin>(sub), n}; // n-th excited state in the subspace
+}
+
+inline subspace_t subspace(const state_t &st) {
+  return {std::get<0>(st), std::get<1>(st)};
 }
 
 inline void skip_line(std::ostream &o = std::cout)
@@ -315,7 +326,7 @@ struct params {
   bool printTotSpinZ;    // prints total Nup, Ndn and Sz
   bool overlaps;         // compute <i|j> overlap table in each subspace
   bool charge_susceptibility; // compute <i|nimp|j> overlap table in each subspace
-  bool channel_parity;   // prints the channel parity  
+  bool channel_parity;   // prints the channel parity
 
   bool calcweights;      // calculates the spectral weights of the two closes spectroscopically availabe excitations
   bool excited_state;    // computes excited state
@@ -329,6 +340,7 @@ struct params {
   bool Quiet, Silent;    // control output in dmrg()
   bool refisn0;          // the energies will be computed in the sectors centered around the one with n = round(n0) + 1
   bool verbose;          // verbosity level
+  bool debug;            // debugging messages
   bool band_level_shift; // shifts the band levels for a constant in order to make H particle-hole symmetric
   bool sc_only;          // do not put any electrons on the QD in the initial state
   double Weight;         // parameter 'Weight' for the calculaiton of excited states
@@ -338,8 +350,14 @@ struct params {
   int nref;              // central value of the occupancy.
   int nrange;            // number of occupancies considered is 2*nrange + 1, i.e. [nref-nrange:nref+nrange]
   bool spin1;            // include sz=1 for even charge sectors.
-  bool flat_band;        // set energies of half of the levels to -flat_band_factor, and half of the levels to +flat_band_factor 
-  float flat_band_factor; 
+  bool flat_band;        // set energies of half of the levels to -flat_band_factor, and half of the levels to +flat_band_factor
+  float flat_band_factor;
+
+  bool chi;              // calculate Re[chi(omega_r+i eta_r)] by tabulating over [0:tau_max] in steps of tau_step
+  double omega_r;
+  double eta_r;
+  double tau_max;
+  double tau_step;
 
   std::unique_ptr<imp>    qd;
   std::unique_ptr<SCbath> sc;
@@ -354,7 +372,7 @@ struct params {
   double SCSCinteraction = 0.0;  // test parameter for the 2 channel MPO
 };
 
-// lists of quantities calculated in FindGS 
+// lists of quantities calculated in FindGS
 struct store
 {
   std::map<state_t, eigenpair> eigen;
@@ -381,7 +399,7 @@ class imp_first : virtual public problem_type
        l.push_back(1+i);
      return l;
    }
-   ndx_t bath_indexes(int NBath, int ch) override { 
+   ndx_t bath_indexes(int NBath, int ch) override {
      Expects(ch == 1 || ch == 2);
      auto ndx = bath_indexes(NBath);
      return ch == 1 ? ndx_t(ndx.begin(), ndx.begin() + NBath/2) : ndx_t(ndx.begin() + NBath/2, ndx.begin() + NBath);
@@ -399,7 +417,7 @@ class imp_middle : virtual public problem_type
      Expects(even(NBath));
      ndx_t l;
      for (int i = 1; i <= 1+NBath; i++)
-       if (i != 1+NBath/2) 
+       if (i != 1+NBath/2)
          l.push_back(i);
      return l;
    }
@@ -462,7 +480,6 @@ inline void add_bath_electrons(const int nsc, const spin & Szadd, const ndx_t &b
 class single_channel : virtual public problem_type
 {
  public:
-
    auto get_eps_V(auto & sc, auto & Gamma, params &p) const {
      auto eps0 = sc->eps(p.band_level_shift, p.flat_band, p.flat_band_factor);
      auto V0 = Gamma->V(sc->NBath());
@@ -499,17 +516,14 @@ class single_channel : virtual public problem_type
    int numChannels() {
     return 1;
    }
-  
-
 };
 
 class single_channel_eta : public single_channel
 {
  public:
-   
    double y(const int i, const params &p) const {
      const auto L = p.NBath;
-     assert(0.0 <= p.eta <= 1.0);
+     assert(0.0 <= p.eta && p.eta <= 1.0);
      assert(i >= 1 && i <= L); // 1 is special site, 2,3,...,L are regular sites
      return i == 1 ? p.eta : sqrt( (L-p.eta*p.eta)/(L-1.) );
    }
@@ -531,9 +545,7 @@ class single_channel_eta : public single_channel
      auto V = shift1(V0);
      return std::make_pair(eps, V);
    }
-
 };
-
 
 template <class T>
   auto concat(const std::vector<T> &t1, const std::vector<T> &t2)
@@ -562,7 +574,6 @@ class two_channel : virtual public problem_type
      return std::make_pair(eps, V);
    }
    InitState initState(subspace_t sub, params &p) override {
-    
      const auto [ntot, Sz] = sub; // Sz is the z-component of the total spin.
      Expects(0 <= ntot && ntot <= 2*p.N);
      Expects(Sz == -1 || Sz == -0.5 || Sz == 0 || Sz == +0.5 || Sz == +1);
@@ -598,7 +609,6 @@ class two_channel : virtual public problem_type
    int numChannels() {
     return 2;
    }
-  
 };
 
 namespace prob {
@@ -753,7 +763,7 @@ namespace prob {
    class twoch_impfirst : public imp_first, public two_channel {
     public:
       MPO initH(subspace_t sub, params &p) override {
-        
+
         Expects(even(p.NBath)); // in 2-ch problems, NBath is the total number of bath sites in both SCs !!
         Expects(p.sc1->NBath() + p.sc2->NBath() == p.NBath);
         Expects(p.sc1->NBath() == p.sc2->NBath());
@@ -768,7 +778,7 @@ namespace prob {
    class twoch_hopping : public imp_first, public two_channel {
     public:
       MPO initH(subspace_t sub, params &p) override {
-        
+
         Expects(even(p.NBath)); // in 2-ch problems, NBath is the total number of bath sites in both SCs !!
         Expects(p.sc1->NBath() + p.sc2->NBath() == p.NBath);
         Expects(p.sc1->NBath() == p.sc2->NBath());
@@ -779,8 +789,6 @@ namespace prob {
         return H;
       }
    };
-
-
 }
 
 inline type_ptr set_problem(std::string str)
@@ -806,6 +814,5 @@ void parse_cmd_line(int, char * [], params &);
 std::vector<subspace_t> init_subspace_lists(params &p);
 void solve(const std::vector<subspace_t> &l, store &s, params &);
 void process_and_save_results(store &, params &, std::string = "solution.h5");
-
 
 #endif
