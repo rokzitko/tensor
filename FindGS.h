@@ -358,6 +358,11 @@ struct params {
   double eta_r;
   double tau_max;
   double tau_step;
+  int evol_nr_expansion;
+  double evol_sweeps_maxdim;
+  int evol_sweeps_niter;
+  double evol_epsilonK1, evol_epsilonK2;
+  int evol_numcenter;
 
   std::unique_ptr<imp>    qd;
   std::unique_ptr<SCbath> sc;
@@ -615,6 +620,7 @@ namespace prob {
    class Std : public imp_first, public single_channel { // Note: avoid lowercase 'std'!!
     public:
       MPO initH(subspace_t sub, params &p) override {
+        if (p.verbose) std::cout << "Building Hamiltonian, MPO=Std" << std::endl;
         auto [ntot, Sz] = sub;
         auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
         MPO H(p.sites); // MPO is the hamiltonian in the "MPS-form"
@@ -629,6 +635,7 @@ namespace prob {
    class Ec : public imp_first, public single_channel {
     public:
       MPO initH(subspace_t sub, params &p) override {
+        if (p.verbose) std::cout << "Building Hamiltonian, MPO=Ec" << std::endl;
         auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
         MPO H(p.sites);
         double Eshift = p.sc->Ec()*pow(p.sc->n0(), 2) + p.qd->U()/2;
@@ -640,6 +647,7 @@ namespace prob {
    class Ec_V : public imp_first, public single_channel {
     public:
       MPO initH(subspace_t sub, params &p) override {
+        if (p.verbose) std::cout << "Building Hamiltonian, MPO=Ec_V" << std::endl;
         auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
         MPO H(p.sites);
         double Eshift = p.sc->Ec()*pow(p.sc->n0(), 2) + p.V12 * p.sc->n0() * p.qd->nu() + p.qd->U()/2;
@@ -653,6 +661,7 @@ namespace prob {
    class middle : public imp_middle, public single_channel {
     public:
       MPO initH(subspace_t sub, params &p) override {
+        if (p.verbose) std::cout << "Building Hamiltonian, MPO=middle" << std::endl;
         auto [ntot, Sz] = sub;
         auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
         MPO H(p.sites);
@@ -667,6 +676,7 @@ namespace prob {
    class middle_Ec : public imp_middle, public single_channel {
     public:
       MPO initH(subspace_t sub, params &p) override {
+        if (p.verbose) std::cout << "Building Hamiltonian, MPO=middle_Ec" << std::endl;
         auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
         MPO H(p.sites);
         double Eshift = p.sc->Ec()*pow(p.sc->n0(), 2) + p.qd->U()/2;
@@ -679,6 +689,7 @@ namespace prob {
     public:
       MPO initH(subspace_t sub, params &p) override {
         //Expects(p.sc_only);
+        if (p.verbose) std::cout << "Building Hamiltonian, MPO=t_SConly" << std::endl;
         auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
         MPO H(p.sites);
         double Eshift = p.sc->Ec()*pow(p.sc->n0(), 2);
@@ -690,6 +701,7 @@ namespace prob {
    class Ec_t : public imp_first, public single_channel {
     public:
       MPO initH(subspace_t sub, params &p) override {
+        if (p.verbose) std::cout << "Building Hamiltonian, MPO=Ec_t" << std::endl;
         auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
         MPO H(p.sites);
         double Eshift = p.sc->Ec()*pow(p.sc->n0(), 2) + p.qd->U()/2;
@@ -700,6 +712,7 @@ namespace prob {
    class Ec_eta : public imp_first, public single_channel_eta {
     public:
       MPO initH(subspace_t sub, params &p) override {
+        if (p.verbose) std::cout << "Building Hamiltonian, MPO=Ec_eta" << std::endl;
         auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
         MPO H(p.sites);
         double Eshift = p.sc->Ec()*pow(p.sc->n0(), 2) + p.qd->U()/2;
@@ -713,6 +726,7 @@ namespace prob {
    class middle_2channel : public imp_middle, public single_channel {
     public:
       MPO initH(subspace_t sub, params &p) override {
+        if (p.verbose) std::cout << "Building Hamiltonian, MPO=middle_2channel" << std::endl;
         auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
         MPO H(p.sites);
         double Eshift = p.sc1->Ec()*pow(p.sc1->n0(), 2) + p.qd->U()/2;
@@ -727,6 +741,7 @@ namespace prob {
     class autoH_1ch : public imp_first, public single_channel {
     public:
       MPO initH(subspace_t sub, params &p) override {
+        if (p.verbose) std::cout << "Building Hamiltonian, MPO=autoH_1ch" << std::endl;
         auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
         MPO H(p.sites);
         double Eshift = p.qd->U()/2;
@@ -738,6 +753,7 @@ namespace prob {
     class autoH_2ch : public imp_first, public two_channel {
     public:
       MPO initH(subspace_t sub, params &p) override {
+        if (p.verbose) std::cout << "Building Hamiltonian, MPO=autoH_2ch" << std::endl;
         auto [eps, V] = get_eps_V(p.sc1, p.Gamma1, p.sc2, p.Gamma2, p);
         MPO H(p.sites);
         double Eshift = p.qd->U()/2;
@@ -749,6 +765,7 @@ namespace prob {
    class twoch : public imp_middle, public two_channel {
     public:
       MPO initH(subspace_t sub, params &p) override {
+        if (p.verbose) std::cout << "Building Hamiltonian, MPO=twoch" << std::endl;
         Expects(even(p.NBath)); // in 2-ch problems, NBath is the total number of bath sites in both SCs !!
         Expects(p.sc1->NBath() + p.sc2->NBath() == p.NBath);
         auto [eps, V] = get_eps_V(p.sc1, p.Gamma1, p.sc2, p.Gamma2, p);
@@ -763,7 +780,7 @@ namespace prob {
    class twoch_impfirst : public imp_first, public two_channel {
     public:
       MPO initH(subspace_t sub, params &p) override {
-
+        if (p.verbose) std::cout << "Building Hamiltonian, MPO=twoch_impfirst" << std::endl;
         Expects(even(p.NBath)); // in 2-ch problems, NBath is the total number of bath sites in both SCs !!
         Expects(p.sc1->NBath() + p.sc2->NBath() == p.NBath);
         Expects(p.sc1->NBath() == p.sc2->NBath());
@@ -778,7 +795,7 @@ namespace prob {
    class twoch_hopping : public imp_first, public two_channel {
     public:
       MPO initH(subspace_t sub, params &p) override {
-
+        if (p.verbose) std::cout << "Building Hamiltonian, MPO=twoch_hopping" << std::endl;
         Expects(even(p.NBath)); // in 2-ch problems, NBath is the total number of bath sites in both SCs !!
         Expects(p.sc1->NBath() + p.sc2->NBath() == p.NBath);
         Expects(p.sc1->NBath() == p.sc2->NBath());

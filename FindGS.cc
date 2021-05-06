@@ -22,6 +22,13 @@ std::vector<subspace_t> init_subspace_lists(params &p)
   return l;
 }
 
+template<typename T> void my_assert(const bool condition, T message) {
+  if (!condition) {
+    std::cout << "Failed assertion: " << message << std::endl;
+    exit(1);
+  }
+}
+
 void parse_cmd_line(int argc, char *argv[], params &p) {
   if (!(argc == 2 || argc == 3 || argc == 4))
     throw std::runtime_error("Please provide input file. Usage: executable <input file> [solve_ndx] [stop_n]");
@@ -106,6 +113,13 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.eta_r = input.getReal("eta_r", 0.01);
   p.tau_max = input.getReal("tau_max", 1.0);
   p.tau_step = input.getReal("tau_step", 0.1);
+  p.evol_nr_expansion = input.getInt("evol_nr_expansion", 3);
+  p.evol_sweeps_maxdim = input.getInt("evol_sweeps_maxdim", 2000);
+  p.evol_sweeps_niter = input.getInt("evol_sweeps_niter", 10);
+  p.evol_epsilonK1 = input.getReal("evol_epsilonK1", 1e-12);
+  p.evol_epsilonK2 = input.getReal("evol_epsilonK2", 1e-12);
+  p.evol_numcenter = input.getInt("evol_numcenter", 1);
+  my_assert(1 <= p.evol_numcenter && p.evol_numcenter <= 2, "incorrect evol_numcenter");
 }
 
 
@@ -788,28 +802,32 @@ void calculate_charge_susceptibilities(store &s, auto &file, params &p) {
   }
 }
 
-void evolve(MPS &psiAtau, const MPO &H2, const double tau, params &p) {
-  auto sweeps = Sweeps(1);
-  sweeps.maxdim() = 2000;
-  sweeps.niter() = 10;
-  std::vector<Real> epsilonK = { 1e-12, 1e-12 };
-  addBasis(psiAtau, H2, epsilonK, {
-      "Cutoff", 1E-8,
-      "Method", "DensityMatrix",
-      "KrylovOrd", 3,
-      "DoNormalize", false,
-      "Quiet", !p.debug
-  });
+void evolve(MPS &psiAtau, const MPO &H2, const int cnt, const double tau, params &p) {
+  if (cnt < p.evol_nr_expansion) {
+    std::vector<Real> epsilonK = { p.evol_epsilonK1, p.evol_epsilonK2 };
+    addBasis(psiAtau, H2, epsilonK, {
+        "Cutoff", 1E-8,              // default is 1e-15
+        "Method", "DensityMatrix",   // default is DensityMatrix
+        "KrylovOrd", 3,              // default is 3
+        "DoNormalize", false,
+        "Quiet", !p.debug
+    });
+  }
+  auto sweeps = Sweeps(1);           // default cutoff is 1e-8
+  sweeps.maxdim() = p.evol_sweeps_maxdim;
+  sweeps.niter() = p.evol_sweeps_niter;
   tdvp(psiAtau, H2, -tau, sweeps, {
-    "DoNormalize", false,
+      "DoNormalize", false,
       "Quiet", !p.debug,
       "Silent", !p.debug,
       "DebugLevel", (p.debug ? 2 : -1),
-      "NumCenter", 1
+      "NumCenter", p.evol_numcenter  // default is 2
   });
 }
 
 void calculate_dynamical_charge_susceptibility(store &s, const state_t GS, const double EGS, auto &file, params &p) {
+  std::cout << "\nDynamical charge susceptibility:" << std::endl;
+  
   const auto psi0 = s.eigen[GS].psi();
   if (p.debug) {
     const auto norm = inner(psi0, psi0);
@@ -883,6 +901,8 @@ void calculate_dynamical_charge_susceptibility(store &s, const state_t GS, const
     std::cout << "<A|(H-omega'_0)^2|A>=" << AH2pA << std::endl;
   }
   
+  std::cout << std::endl;
+  
   auto psiAtau = psiA;
   auto psiAptau = psiA;
 
@@ -900,7 +920,7 @@ void calculate_dynamical_charge_susceptibility(store &s, const state_t GS, const
     H5Easy::dump(file, "dynamical_charge_susceptibilty/intg/"  + std::to_string(cnt), intg);
 
     if (tau + p.tau_step <= tau_max) {
-      evolve(psiAtau, H2, p.tau_step, p);
+      evolve(psiAtau, H2, cnt, p.tau_step, p);
       if (p.debug) {
         const auto AtauAtau = inner(psiAtau, psiAtau);
         std::cout << "<A(tau)|A(tau)>=" << AtauAtau << std::endl;
@@ -908,7 +928,7 @@ void calculate_dynamical_charge_susceptibility(store &s, const state_t GS, const
         std::cout << "<B|A(tau)>=" << BAtau << std::endl;
       }
       
-      evolve(psiAptau, H2p, p.tau_step, p);
+      evolve(psiAptau, H2p, cnt, p.tau_step, p);
       if (p.debug) {
         const auto AptauAptau = inner(psiAptau, psiAptau);
         std::cout << "<A'(tau)|A'(tau)>=" << AptauAptau << std::endl;
