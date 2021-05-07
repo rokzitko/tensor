@@ -358,8 +358,11 @@ struct params {
   double eta_r;
   double tau_max;
   double tau_step;
+  int evol_krylovord;
   int evol_nr_expansion;
-  double evol_sweeps_maxdim;
+  int evol_nrsweeps;
+  double evol_sweeps_cutoff;
+  int evol_sweeps_maxdim;
   int evol_sweeps_niter;
   double evol_epsilonK1, evol_epsilonK2;
   int evol_numcenter;

@@ -114,6 +114,9 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.tau_max = input.getReal("tau_max", 1.0);
   p.tau_step = input.getReal("tau_step", 0.1);
   p.evol_nr_expansion = input.getInt("evol_nr_expansion", 3);
+  p.evol_krylovord = input.getInt("evol_krylovord", 3);
+  p.evol_nrsweeps = input.getInt("evol_nrsweeps", 1);
+  p.evol_sweeps_cutoff = input.getReal("evol_sweeps_cutoff", 1e-8);
   p.evol_sweeps_maxdim = input.getInt("evol_sweeps_maxdim", 2000);
   p.evol_sweeps_niter = input.getInt("evol_sweeps_niter", 10);
   p.evol_epsilonK1 = input.getReal("evol_epsilonK1", 1e-12);
@@ -803,26 +806,32 @@ void calculate_charge_susceptibilities(store &s, auto &file, params &p) {
 }
 
 void evolve(MPS &psiAtau, const MPO &H2, const int cnt, const double tau, params &p) {
+  if (p.debug) std::cout << "*** evolve() starting, cnt=" << cnt << std::endl;
   if (cnt < p.evol_nr_expansion) {
+    if (p.debug) std::cout << "*** addBasis()" << std::endl;
     std::vector<Real> epsilonK = { p.evol_epsilonK1, p.evol_epsilonK2 };
     addBasis(psiAtau, H2, epsilonK, {
-        "Cutoff", 1E-8,              // default is 1e-15
-        "Method", "DensityMatrix",   // default is DensityMatrix
-        "KrylovOrd", 3,              // default is 3
+        "Cutoff", 1E-8,                    // default is 1e-15
+        "Method", "DensityMatrix",         // default is DensityMatrix
+        "KrylovOrd", p.evol_krylovord,     // default is 3
         "DoNormalize", false,
         "Quiet", !p.debug
     });
   }
-  auto sweeps = Sweeps(1);           // default cutoff is 1e-8
+  if (p.debug) std::cout << "*** tdvp()" << std::endl;
+  auto sweeps = Sweeps(p.evol_nrsweeps);
+  sweeps.cutoff() = p.evol_sweeps_cutoff;  // default cutoff is 1e-8
   sweeps.maxdim() = p.evol_sweeps_maxdim;
-  sweeps.niter() = p.evol_sweeps_niter;
-  tdvp(psiAtau, H2, -tau, sweeps, {
+  sweeps.niter()  = p.evol_sweeps_niter;
+  const auto tdvp_t = -tau/p.evol_nrsweeps;
+  tdvp(psiAtau, H2, tdvp_t, sweeps, {
       "DoNormalize", false,
       "Quiet", !p.debug,
       "Silent", !p.debug,
       "DebugLevel", (p.debug ? 2 : -1),
-      "NumCenter", p.evol_numcenter  // default is 2
+      "NumCenter", p.evol_numcenter        // default is 2
   });
+  if (p.debug) std::cout << "*** evolve() done" << std::endl;
 }
 
 void calculate_dynamical_charge_susceptibility(store &s, const state_t GS, const double EGS, auto &file, params &p) {
