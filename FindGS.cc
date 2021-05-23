@@ -148,8 +148,9 @@ void MeasureTotalSpin(MPS& psi, auto & file, std::string path, const params &p) 
   H5Easy::dump(file, path + "/S2", res);
 }
 
-// If i<=j, computes <op_i op_j>. If i>j, computes <op_j op_i>=<op_i^dag op_j^dag>^*.
+// If i<j, computes <op_i op_j>. If i>j, computes <op_j op_i>=<op_i^dag op_j^dag>^*.
 auto Correlator(MPS& psi, const int i, const auto op_i, const int j, const auto op_j, const params &p) {
+  Expects(i != j);
   psi.position(i);
   MPS psidag = dag(psi);
   psidag.prime("Link");
@@ -280,12 +281,20 @@ void MeasureSpinCorrelation(MPS& psi, H5Easy::File & file, std::string path, con
 }
 
 auto calcSS(MPS& psi, const int i, const int j, const params &p) {
-  const auto [Szi, Spi, Smi] = Sz_Sp_Sm(i, p);
-  const auto [Szj, Spj, Smj] = Sz_Sp_Sm(j, p);
-  const auto zz = Correlator(psi, i, Szi, j, Szj, p);
-  const auto pm = Correlator(psi, i, Spi, j, Smj, p);
-  const auto mp = Correlator(psi, i, Smi, j, Spj, p);
-  return zz + 0.5*(pm + mp);
+  if (i != j) {
+    const auto [Szi, Spi, Smi] = Sz_Sp_Sm(i, p);
+    const auto [Szj, Spj, Smj] = Sz_Sp_Sm(j, p);
+    const auto zz = Correlator(psi, i, Szi, j, Szj, p);
+    const auto pm = Correlator(psi, i, Spi, j, Smj, p);
+    const auto mp = Correlator(psi, i, Smi, j, Spj, p);
+    return zz + 0.5*(pm + mp);
+  } else {
+    const auto [SzSz, SpSm, SmSp] = SzSz_SpSm_SmSp(i, p);
+    const auto zz = vev(psi, i, SzSz);
+    const auto pm = vev(psi, i, SpSm);
+    const auto mp = vev(psi, i, SmSp);
+    return zz + 0.5*(pm + mp);
+  }
 }
 
 auto calcSpinCorrelationMatrix(MPS& psi, const ndx_t &all_sites, const params &p, const bool full = false) {
