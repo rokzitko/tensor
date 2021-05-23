@@ -193,6 +193,17 @@ inline ndx_t range(int a, int b) // non-const because of swap!
   return l;
 }
 
+// Concatenate two vectors
+template<typename T>
+auto concat(const std::vector<T> &t1, const std::vector<T> &t2)
+{
+   std::vector<T> t;
+   t.reserve(t1.size() + t2.size());
+   t.insert(t.end(), t1.cbegin(), t1.cend());
+   t.insert(t.end(), t2.cbegin(), t2.cend());
+   return t;
+}
+
 // Class containing impurity parameters
 class imp {
  private:
@@ -389,6 +400,7 @@ struct store
 class problem_type {
  public:
    virtual int imp_index() = 0;
+   virtual ndx_t all_indexes() = 0;            // all indexes
    virtual ndx_t bath_indexes() = 0;           // all bath indexes
    virtual ndx_t bath_indexes(const int) = 0;  // per channel bath indexes
    virtual MPO initH(subspace_t, params &) = 0;
@@ -404,12 +416,8 @@ class imp_first : virtual public problem_type
    imp_first() = delete;
    imp_first(int _NBath) : NBath(_NBath) {}
    int imp_index() override { return 1; }
-   ndx_t bath_indexes() override {
-     ndx_t l;
-     for (int i = 1; i <= NBath; i++)
-       l.push_back(1+i);
-     return l;
-   }
+   ndx_t all_indexes() override { return range(1, NBath+1); }
+   ndx_t bath_indexes() override { return range(2, NBath+1); }
    ndx_t bath_indexes(const int ch) override {
      Expects(ch == 1 || ch == 2);
      const auto ndx = bath_indexes();
@@ -425,13 +433,8 @@ class imp_middle : virtual public problem_type
    imp_middle() = delete;
    imp_middle(int _NBath) : NBath(_NBath) { Expects(even(NBath)); }
    int imp_index() override { return 1+NBath/2; }
-   ndx_t bath_indexes() override {
-     ndx_t l;
-     for (int i = 1; i <= 1+NBath; i++)
-       if (i != 1+NBath/2)
-         l.push_back(i);
-     return l;
-   }
+   ndx_t all_indexes() override { return range(1, NBath+1); }
+   ndx_t bath_indexes() override { return concat(range(1,NBath/2), range(2+NBath/2, NBath+1)); }
    ndx_t bath_indexes(const int ch) override {
      Expects(ch == 1 || ch == 2);
      const auto ndx = bath_indexes();
@@ -557,16 +560,6 @@ class single_channel_eta : public single_channel
      return std::make_pair(eps, V);
    }
 };
-
-template <class T>
-  auto concat(const std::vector<T> &t1, const std::vector<T> &t2)
-{
-   std::vector<T> t;
-   t.reserve(t1.size() + t2.size());
-   t.insert(t.end(), t1.cbegin(), t1.cend());
-   t.insert(t.end(), t2.cbegin(), t2.cend());
-   return t;
-}
 
 class two_channel : virtual public problem_type
 {

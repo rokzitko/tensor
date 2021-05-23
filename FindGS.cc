@@ -169,7 +169,7 @@ auto Correlator(MPS& psi, const int i, const auto op_i, const int j, const auto 
 }
 
 auto ImpurityCorrelator(MPS& psi, const auto impOp, const int j, const auto opj, const params &p) {
-  return Correlator(psi,  p.impindex, impOp, j, opj, p);
+  return Correlator(psi, p.impindex, impOp, j, opj, p);
 }
 
 //CORRELATION FUNCTIONS BETWEEN THE IMPURITY AND ALL SC LEVELS:
@@ -365,10 +365,10 @@ void MeasureImpurityUpDn(MPS& psi, auto &file, std::string path, const params &p
 }
 
 // total Sz of the state
-auto calcTotalSpinz(MPS& psi, const ndx_t &sites, const params &p) {
+auto calcTotalSpinz(MPS& psi, const ndx_t &all_sites, const params &p) {
   double totNup = 0.;
   double totNdn = 0.;
-  for (const auto j: sites) {
+  for (const auto j: all_sites) {
     psi.position(j);
     auto Nupi = psi.A(j) * p.sites.op("Nup",j)* dag(prime(psi.A(j),"Site"));
     auto Ndni = psi.A(j) * p.sites.op("Ndn",j)* dag(prime(psi.A(j),"Site"));
@@ -380,7 +380,7 @@ auto calcTotalSpinz(MPS& psi, const ndx_t &sites, const params &p) {
 }
 
 void MeasureTotalSpinz(MPS& psi, H5Easy::File &file, std::string path, const params &p) {
-  const auto [totNup, totNdn, totSz] = calcTotalSpinz(psi, range(1, p.N), p);
+  const auto [totNup, totNdn, totSz] = calcTotalSpinz(psi, p.problem->all_indexes(), p);
   std::cout << std::setprecision(full) << "Total spin z: " << " Nup = " << totNup << " Ndn = " << totNdn << " Sztot = " << totSz << std::endl;
   H5Easy::dump(file, path + "/total_Nup", totNup);
   H5Easy::dump(file, path + "/total_Ndn", totNdn);
@@ -388,12 +388,10 @@ void MeasureTotalSpinz(MPS& psi, H5Easy::File &file, std::string path, const par
 }
 
 // occupation numbers of levels 'sites'
-auto calcOccupancy(MPS &psi, const ndx_t &sites, const params &p) {
+auto calcOccupancy(MPS &psi, const ndx_t &all_sites, const params &p) {
   std::vector<double> r;
-
-  for(const auto i : sites) {
+  for(const auto i : all_sites) {
     // position call very important! otherwise one would need to contract the whole tensor network of <psi|O|psi> this way, only the local operator at site i is needed
-
     psi.position(i);
     const auto val = psi.A(i) * p.sites.op("Ntot",i) * dag(prime(psi.A(i),"Site"));
     r.push_back(std::real(val.cplx()));
@@ -402,7 +400,7 @@ auto calcOccupancy(MPS &psi, const ndx_t &sites, const params &p) {
 }
 
 void MeasureOccupancy(MPS& psi, auto & file, std::string path, const params &p) {
-  const auto r = calcOccupancy(psi, range(1, p.N), p);
+  const auto r = calcOccupancy(psi, p.problem->all_indexes(), p);
   const auto tot = std::accumulate(r.cbegin(), r.cend(), 0.0);
   std::cout << "site occupancies = " << std::setprecision(full) << r << std::endl;
   std::cout << "tot = " << tot << std::endl;
@@ -431,7 +429,7 @@ auto calcPairing(MPS &psi, const ndx_t &all_sites, const params &p) {
 }
 
 void MeasurePairing(MPS& psi, auto & file, std::string path, const params &p) {
-  const auto [r, tot] = calcPairing(psi, range(1, p.N), p);
+  const auto [r, tot] = calcPairing(psi, p.problem->all_indexes(), p);
   std::cout << "site pairing = " << std::setprecision(full) << r << std::endl;
   std::cout << "tot = " << tot << std::endl;
   dumpreal(file, path + "/pairing", r);
@@ -461,7 +459,7 @@ auto calcAmplitudes(MPS &psi, const ndx_t &all_sites, const params &p) {
 }
 
 void MeasureAmplitudes(MPS& psi, auto & file, std::string path, const params &p) {
-  const auto [rv, ru, rpdt, tot] = calcAmplitudes(psi, range(1, p.N), p);
+  const auto [rv, ru, rpdt, tot] = calcAmplitudes(psi, p.problem->all_indexes(), p);
   std::cout << "amplitudes vu = " << std::setprecision(full);
   for (size_t i = 0; i < rv.size(); i++)
     std::cout << "[v=" << rv[i] << " u=" << ru[i] << " pdt=" << rpdt[i] << "] ";
@@ -502,19 +500,15 @@ void MeasureEntropy(MPS& psi, auto & file, std::string path, const params &p) {
 //contract all other tensors except the impurity one. The diagonal terms are the squares of the amplitudes for the impurity states |0>, |up>, |dn>, |2>. 
 auto calculate_imp_density_matrix(MPS &psi, const params &p)
 {
-
   psi.position(p.impindex);
   auto psidag = dag(psi);
   auto imp_psipsi = psi(p.impindex)*prime(psidag(p.impindex),"Site");
-
   return imp_psipsi;
 }
 
 void MeasureImpDensityMatrix(MPS& psi, auto & file, std::string path, const params &p){
     const auto psipsi = calculate_imp_density_matrix(psi, p);
-
     std::cout << "imp amplitudes: " << psipsi.real(1,1) << " " << psipsi.real(2,2) << " " << psipsi.real(3,3) << " " << psipsi.real(4,4) << "\n";
-
     H5Easy::dump(file, path + "/imp_amplitudes/0",    sqrt(psipsi.real(1,1)));
     H5Easy::dump(file, path + "/imp_amplitudes/up",   sqrt(psipsi.real(2,2)));
     H5Easy::dump(file, path + "/imp_amplitudes/down", sqrt(psipsi.real(3,3)));
