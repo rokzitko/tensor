@@ -198,6 +198,25 @@ void MeasureChargeCorrelation(MPS& psi, auto & file, std::string path, const par
   H5Easy::dump(file, path + "/charge_correlation_total", tot);
 }
 
+// Sz, Sp, Sm
+auto Sz_Sp_Sm(const int i, const params &p) {
+  return std::make_tuple(0.5*( op(p.sites, "Nup", i) - op(p.sites, "Ndn", i) ),
+                         op(p.sites, "Cdagup*Cdn", i),
+                         op(p.sites, "Cdagdn*Cup", i));
+}
+
+// Sz^2, SpSm, SmSp
+auto SzSz_SpSm_SmSp(const int i, const params &p) {
+  return std::make_tuple(0.25 * ( op(p.sites, "Nup*Nup", i) - op(p.sites, "Nup*Ndn", i) - op(p.sites, "Ndn*Nup", i) + op(p.sites, "Ndn*Ndn", i)),
+                         op(p.sites, "Cdagup*Cdn*Cdagdn*Cup", i),
+                         op(p.sites, "Cdagdn*Cup*Cdagup*Cdn", i));
+}
+
+auto vev(MPS &psi, const int i, auto &op) {
+  psi.position(i);
+  return elt(psi(i) * op *  dag(prime(psi(i),"Site")));
+}
+
 // <S_imp S_i> = <Sz_imp Sz_i> + 1/2 ( <S+_imp S-_i> + <S-_imp S+_i> )
 auto calcSpinCorrelation(MPS& psi, const ndx_t &sites, const params &p) {
   std::vector<double> rzz, rpm, rmp;
@@ -205,14 +224,10 @@ auto calcSpinCorrelation(MPS& psi, const ndx_t &sites, const params &p) {
   double tot = 0;
 
   //impurity spin operators
-  auto impSz = 0.5*( op(p.sites, "Nup", p.impindex) - op(p.sites, "Ndn", p.impindex) );
-  auto impSp = op(p.sites, "Cdagup*Cdn", p.impindex);
-  auto impSm = op(p.sites, "Cdagdn*Cup", p.impindex);
-  auto SzSz = 0.25 * ( op(p.sites, "Nup*Nup", p.impindex) - op(p.sites, "Nup*Ndn", p.impindex) - op(p.sites, "Ndn*Nup", p.impindex) + op(p.sites, "Ndn*Ndn", p.impindex));
-  //SzSz term
-  psi.position(p.impindex);
+  const auto [impSz, impSp, impSm] = Sz_Sp_Sm(p.impindex, p);
+  const auto [impSzSz, impSpSm, impSmSp] = SzSz_SpSm_SmSp(p.impindex, p);
   //on site term
-  auto onSiteSzSz = elt(psi(p.impindex) * SzSz *  dag(prime(psi(p.impindex),"Site")));
+  const auto onSiteSzSz = vev(psi, p.impindex, impSzSz);
   tot += onSiteSzSz;
   for(const auto j: sites) {
     if (j != p.impindex) {
@@ -223,9 +238,8 @@ auto calcSpinCorrelation(MPS& psi, const ndx_t &sites, const params &p) {
     }
   }
   //S+S- term
-  psi.position(p.impindex);
   //on site term
-  auto onSiteSpSm = elt(psi(p.impindex) * op(p.sites, "Cdagup*Cdn*Cdagdn*Cup", p.impindex) * dag(prime(psi(p.impindex),"Site")));
+  const auto onSiteSpSm = vev(psi, p.impindex, impSpSm);
   tot += 0.5*onSiteSpSm;
   for(const auto j: sites) {
     if (j != p.impindex) {
@@ -238,7 +252,7 @@ auto calcSpinCorrelation(MPS& psi, const ndx_t &sites, const params &p) {
   //S- S+ term
   psi.position(p.impindex);
   //on site term
-  auto onSiteSmSp = elt(psi(p.impindex) * op(p.sites, "Cdagdn*Cup*Cdagup*Cdn", p.impindex) * dag(prime(psi(p.impindex),"Site")));
+  const auto onSiteSmSp = vev(psi, p.impindex, impSmSp);
   tot += 0.5*onSiteSmSp;
   for(const auto j: sites) {
     if (j != p.impindex) {
