@@ -31,12 +31,21 @@ using namespace itensor;
 #define FMT_HEADER_ONLY
 #include <fmt/format.h>
 
-#include <highfive/H5Easy.hpp>
-
 #include <boost/math/interpolators/cardinal_cubic_b_spline.hpp>
 #include <boost/math/quadrature/gauss_kronrod.hpp>
+#include <boost/numeric/ublas/matrix.hpp>
+
+#define H5_USE_BOOST
+#include <highfive/H5Easy.hpp>
 
 using complex_t = std::complex<double>;
+using matrix_t = boost::numeric::ublas::matrix<double, boost::numeric::ublas::row_major>;
+
+inline void h5_dump_matrix(H5Easy::File &file, const std::string &path, const matrix_t &m) {
+  H5Easy::detail::createGroupsToDataSet(file, path);
+  HighFive::DataSet dataset = file.createDataSet<double>(path, HighFive::DataSpace::From(m));
+  dataset.write(m);
+}
 
 constexpr auto full = std::numeric_limits<double>::max_digits10;
 
@@ -331,6 +340,7 @@ struct params {
   bool impNupNdn;        // print the number of up and dn electrons on the impurity
   bool chargeCorrelation;// compute the impurity-superconductor correlation <n_imp n_i>
   bool spinCorrelation;  // compute the impurity-superconductor correlation <S_imp S_i>
+  bool spinCorrelationMatrix;  // compute the full correlation matrix <S_i S_j>
   bool pairCorrelation;  // compute the impurity-superconductor correlation <d d c_i^dag c_i^dag>
   bool hoppingExpectation;//compute the hopping expectation value 1/sqrt(N) \sum_sigma \sum_i <d^dag c_i> + <c^dag_i d>
   bool printTotSpinZ;    // prints total Nup, Ndn and Sz

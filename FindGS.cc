@@ -87,6 +87,7 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.impNupNdn = input.getYesNo("impNupNdn", false);
   p.chargeCorrelation = input.getYesNo("chargeCorrelation", false);
   p.spinCorrelation = input.getYesNo("spinCorrelation", false);
+  p.spinCorrelationMatrix = input.getYesNo("spinCorrelationMatrix", false);
   p.pairCorrelation = input.getYesNo("pairCorrelation", false);
   p.hoppingExpectation = input.getYesNo("hoppingExpectation", false);
   p.calcweights = input.getYesNo("calcweights", false);
@@ -276,6 +277,37 @@ void MeasureSpinCorrelation(MPS& psi, H5Easy::File & file, std::string path, con
   H5Easy::dump(file, path + "/spin_correlation/pm", rpm);
   H5Easy::dump(file, path + "/spin_correlation/mp", rmp);
   H5Easy::dump(file, path + "/spin_correlation_total", tot);
+}
+
+auto calcSS(MPS& psi, const int i, const int j, const params &p) {
+  const auto [Szi, Spi, Smi] = Sz_Sp_Sm(i, p);
+  const auto [Szj, Spj, Smj] = Sz_Sp_Sm(j, p);
+  const auto zz = Correlator(psi, i, Szi, j, Szj, p);
+  const auto pm = Correlator(psi, i, Spi, j, Smj, p);
+  const auto mp = Correlator(psi, i, Smi, j, Spj, p);
+  return zz + 0.5*(pm + mp);
+}
+
+auto calcSpinCorrelationMatrix(MPS& psi, const ndx_t &all_sites, const params &p, const bool full = false) {
+  if (p.verbose) { std::cout << "Computing spin correlation matrix" << std::endl; }
+  auto m = matrix_t(all_sites.size(), all_sites.size(), 0.0);
+  for (const auto i: all_sites) {
+    if (p.verbose) { std::cout << "row " << i << std::endl; }
+    for (const auto j: all_sites) {
+      if (full || i <= j) {
+        m(i-1, j-1) = calcSS(psi, i, j, p); // 0-based matrix indexing
+        if (p.debug) { std::cout << fmt::format("m({},{})={:18}\n", i, j, m(i-1, j-1)); }
+      } else {
+        m(i-1, j-1) = m(j-1, i-1);
+      }
+    }
+  }
+  return m;
+}
+
+void MeasureSpinCorrelationMatrix(MPS &psi, H5Easy::File &file, std::string path, const params &p) {
+  const auto m = calcSpinCorrelationMatrix(psi, p.problem->all_indexes(), p);
+  h5_dump_matrix(file, path + "/spin_correlation_matrix", m);
 }
 
 auto calcPairCorrelation(MPS& psi, const ndx_t &bath_sites, const params &p) {
@@ -682,6 +714,7 @@ void calc_properties(const state_t st, H5Easy::File &file, store &s, params &p)
   if (p.impNupNdn) MeasureImpurityUpDn(psi, file, path, p);
   if (p.chargeCorrelation) MeasureChargeCorrelation(psi, file, path, p);
   if (p.spinCorrelation) MeasureSpinCorrelation(psi, file, path, p);
+  if (p.spinCorrelationMatrix) MeasureSpinCorrelationMatrix(psi, file, path, p);
   if (p.pairCorrelation) MeasurePairCorrelation(psi, file, path, p);
   if (p.hoppingExpectation) MeasureHopping(psi, file, path, p);
   if (p.printTotSpinZ) MeasureTotalSpinz(psi, file, path, p);
