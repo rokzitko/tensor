@@ -146,26 +146,29 @@ void MeasureTotalSpin(MPS& psi, auto & file, std::string path, const params &p) 
   H5Easy::dump(file, path + "/S2", res);
 }
 
-double ImpurityCorrelator(MPS& psi, auto impOp, int j, auto opj, const params &p) {
-  psi.position(p.impindex);
+// If i<=j, computes <op_i op_j>. If i>j, computes <op_j op_i>=<op_i^dag op_j^dag>^*.
+auto Correlator(MPS& psi, const int i, const auto op_i, const int j, const auto op_j, const params &p) {
+  psi.position(i);
   MPS psidag = dag(psi);
   psidag.prime("Link");
-
-  int first = std::min(p.impindex, j);
-  int second = std::max(p.impindex, j);
-  // apply the operator to the first site (wheter impurity or j)
-  auto li_1 = leftLinkIndex(psi,first);
-  auto C = prime(psi(first),li_1)*(first==j ? opj : impOp) ;
-  C *= prime(psidag(first),"Site");
-
-  for (int k = first+1; k < second; ++k){
+  const auto [first, second] = std::minmax(i, j);
+  // apply the operator to the first site
+  const auto li_1 = leftLinkIndex(psi, first);
+  auto C = prime(psi(first), li_1) * (first == i ? op_i : op_j) ;
+  C *= prime(psidag(first), "Site");
+  for (int k = first+1; k < second; ++k) {
     C *= psi(k);
     C *= psidag(k);
   }
-  auto lj = rightLinkIndex(psi,second);
-  C *= prime(psi(second),lj)*(first==j ? impOp : opj);
-  C *= prime(psidag(second),"Site");
+  // apply the operator to the second site
+  const auto lj = rightLinkIndex(psi, second);
+  C *= prime(psi(second), lj) * (first == i ? op_j : op_i);
+  C *= prime(psidag(second), "Site");
   return elt(C);
+}
+
+auto ImpurityCorrelator(MPS& psi, const auto impOp, const int j, const auto opj, const params &p) {
+  return Correlator(psi,  p.impindex, impOp, j, opj, p);
 }
 
 //CORRELATION FUNCTIONS BETWEEN THE IMPURITY AND ALL SC LEVELS:
