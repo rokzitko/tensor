@@ -55,7 +55,7 @@ inline state_t gs(const subspace_t &sub)
   return {std::get<charge>(sub), std::get<spin>(sub), 0}; // ground state in the subspace
 }
 
-inline state_t es(const subspace_t &sub, int n = 1) // es(sub,0) is the ground state!
+inline state_t es(const subspace_t &sub, const int n = 1) // es(sub,0) is the ground state!
 {
   Expects(0 <= n);
   return {std::get<charge>(sub), std::get<spin>(sub), n}; // n-th excited state in the subspace
@@ -70,7 +70,7 @@ inline void skip_line(std::ostream &o = std::cout)
   o << std::endl;
 }
 
-inline std::string Sz_string(spin Sz) // custom formatting
+inline std::string Sz_string(const spin Sz) // custom formatting
 {
     Expects(Sz == -1.0 || Sz == -0.5 || Sz == 0.0 || Sz == +0.5 || Sz == +1.0);
     if (Sz == -1.0) return "-1";
@@ -175,7 +175,7 @@ inline auto shift1(const std::vector<double> &a) {
 }
 
 // Vector of integers centered at nref
-inline auto n_list(int nref, int nrange) {
+inline auto n_list(const int nref, const int nrange) {
   std::vector<int> n;
   n.push_back(nref);
   for (auto i : range1(nrange)) {
@@ -186,7 +186,7 @@ inline auto n_list(int nref, int nrange) {
 }
 
 // Range of integers [a:b], end points included.
-inline ndx_t range(int a, int b)
+inline ndx_t range(const int a, const int b)
 {
   if (a > b) std::swap(a, b);
   ndx_t l(b - a + 1);
