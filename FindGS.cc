@@ -229,52 +229,33 @@ auto vev(MPS &psi, const int i, auto &op) {
 
 // <S_imp S_i> = <Sz_imp Sz_i> + 1/2 ( <S+_imp S-_i> + <S-_imp S+_i> )
 auto calcSpinCorrelation(MPS& psi, const ndx_t &sites, const params &p) {
-  std::vector<double> rzz, rpm, rmp;
-  //squares of the impurity operators; for on-site terms
-  double tot = 0;
-
-  //impurity spin operators
-  const auto [impSz, impSp, impSm] = Sz_Sp_Sm(p.impindex, p);
+  const auto [impSz, impSp, impSm] = Sz_Sp_Sm(p.impindex, p);   //impurity spin operators
   const auto [impSzSz, impSpSm, impSmSp] = SzSz_SpSm_SmSp(p.impindex, p);
-
-// auto sum = [&p, &sites](auto opimp, auto op2) {};
-  
-  //on site term
+  auto sum = [&sites, &p, &psi](const auto &opimp, const auto &opbath, auto &results) {
+    double total = 0;
+    for(const auto j: sites) {
+      if (j != p.impindex) {
+        const auto result = ImpurityCorrelator(psi, opimp, j, opbath(j), p);
+        results.push_back(result);
+        total += result;
+      }
+    }
+    return total;
+  };
+  std::vector<double> rzz, rpm, rmp;  // vectors collecting individual terms <Sz_imp Sz_i>, <S+_imp S-_i>, <S-_imp S+_i>
+  double tot = 0;                     // sum over all three contributions and over i
+  // Sz Sz
   const auto onSiteSzSz = vev(psi, p.impindex, impSzSz);
   tot += onSiteSzSz;
-  for(const auto j: sites) {
-    if (j != p.impindex) {
-      auto scSz = Sz(j, p);
-      auto result = ImpurityCorrelator(psi, impSz, j, scSz, p);
-      rzz.push_back(result);
-      tot += result;
-    }
-  }
-  //S+S- term
-  //on site term
+  tot += sum(impSz, [&p](const int j){ return Sz(j, p); }, rzz);
+  // S+ S-
   const auto onSiteSpSm = vev(psi, p.impindex, impSpSm);
   tot += 0.5*onSiteSpSm;
-  for(const auto j: sites) {
-    if (j != p.impindex) {
-      auto scSm = Sm(j, p);
-      auto result = ImpurityCorrelator(psi, impSp, j, scSm, p);
-      rpm.push_back(result);
-      tot += 0.5*result;
-    }
-  }
-  //S- S+ term
-  psi.position(p.impindex);
-  //on site term
+  tot += 0.5*sum(impSp, [&p](const int j){ return Sm(j, p); }, rpm);
+  // S- S+
   const auto onSiteSmSp = vev(psi, p.impindex, impSmSp);
   tot += 0.5*onSiteSmSp;
-  for(const auto j: sites) {
-    if (j != p.impindex) {
-      auto scSp = Sp(j, p);
-      auto result = ImpurityCorrelator(psi, impSm, j, scSp, p);
-      rmp.push_back(result);
-      tot += 0.5*result;
-    }
-  }
+  tot += 0.5*sum(impSm, [&p](const int j){ return Sp(j, p); }, rmp);
   return std::make_tuple(onSiteSzSz, onSiteSpSm, onSiteSmSp, rzz, rpm, rmp, tot);
 }
 
