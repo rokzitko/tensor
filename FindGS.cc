@@ -176,23 +176,21 @@ auto ImpurityCorrelator(MPS& psi, const auto impOp, const int j, const auto opj,
 //according to: http://www.itensor.org/docs.cgi?vers=cppv3&page=formulas/correlator_mps
 
 // <n_imp n_i>
-auto calcChargeCorrelation(MPS& psi, const ndx_t sites, const params &p) {
+auto calcChargeCorrelation(MPS& psi, const ndx_t bath_sites, const params &p) {
   std::vector<double> r;
   double tot = 0;
   auto impOp = op(p.sites, "Ntot", p.impindex);
-  for (const auto j: sites) {
-    if (j != p.impindex) { // skip impurity site!
-      auto scOp = op(p.sites, "Ntot", j);
-      double result = ImpurityCorrelator(psi, impOp, j, scOp, p);
-      r.push_back(result);
-      tot += result;
-    }
+  for (const auto j: bath_sites) {
+    auto scOp = op(p.sites, "Ntot", j);
+    double result = ImpurityCorrelator(psi, impOp, j, scOp, p);
+    r.push_back(result);
+    tot += result;
   }
   return std::make_pair(r, tot);
 }
 
 void MeasureChargeCorrelation(MPS& psi, auto & file, std::string path, const params &p) {
-  const auto [r, tot] = calcChargeCorrelation(psi, range(1, p.N), p);
+  const auto [r, tot] = calcChargeCorrelation(psi, p.problem->bath_indexes(), p);
   std::cout << "charge correlation = " << std::setprecision(full) << r << std::endl;
   std::cout << "charge correlation tot = " << tot << std::endl;
   H5Easy::dump(file, path + "/charge_correlation", r);
@@ -229,17 +227,15 @@ auto vev(MPS &psi, const int i, auto &op) {
 }
 
 // <S_imp S_i> = <Sz_imp Sz_i> + 1/2 ( <S+_imp S-_i> + <S-_imp S+_i> )
-auto calcSpinCorrelation(MPS& psi, const ndx_t &sites, const params &p) {
+auto calcSpinCorrelation(MPS& psi, const ndx_t &bath_sites, const params &p) {
   const auto [impSz, impSp, impSm] = Sz_Sp_Sm(p.impindex, p);   //impurity spin operators
   const auto [impSzSz, impSpSm, impSmSp] = SzSz_SpSm_SmSp(p.impindex, p);
-  auto sum = [&sites, &p, &psi](const auto &opimp, const auto &opbath, auto &results) {
+  auto sum = [&bath_sites, &p, &psi](const auto &opimp, const auto &opbath, auto &results) {
     double total = 0;
-    for(const auto j: sites) {
-      if (j != p.impindex) {
-        const auto result = ImpurityCorrelator(psi, opimp, j, opbath(j), p);
-        results.push_back(result);
-        total += result;
-      }
+    for(const auto j: bath_sites) {
+      const auto result = ImpurityCorrelator(psi, opimp, j, opbath(j), p);
+      results.push_back(result);
+      total += result;
     }
     return total;
   };
@@ -261,7 +257,7 @@ auto calcSpinCorrelation(MPS& psi, const ndx_t &sites, const params &p) {
 }
 
 void MeasureSpinCorrelation(MPS& psi, H5Easy::File & file, std::string path, const params &p) {
-  const auto [onSiteSzSz, onSiteSpSm, onSiteSmSp, rzz, rpm, rmp, tot] = calcSpinCorrelation(psi, range(1, p.N), p);
+  const auto [onSiteSzSz, onSiteSpSm, onSiteSmSp, rzz, rpm, rmp, tot] = calcSpinCorrelation(psi, p.problem->bath_indexes(), p);
   std::cout << "spin correlations:\n";
   std::cout << "SzSz correlations: ";
   std::cout << std::setprecision(full) << onSiteSzSz << " ";
@@ -282,23 +278,21 @@ void MeasureSpinCorrelation(MPS& psi, H5Easy::File & file, std::string path, con
   H5Easy::dump(file, path + "/spin_correlation_total", tot);
 }
 
-auto calcPairCorrelation(MPS& psi, const ndx_t &sites, const params &p) {
+auto calcPairCorrelation(MPS& psi, const ndx_t &bath_sites, const params &p) {
   std::vector<double> r;
   double tot = 0;
   auto impOp = op(p.sites, "Cup*Cdn", p.impindex);
-  for(const auto j: sites) {
-    if (j != p.impindex) {
-      auto scOp = op(p.sites, "Cdagdn*Cdagup", j);
-      double result = ImpurityCorrelator(psi, impOp, j, scOp, p);
-      r.push_back(result);
-      tot += result;
-    }
+  for(const auto j: bath_sites) {
+    auto scOp = op(p.sites, "Cdagdn*Cdagup", j);
+    double result = ImpurityCorrelator(psi, impOp, j, scOp, p);
+    r.push_back(result);
+    tot += result;
   }
   return std::make_pair(r, tot);
 }
 
 void MeasurePairCorrelation(MPS& psi, H5Easy::File & file, std::string path, const params &p) {
-  const auto [r, tot] = calcPairCorrelation(psi, range(1, p.N), p);
+  const auto [r, tot] = calcPairCorrelation(psi, p.problem->bath_indexes(), p);
   std::cout << "pair correlation = " << std::setprecision(full) << r << std::endl;
   std::cout << "pair correlation tot = " << tot << std::endl;
   H5Easy::dump(file, path + "/pair_correlation", r);
@@ -307,7 +301,7 @@ void MeasurePairCorrelation(MPS& psi, H5Easy::File & file, std::string path, con
 
 //Prints <d^dag c_i + c_i^dag d> for each i. the sum of this expected value, weighted by 1/sqrt(N)
 //gives <d^dag f_0 + f_0^dag d>, where f_0 = 1/sqrt(N) sum_i c_i. This is the expected value of hopping.
-auto calcHopping(MPS& psi, const ndx_t &sites, const params &p) {
+auto calcHopping(MPS& psi, const ndx_t &bath_sites, const params &p) {
   std::vector<double> rup, rdn;
   double totup = 0;
   double totdn = 0;
@@ -316,34 +310,30 @@ auto calcHopping(MPS& psi, const ndx_t &sites, const params &p) {
   auto impOpDn = op(p.sites, "Cdn", p.impindex);
   auto impOpDagDn = op(p.sites, "Cdagdn", p.impindex);
   // hopping expectation values for spin up
-  for (const auto j : sites) {
-    if (j != p.impindex) {
-      auto scDagOp = op(p.sites, "Cdagup", j);
-      auto scOp = op(p.sites, "Cup", j);
-      auto result1 = ImpurityCorrelator(psi, impOpUp, j, scDagOp, p); // <d c_i^dag>
-      auto result2 = ImpurityCorrelator(psi, impOpDagUp, j, scOp, p); // <d^dag c_i>
-      auto sum = result1+result2;
-      rup.push_back(sum);
-      totup += sum;
-    }
+  for (const auto j : bath_sites) {
+    auto scDagOp = op(p.sites, "Cdagup", j);
+    auto scOp = op(p.sites, "Cup", j);
+    auto result1 = ImpurityCorrelator(psi, impOpUp, j, scDagOp, p); // <d c_i^dag>
+    auto result2 = ImpurityCorrelator(psi, impOpDagUp, j, scOp, p); // <d^dag c_i>
+    auto sum = result1+result2;
+    rup.push_back(sum);
+    totup += sum;
   }
   // hopping expectation values for spin dn
-  for (const auto j : sites) {
-    if (j != p.impindex) {
-      auto scDagOp = op(p.sites, "Cdagdn", j);
-      auto scOp = op(p.sites, "Cdn", j);
-      auto result1 = ImpurityCorrelator(psi, impOpDn, j, scDagOp, p);    // <d c_i^dag>
-      auto result2 =  ImpurityCorrelator(psi, impOpDagDn, j, scOp, p); // <d^dag c_i>
-      auto sum = result1+result2;
-      rdn.push_back(sum);
-      totdn += sum;
-    }
+  for (const auto j : bath_sites) {
+    auto scDagOp = op(p.sites, "Cdagdn", j);
+    auto scOp = op(p.sites, "Cdn", j);
+    auto result1 = ImpurityCorrelator(psi, impOpDn, j, scDagOp, p);    // <d c_i^dag>
+    auto result2 =  ImpurityCorrelator(psi, impOpDagDn, j, scOp, p); // <d^dag c_i>
+    auto sum = result1+result2;
+    rdn.push_back(sum);
+    totdn += sum;
   }
   return std::make_tuple(rup, rdn, totup, totdn);
 }
 
 void MeasureHopping(MPS& psi, H5Easy::File & file, std::string path, const params &p) {
-  const auto [rup, rdn, totup, totdn] = calcHopping(psi, range(1, p.N), p);
+  const auto [rup, rdn, totup, totdn] = calcHopping(psi, p.problem->bath_indexes(), p);
   std::cout << "hopping spin up = " << std::setprecision(full) << rup << std::endl;
   std::cout << "hopping correlation up tot = " << totup << std::endl;
   std::cout << "hopping spin down = " << std::setprecision(full) << rdn << std::endl;
@@ -423,10 +413,10 @@ void MeasureOccupancy(MPS& psi, auto & file, std::string path, const params &p) 
 // This is actually sqrt of local charge correlation, <n_up n_down>-<n_up><n_down>, summed over all bath levels.
 // The sum (tot) corresponds to \bar{\Delta}', Eq. (4) in Braun, von Delft, PRB 50, 9527 (1999), first proposed by Dan Ralph.
 // It reduces to Delta_BCS in the thermodynamic limit (if the impurity is decoupled, Gamma=0).
-auto calcPairing(MPS &psi, const ndx_t &sites, const params &p) {
+auto calcPairing(MPS &psi, const ndx_t &all_sites, const params &p) {
   std::vector<complex_t> r;
   complex_t tot = 0;
-  for(const auto i : sites) {
+  for(const auto i : all_sites) {
     psi.position(i);
     auto val2  = psi.A(i) * p.sites.op("Cdagup*Cup*Cdagdn*Cdn", i) * dag(prime(psi.A(i),"Site"));
     auto val1u = psi.A(i) * p.sites.op("Cdagup*Cup", i) * dag(prime(psi.A(i),"Site"));
@@ -451,10 +441,10 @@ void MeasurePairing(MPS& psi, auto & file, std::string path, const params &p) {
 // See von Delft, Zaikin, Golubev, Tichy, PRL 77, 3189 (1996)
 // v = <c^\dag_up c^\dag_dn c_dn c_up>
 // u = <c_dn c_up c^\dag_up c^\dag_dn>
-auto calcAmplitudes(MPS &psi, const ndx_t &sites, const params &p) {
+auto calcAmplitudes(MPS &psi, const ndx_t &all_sites, const params &p) {
   std::vector<complex_t> rv, ru, rpdt;
   complex_t tot = 0;
-  for(const auto i : sites) {
+  for(const auto i : all_sites) {
     psi.position(i);
     auto valv = psi.A(i) * p.sites.op("Cdagup*Cdagdn*Cdn*Cup", i) * dag(prime(psi.A(i),"Site"));
     auto valu = psi.A(i) * p.sites.op("Cdn*Cup*Cdagup*Cdagdn", i) * dag(prime(psi.A(i),"Site"));
