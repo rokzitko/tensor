@@ -17,7 +17,7 @@ namespace details {
 template <typename T>
 struct BufferInfo {
     using type_no_const = typename std::remove_const<T>::type;
-    using elem_type = typename details::type_of_array<type_no_const>::type;
+    using elem_type = typename details::inspector<type_no_const>::base_type;
     using char_array_t = typename details::type_char_array<type_no_const>::type;
     static constexpr bool is_char_array = ! std::is_same<char_array_t, void>::value;
 
@@ -59,7 +59,7 @@ template <typename T>
 BufferInfo<T>::BufferInfo(const DataType& dtype)
     : is_fixed_len_string(dtype.isFixedLenStr())
     // In case we are using Fixed-len strings we need to subtract one dimension
-    , n_dimensions(details::array_dims<type_no_const>::value -
+    , n_dimensions(details::inspector<type_no_const>::recursive_ndim -
                    ((is_fixed_len_string && is_char_array) ? 1 : 0))
     , data_type(string_type_checker<char_array_t>::getDataType(
             create_datatype<elem_type>(), is_fixed_len_string)) {

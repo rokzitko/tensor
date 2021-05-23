@@ -58,8 +58,8 @@ template <typename T>
 inline void Attribute::read(T& array) const {
     static_assert(!std::is_const<typename std::remove_reference<T>::type>::value,
                   "read() requires a non-const array to read into");
-    using element_type = typename details::type_of_array<T>::type;
-    const size_t dim_array = details::array_dims<T>::value;
+    using element_type = typename details::inspector<T>::base_type;
+    const size_t dim_array = details::inspector<T>::recursive_ndim;
     DataSpace space = getSpace();
     DataSpace mem_space = getMemSpace();
 
@@ -87,13 +87,10 @@ inline void Attribute::read(T& array) const {
 }
 
 template <typename T>
-inline void Attribute::read(T* array) const {
+inline void Attribute::read(T* array, const DataType& dtype) const {
     static_assert(!std::is_const<T>::value,
                   "read() requires a non-const structure to read data into");
-    using element_type = typename details::type_of_array<T>::type;
-    DataSpace mem_space = getMemSpace();
-
-    const DataType mem_datatype = create_and_check_datatype<element_type>();
+    const auto& mem_datatype = dtype.empty() ? create_and_check_datatype<T>() : dtype;
 
     if (H5Aread(getId(), mem_datatype.getId(),
                 static_cast<void*>(array)) < 0) {
@@ -104,8 +101,8 @@ inline void Attribute::read(T* array) const {
 
 template <typename T>
 inline void Attribute::write(const T& buffer) {
-    using element_type = typename details::type_of_array<T>::type;
-    const size_t dim_buffer = details::array_dims<T>::value;
+    using element_type = typename details::inspector<T>::base_type;
+    const size_t dim_buffer = details::inspector<T>::recursive_ndim;
     DataSpace space = getSpace();
     DataSpace mem_space = getMemSpace();
 
@@ -128,15 +125,10 @@ inline void Attribute::write(const T& buffer) {
 }
 
 template <typename T>
-inline void Attribute::write_raw(const T& buffer) {
-    using element_type = typename details::type_of_array<T>::type;
-    DataSpace space = getSpace();
-    DataSpace mem_space = getMemSpace();
-    const DataType mem_datatype = create_and_check_datatype<element_type>();
-    details::data_converter<T> converter(mem_space);
+inline void Attribute::write_raw(const T* buffer, const DataType& dtype) {
+    const DataType mem_datatype = dtype.empty() ? create_and_check_datatype<T>() : dtype;
 
-    if (H5Awrite(getId(), mem_datatype.getId(),
-                 static_cast<const void*>(converter.transform_write(buffer))) < 0) {
+    if (H5Awrite(getId(), mem_datatype.getId(), buffer) < 0) {
         HDF5ErrMapper::ToException<DataSetException>(
             "Error during HDF5 Write: ");
     }

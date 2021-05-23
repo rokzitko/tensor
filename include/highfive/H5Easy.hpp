@@ -386,5 +386,7 @@ inline T loadAttribute(const File& file, const std::string& path, const std::str
 #include "h5easy_bits/H5Easy_scalar.hpp"
 #include "h5easy_bits/H5Easy_vector.hpp"
 #include "h5easy_bits/H5Easy_xtensor.hpp"
+#include "h5easy_bits/H5Easy_ublas_vector.hpp"
+#include "h5easy_bits/H5Easy_ublas_matrix.hpp"
 
 #endif  // H5EASY_HPP
