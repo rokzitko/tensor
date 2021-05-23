@@ -104,7 +104,6 @@ inline auto ij_path(const charge ntot, const spin Sz, const int i, const int j)
 
 class problem_type;
 using type_ptr = std::unique_ptr<problem_type>;
-type_ptr set_problem(std::string);
 
 using ndx_t = std::vector<int>;
 
@@ -186,7 +185,7 @@ inline auto n_list(const int nref, const int nrange) {
 }
 
 // Range of integers [a:b], end points included.
-inline ndx_t range(const int a, const int b)
+inline ndx_t range(int a, int b) // non-const because of swap!
 {
   if (a > b) std::swap(a, b);
   ndx_t l(b - a + 1);
@@ -306,7 +305,7 @@ struct params {
   string inputfn;       // filename of the input file
   InputGroup input;     // itensor input parser
 
-  type_ptr problem = set_problem("std");
+  type_ptr problem;
 
   int N;                // number of sites
   int NBath;            // number of bath sites
@@ -389,9 +388,9 @@ struct store
 
 class problem_type {
  public:
-   virtual int imp_index(int) = 0;
-   virtual ndx_t bath_indexes(int) = 0;          // all bath indexes
-   virtual ndx_t bath_indexes(int, int) = 0;     // per channel bath indexes
+   virtual int imp_index() = 0;
+   virtual ndx_t bath_indexes() = 0;           // all bath indexes
+   virtual ndx_t bath_indexes(const int) = 0;  // per channel bath indexes
    virtual MPO initH(subspace_t, params &) = 0;
    virtual InitState initState(subspace_t, params &) = 0;
    virtual int numChannels() = 0;
@@ -399,39 +398,43 @@ class problem_type {
 
 class imp_first : virtual public problem_type
 {
+ private:
+   int NBath;
  public:
-   int imp_index(int) override { return 1; }
-   ndx_t bath_indexes(int NBath) override {
+   imp_first() = delete;
+   imp_first(int _NBath) : NBath(_NBath) {}
+   int imp_index() override { return 1; }
+   ndx_t bath_indexes() override {
      ndx_t l;
      for (int i = 1; i <= NBath; i++)
        l.push_back(1+i);
      return l;
    }
-   ndx_t bath_indexes(int NBath, int ch) override {
+   ndx_t bath_indexes(const int ch) override {
      Expects(ch == 1 || ch == 2);
-     auto ndx = bath_indexes(NBath);
+     const auto ndx = bath_indexes();
      return ch == 1 ? ndx_t(ndx.begin(), ndx.begin() + NBath/2) : ndx_t(ndx.begin() + NBath/2, ndx.begin() + NBath);
    }
 };
 
 class imp_middle : virtual public problem_type
 {
+ private:
+   int NBath;
  public:
-   int imp_index(int NBath) override {
-     Expects(even(NBath));
-     return 1+NBath/2;
-   }
-   ndx_t bath_indexes(int NBath) override {
-     Expects(even(NBath));
+   imp_middle() = delete;
+   imp_middle(int _NBath) : NBath(_NBath) { Expects(even(NBath)); }
+   int imp_index() override { return 1+NBath/2; }
+   ndx_t bath_indexes() override {
      ndx_t l;
      for (int i = 1; i <= 1+NBath; i++)
        if (i != 1+NBath/2)
          l.push_back(i);
      return l;
    }
-   ndx_t bath_indexes(int NBath, int ch) override {
+   ndx_t bath_indexes(const int ch) override {
      Expects(ch == 1 || ch == 2);
-     auto ndx = bath_indexes(NBath);
+     const auto ndx = bath_indexes();
      return ch == 1 ? ndx_t(ndx.begin(), ndx.begin() + NBath/2) : ndx_t(ndx.begin() + NBath/2, ndx.begin() + NBath);
    }
 };
@@ -514,7 +517,7 @@ class single_channel : virtual public problem_type
        add_imp_electron(Sz, p.impindex, state, tot, Sztot);
      // ** Add electrons to the bath
      if (nsc) {
-       ndx_t bath_sites = p.problem->bath_indexes(p.NBath);
+       ndx_t bath_sites = p.problem->bath_indexes();
        add_bath_electrons(nsc, Sz-Sztot, bath_sites, state, tot, Sztot);
      }
      Ensures(tot == ntot);
@@ -602,11 +605,11 @@ class two_channel : virtual public problem_type
      // ** Add electrons to bath 1
      if (nsc1) {
        Expects(even(nsc1));
-       ndx_t bath_sites = p.problem->bath_indexes(p.NBath, 1);
+       ndx_t bath_sites = p.problem->bath_indexes(1);
        add_bath_electrons(nsc1, spin0, bath_sites, state, tot, Sztot);
      }
      if (nsc2) {
-       ndx_t bath_sites = p.problem->bath_indexes(p.NBath, 2);
+       ndx_t bath_sites = p.problem->bath_indexes(2);
        add_bath_electrons(nsc2, Sz-Sztot, bath_sites, state, tot, Sztot);
      }
 
@@ -622,6 +625,7 @@ class two_channel : virtual public problem_type
 namespace prob {
    class Std : public imp_first, public single_channel { // Note: avoid lowercase 'std'!!
     public:
+      Std(const params &p) : imp_first(p.NBath) {}
       MPO initH(subspace_t sub, params &p) override {
         if (p.verbose) std::cout << "Building Hamiltonian, MPO=Std" << std::endl;
         auto [ntot, Sz] = sub;
@@ -637,6 +641,7 @@ namespace prob {
 
    class Ec : public imp_first, public single_channel {
     public:
+      Ec(const params &p) : imp_first(p.NBath) {}
       MPO initH(subspace_t sub, params &p) override {
         if (p.verbose) std::cout << "Building Hamiltonian, MPO=Ec" << std::endl;
         auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
@@ -649,6 +654,7 @@ namespace prob {
 
    class Ec_V : public imp_first, public single_channel {
     public:
+      Ec_V(const params &p) : imp_first(p.NBath) {}
       MPO initH(subspace_t sub, params &p) override {
         if (p.verbose) std::cout << "Building Hamiltonian, MPO=Ec_V" << std::endl;
         auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
@@ -663,6 +669,7 @@ namespace prob {
 
    class middle : public imp_middle, public single_channel {
     public:
+      middle(const params &p) : imp_middle(p.NBath) {}
       MPO initH(subspace_t sub, params &p) override {
         if (p.verbose) std::cout << "Building Hamiltonian, MPO=middle" << std::endl;
         auto [ntot, Sz] = sub;
@@ -678,6 +685,7 @@ namespace prob {
 
    class middle_Ec : public imp_middle, public single_channel {
     public:
+      middle_Ec(const params &p) : imp_middle(p.NBath) {}
       MPO initH(subspace_t sub, params &p) override {
         if (p.verbose) std::cout << "Building Hamiltonian, MPO=middle_Ec" << std::endl;
         auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
@@ -690,6 +698,7 @@ namespace prob {
 
    class t_SConly : public imp_first, public single_channel {
     public:
+      t_SConly(const params &p) : imp_first(p.NBath) {}
       MPO initH(subspace_t sub, params &p) override {
         //Expects(p.sc_only);
         if (p.verbose) std::cout << "Building Hamiltonian, MPO=t_SConly" << std::endl;
@@ -703,6 +712,7 @@ namespace prob {
 
    class Ec_t : public imp_first, public single_channel {
     public:
+      Ec_t(const params &p) : imp_first(p.NBath) {}
       MPO initH(subspace_t sub, params &p) override {
         if (p.verbose) std::cout << "Building Hamiltonian, MPO=Ec_t" << std::endl;
         auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
@@ -714,6 +724,7 @@ namespace prob {
    };
    class Ec_eta : public imp_first, public single_channel_eta {
     public:
+      Ec_eta(const params &p) : imp_first(p.NBath) {}
       MPO initH(subspace_t sub, params &p) override {
         if (p.verbose) std::cout << "Building Hamiltonian, MPO=Ec_eta" << std::endl;
         auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
@@ -728,6 +739,7 @@ namespace prob {
    // channel parameters. Use with care!
    class middle_2channel : public imp_middle, public single_channel {
     public:
+      middle_2channel(const params &p) : imp_middle(p.NBath) {}
       MPO initH(subspace_t sub, params &p) override {
         if (p.verbose) std::cout << "Building Hamiltonian, MPO=middle_2channel" << std::endl;
         auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
@@ -743,6 +755,7 @@ namespace prob {
 
     class autoH_1ch : public imp_first, public single_channel {
     public:
+      autoH_1ch(const params &p) : imp_first(p.NBath) {}
       MPO initH(subspace_t sub, params &p) override {
         if (p.verbose) std::cout << "Building Hamiltonian, MPO=autoH_1ch" << std::endl;
         auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
@@ -755,6 +768,7 @@ namespace prob {
 
     class autoH_2ch : public imp_first, public two_channel {
     public:
+      autoH_2ch(const params &p) : imp_first(p.NBath) {}
       MPO initH(subspace_t sub, params &p) override {
         if (p.verbose) std::cout << "Building Hamiltonian, MPO=autoH_2ch" << std::endl;
         auto [eps, V] = get_eps_V(p.sc1, p.Gamma1, p.sc2, p.Gamma2, p);
@@ -767,6 +781,7 @@ namespace prob {
 
    class twoch : public imp_middle, public two_channel {
     public:
+      twoch(const params &p) : imp_middle(p.NBath) {}
       MPO initH(subspace_t sub, params &p) override {
         if (p.verbose) std::cout << "Building Hamiltonian, MPO=twoch" << std::endl;
         Expects(even(p.NBath)); // in 2-ch problems, NBath is the total number of bath sites in both SCs !!
@@ -782,6 +797,7 @@ namespace prob {
 
    class twoch_impfirst : public imp_first, public two_channel {
     public:
+      twoch_impfirst(const params &p) : imp_first(p.NBath) {}
       MPO initH(subspace_t sub, params &p) override {
         if (p.verbose) std::cout << "Building Hamiltonian, MPO=twoch_impfirst" << std::endl;
         Expects(even(p.NBath)); // in 2-ch problems, NBath is the total number of bath sites in both SCs !!
@@ -797,6 +813,7 @@ namespace prob {
 
    class twoch_hopping : public imp_first, public two_channel {
     public:
+      twoch_hopping(const params &p) : imp_first(p.NBath) {}
       MPO initH(subspace_t sub, params &p) override {
         if (p.verbose) std::cout << "Building Hamiltonian, MPO=twoch_hopping" << std::endl;
         Expects(even(p.NBath)); // in 2-ch problems, NBath is the total number of bath sites in both SCs !!
@@ -811,22 +828,22 @@ namespace prob {
    };
 }
 
-inline type_ptr set_problem(std::string str)
+inline type_ptr set_problem(const std::string str, const params &p)
 {
-  if (str == "std") return std::make_unique<prob::Std>();
-  if (str == "Ec") return std::make_unique<prob::Ec>();
-  if (str == "Ec_V") return std::make_unique<prob::Ec_V>();
-  if (str == "middle") return std::make_unique<prob::middle>();
-  if (str == "middle_Ec") return std::make_unique<prob::middle_Ec>();
-  if (str == "t_SConly") return std::make_unique<prob::t_SConly>();
-  if (str == "Ec_t") return std::make_unique<prob::Ec_t>();
-  if (str == "Ec_eta") return std::make_unique<prob::Ec_eta>();
-  if (str == "autoH") return std::make_unique<prob::autoH_1ch>();
-  if (str == "autoH_2ch") return std::make_unique<prob::autoH_2ch>();
-  if (str == "middle_2channel") return std::make_unique<prob::middle_2channel>();
-  if (str == "2ch") return std::make_unique<prob::twoch>();
-  if (str == "2ch_impFirst") return std::make_unique<prob::twoch_impfirst>();
-  if (str == "2ch_t") return std::make_unique<prob::twoch_hopping>();
+  if (str == "std") return std::make_unique<prob::Std>(p);
+  if (str == "Ec") return std::make_unique<prob::Ec>(p);
+  if (str == "Ec_V") return std::make_unique<prob::Ec_V>(p);
+  if (str == "middle") return std::make_unique<prob::middle>(p);
+  if (str == "middle_Ec") return std::make_unique<prob::middle_Ec>(p);
+  if (str == "t_SConly") return std::make_unique<prob::t_SConly>(p);
+  if (str == "Ec_t") return std::make_unique<prob::Ec_t>(p);
+  if (str == "Ec_eta") return std::make_unique<prob::Ec_eta>(p);
+  if (str == "autoH") return std::make_unique<prob::autoH_1ch>(p);
+  if (str == "autoH_2ch") return std::make_unique<prob::autoH_2ch>(p);
+  if (str == "middle_2channel") return std::make_unique<prob::middle_2channel>(p);
+  if (str == "2ch") return std::make_unique<prob::twoch>(p);
+  if (str == "2ch_impFirst") return std::make_unique<prob::twoch_impfirst>(p);
+  if (str == "2ch_t") return std::make_unique<prob::twoch_hopping>(p);
   throw std::runtime_error("Unknown MPO type");
 }
 

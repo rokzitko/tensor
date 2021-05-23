@@ -36,7 +36,6 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.stop_n = argc >= 4 ? atoi(argv[3]) : INT_MAX;
   p.inputfn = { argv[1] };                                 // read parameters from the input file
   auto input = InputGroup{p.inputfn, "params"};            // get input parameters using InputGroup from itensor
-  p.problem = set_problem(input.getString("MPO", "std"));  // problem type
   p.NImp = 1;
   p.N = input.getInt("N", 0);
   if (p.N != 0)
@@ -47,7 +46,9 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
       throw std::runtime_error("specify either N or NBath!");
     p.N = p.NBath+p.NImp;
   }
-  p.impindex = p.problem->imp_index(p.NBath);
+  // p.NBath must be determined before calling set_problem()
+  p.problem = set_problem(input.getString("MPO", "std"), p);  // problem type
+  p.impindex = p.problem->imp_index(); // XXX: redundant?
   std::cout << "N=" << p.N << " NBath=" << p.NBath << " impindex=" << p.impindex << std::endl;
   // sites is an ITensor thing. It defines the local hilbert space and operators living on each site of the lattice.
   // For example sites.op("N",1) gives the pariticle number operator on the first site.
