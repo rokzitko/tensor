@@ -199,10 +199,20 @@ void MeasureChargeCorrelation(MPS& psi, auto & file, std::string path, const par
 }
 
 // Sz, Sp, Sm
+auto Sz(const int i, const params &p) {
+  return 0.5*( op(p.sites, "Nup", i) - op(p.sites, "Ndn", i) );
+}
+
+auto Sp(const int i, const params &p) {
+  return op(p.sites, "Cdagup*Cdn", i);
+}
+
+auto Sm(const int i, const params &p) {
+  return op(p.sites, "Cdagdn*Cup", i);
+}
+
 auto Sz_Sp_Sm(const int i, const params &p) {
-  return std::make_tuple(0.5*( op(p.sites, "Nup", i) - op(p.sites, "Ndn", i) ),
-                         op(p.sites, "Cdagup*Cdn", i),
-                         op(p.sites, "Cdagdn*Cup", i));
+  return std::make_tuple(Sz(i, p), Sp(i, p), Sm(i, p));
 }
 
 // Sz^2, SpSm, SmSp
@@ -226,12 +236,15 @@ auto calcSpinCorrelation(MPS& psi, const ndx_t &sites, const params &p) {
   //impurity spin operators
   const auto [impSz, impSp, impSm] = Sz_Sp_Sm(p.impindex, p);
   const auto [impSzSz, impSpSm, impSmSp] = SzSz_SpSm_SmSp(p.impindex, p);
+
+// auto sum = [&p, &sites](auto opimp, auto op2) {};
+  
   //on site term
   const auto onSiteSzSz = vev(psi, p.impindex, impSzSz);
   tot += onSiteSzSz;
   for(const auto j: sites) {
     if (j != p.impindex) {
-      auto scSz = 0.5*( op(p.sites, "Nup", j) - op(p.sites, "Ndn", j) );
+      auto scSz = Sz(j, p);
       auto result = ImpurityCorrelator(psi, impSz, j, scSz, p);
       rzz.push_back(result);
       tot += result;
@@ -243,7 +256,7 @@ auto calcSpinCorrelation(MPS& psi, const ndx_t &sites, const params &p) {
   tot += 0.5*onSiteSpSm;
   for(const auto j: sites) {
     if (j != p.impindex) {
-      auto scSm = op(p.sites, "Cdagdn*Cup", j);
+      auto scSm = Sm(j, p);
       auto result = ImpurityCorrelator(psi, impSp, j, scSm, p);
       rpm.push_back(result);
       tot += 0.5*result;
@@ -256,7 +269,7 @@ auto calcSpinCorrelation(MPS& psi, const ndx_t &sites, const params &p) {
   tot += 0.5*onSiteSmSp;
   for(const auto j: sites) {
     if (j != p.impindex) {
-      auto scSp = op(p.sites, "Cdagup*Cdn", j);
+      auto scSp = Sp(j, p);
       auto result = ImpurityCorrelator(psi, impSm, j, scSp, p);
       rmp.push_back(result);
       tot += 0.5*result;
