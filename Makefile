@@ -29,6 +29,14 @@ calcGS: calcGS.o FindGS.o $(ITENSOR_LIBS) $(TENSOR_HEADERS)
 calcGS-g: mkdebugdir .debug_objs/calcGS.o .debug_objs/FindGS.o $(ITENSOR_GLIBS) $(TENSOR_HEADERS)
 	$(CCCOM) $(CCGFLAGS) .debug_objs/calcGS.o .debug_objs/FindGS.o -o calcGS-g $(LIBGFLAGS)
 
+# calcOverlap targets -----------------
+
+calcOverlap: calcOverlap.o FindGS.o $(ITENSOR_LIBS) $(TENSOR_HEADERS)
+	$(CCCOM) $(CCFLAGS) calcOverlap.o FindGS.o -o calcOverlap $(LIBFLAGS)
+
+calcOverlap-g: mkdebugdir .debug_objs/calcOverlap.o .debug_objs/FindGS.o $(ITENSOR_GLIBS) $(TENSOR_HEADERS)
+	$(CCCOM) $(CCGFLAGS) .debug_objs/calcOverlap.o .debug_objs/FindGS.o -o calcOverlap-g $(LIBGFLAGS)
+
 # calcPT targets -----------------
 
 calcPT: calcPT.o FindGS.o $(ITENSOR_LIBS) $(TENSOR_HEADERS)
@@ -36,11 +44,12 @@ calcPT: calcPT.o FindGS.o $(ITENSOR_LIBS) $(TENSOR_HEADERS)
 
 buildPT: calcPT
 buildGS: calcGS
-build: calcGS
+buildOverlap: calcOverlap
+build: calcGS calcOverlap
 debug: calcGS-g
 
 clean:
-	rm -v *.o calcGS calcPT
+	rm -v *.o calcGS calcPT calcOverlap
 
 mkdebugdir:
 	mkdir -p .debug_objs
