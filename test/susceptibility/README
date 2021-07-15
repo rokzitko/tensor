@@ -1,0 +1,19 @@
+Calculations of impurity charge susceptibility
+RZ, 2021
+
+small cluster, 2 bath sites, U=10, eps=-5, Gamma=1
+
+n_el=3 sector:
+E_gs = -2.51293
+n_imp = 0.997624
+g_01 = -0.00381294 (sign is arbitrary)
+2 * sum |g_{0i}|^2/(E_i-E_0) = 0.00486367
+Results from small_cluster/ed.nb
+
+dir small_clusters: results.dat from DMRG are OK!
+
+Results for chi from tau integration: 
+Re[A1+A2] = 0.004870128 for wr=0.25, eta=0.1
+Re[A1+A2] = 0.0048637   for wr=0, eta=0 ; results from tau-wr=0/ed-tau.nb
+
+perfect agreement!
