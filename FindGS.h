@@ -391,6 +391,8 @@ struct params {
   std::unique_ptr<SCbath> sc;
   std::unique_ptr<hyb>    Gamma;
   double V12;            // QD-SC capacitive coupling, for MPO_Ec_V
+  double V1imp;          // QD-SC capacitive coupling, for MPO_2h_.*_V
+  double V2imp;          // QD-SC capacitive coupling, for MPO_2h_.*_V
   double eta;            // coupling reduction factor, 0<=eta<=1, for MPO_Ec_eta
 
   bool magnetic_field() { return qd->EZ() != 0 || sc->EZ() != 0; } // true if there is magnetic field
@@ -497,6 +499,7 @@ inline void add_bath_electrons(const int nsc, const spin & Szadd, const ndx_t &b
 #include "SC_BathMPO_Ec_eta.h"
 #include "SC_BathMPO_MiddleImp_TwoChannel.h"
 #include "SC_BathMPO_ImpFirst_TwoChannel.h"
+#include "SC_BathMPO_ImpFirst_TwoChannel_V.h"
 #include "SC_BathMPO_ImpFirst_TwoChannel_hopping.h"
 #include "autoMPO_1ch.h"
 #include "autoMPO_2ch.h"
@@ -814,6 +817,26 @@ namespace prob {
       }
    };
 
+
+  class twoch_impfirst_V : public imp_first, public two_channel {
+    public:
+      twoch_impfirst_V(const params &p) : imp_first(p.NBath) {}
+      MPO initH(subspace_t sub, params &p) override {
+        if (p.verbose) std::cout << "Building Hamiltonian, MPO=twoch_impfirst_V" << std::endl;
+        Expects(even(p.NBath)); // in 2-ch problems, NBath is the total number of bath sites in both SCs !!
+        Expects(p.sc1->NBath() + p.sc2->NBath() == p.NBath);
+        Expects(p.sc1->NBath() == p.sc2->NBath());
+        auto [eps, V] = get_eps_V(p.sc1, p.Gamma1, p.sc2, p.Gamma2, p);
+        MPO H(p.sites);
+        double Eshift = p.sc1->Ec()*pow(p.sc1->n0(), 2) + p.sc2->Ec()*pow(p.sc2->n0(), 2) + p.qd->U()/2 + p.V1imp * p.sc1->n0() * p.qd->nu() + p.V2imp * p.sc2->n0() * p.qd->nu();
+        double epsishift1 = - p.V1imp * p.qd->nu();
+        double epsishift2 = - p.V2imp * p.qd->nu();
+        double epseff = p.qd->eps() - p.V1imp * p.sc1->n0() - p.V2imp * p.sc2->n0();
+        Fill_SCBath_MPO_ImpFirst_TwoChannel_V(H, Eshift, epsishift1, epsishift2, epseff, eps, V, p);
+        return H;
+      }
+   };
+
    class twoch_hopping : public imp_first, public two_channel {
     public:
       twoch_hopping(const params &p) : imp_first(p.NBath) {}
@@ -846,6 +869,7 @@ inline type_ptr set_problem(const std::string str, const params &p)
   if (str == "middle_2channel") return std::make_unique<prob::middle_2channel>(p);
   if (str == "2ch") return std::make_unique<prob::twoch>(p);
   if (str == "2ch_impFirst") return std::make_unique<prob::twoch_impfirst>(p);
+  if (str == "2ch_impFirst_V") return std::make_unique<prob::twoch_impfirst_V>(p);
   if (str == "2ch_t") return std::make_unique<prob::twoch_hopping>(p);
   throw std::runtime_error("Unknown MPO type");
 }
