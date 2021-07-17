@@ -1,0 +1,56 @@
+params{
+     parallel = false
+     alpha = -1
+     U=10
+     gamma = 1
+     N = 3
+     nrange = 0
+#    excited_states = 8
+#    Weight = 1000
+#    verbose = true
+     verbose = false
+     Silent = true
+
+#    calc_weights = true
+#    charge_susceptibility = true
+#    overlaps = true
+
+#    debug = true
+     chi = true
+     omega_r = 0.
+     eta_r = 0.
+     tau_max = 2.0
+     tau_step = 0.01
+
+     MPO = middle
+}
+
+
+sweeps
+{
+
+sweeps
+     {
+     maxdim  mindim  cutoff  niter  noise
+     200      20      1E-7    3     1e-4
+     200      20      1E-7    3     1e-4
+     200      20      1E-7    3     0
+     200      20      1E-7    3     0
+     200      20      1E-7    3     0
+     400      1      1E-8    3     0
+     400      1      1E-8    3     0
+     400      1      1E-8    3     0
+     400      1      1E-8    3     0
+     400      1      1E-8    3     0
+     1600     1      1E-12   3      0
+     1600     1      1E-12   5      0
+     1600     1      1E-12   5      0
+     1600     1      1E-12   5      0
+     1600     1      1E-12   5      0
+     2400     1      1E-12   5      0
+     2400     1      1E-12   5      0
+     2400     1      1E-12   5      0
+     4000     1      1E-12   5      0
+     4000     1      1E-12   5      0
+     }
+}
