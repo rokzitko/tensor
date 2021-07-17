@@ -109,6 +109,7 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.nrH = input.getInt("nrH", 5);
   p.sc_only = input.getYesNo("sc_only", false);
   p.Weight = input.getReal("Weight", p.N);  // weight is implemented as the energy cost of the overlap between the GS and the ES; as energy of the GS is on the order of -N/2, the default weight should probs be on this scale.  
+  p.transition_dipole_moment = input.getYesNo("transition_dipole_moment", false);
   p.overlaps = input.getYesNo("overlaps", false);
   p.flat_band = input.getYesNo("flat_band", false);
   p.flat_band_factor = input.getReal("flat_band_factor", 0);
@@ -822,6 +823,57 @@ void calculate_overlaps(store &s, auto &file, params &p) {
   }
 }
 
+auto one_channel_tdm(const int channelNum, auto &psi1, auto &psi2, const params &p){
+
+  double res = 0.0;
+
+  for (int i : p.problem->bath_indexes(channelNum)){
+
+    MPS newpsi = psi2;
+    newpsi.position(i);
+
+    // Apply the n operator to a copy of psi2
+    auto newT = p.sites.op("Ntot", i) * newpsi(i);
+    newT.noPrime();
+
+    newpsi.set(i, newT);
+
+    psi1.position(i);
+
+    res += abs(inner(psi1, newpsi)); //absolute value!!!
+  }
+  return res;
+}
+
+auto calculate_transition_dipole_moment(auto &psi1, auto &psi2, params &p){
+  // < i | nsc1 | j > - < i | nsc2 | j > 
+
+  double res = 0.0;
+  res += one_channel_tdm(1, psi1, psi2, p);
+  res -= one_channel_tdm(2, psi1, psi2, p);
+  
+  return res;
+}
+
+void calculate_transition_dipole_moments(store &s, auto &file, params &p) {
+
+  skip_line();  
+  std::cout << "Transition dipole moments:\n";
+
+  for (const auto & [st1, st2] : itertools::product(s.eigen, s.eigen)) {
+    const auto [ntot1, Sz1, i] = st1.first;
+    const auto [ntot2, Sz2, j] = st2.first;
+    
+    if (ntot1 == ntot2 && Sz1 == Sz2 && i < j) { // for now only for Sz1==Sz2
+      auto o = calculate_transition_dipole_moment(st1.second.psi(), st2.second.psi(), p);
+      o = abs(o);
+      std::cout << fmt::format(FMT_STRING("n = {:<5}  Sz = {:4}  i = {:<3}  j = {:<3}  |<i|nsc1 - nsc2|j>| = {:<22.15}"),
+                               ntot1, Sz_string(Sz1), i, j, o) << std::endl;
+      H5Easy::dump(file, "transition_dipole_moment/" + ij_path(ntot1, Sz1, i, j), o);
+    }
+  }
+}
+
 auto calculate_charge_susceptibility(MPS &psi1, MPS &psi2, const params &p)
 {
   auto psi2new = psi2;
@@ -1012,6 +1064,8 @@ void process_and_save_results(store &s, params &p, std::string h5_filename) {
     calculate_spectral_weights(s, GS, file, p, 0);
     if (p.excited_state) calculate_spectral_weights(s, GS, file, p, 1);
   }
+  if (p.transition_dipole_moment)
+    calculate_transition_dipole_moments(s, file, p);
   if (p.overlaps)
     calculate_overlaps(s, file, p);
   if (p.charge_susceptibility)

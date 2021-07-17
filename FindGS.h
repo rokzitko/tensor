@@ -344,6 +344,7 @@ struct params {
   bool pairCorrelation;  // compute the impurity-superconductor correlation <d d c_i^dag c_i^dag>
   bool hoppingExpectation;//compute the hopping expectation value 1/sqrt(N) \sum_sigma \sum_i <d^dag c_i> + <c^dag_i d>
   bool printTotSpinZ;    // prints total Nup, Ndn and Sz
+  bool transition_dipole_moment; // compute < i | nsc1 - ncs2 | j > 
   bool overlaps;         // compute <i|j> overlap table in each subspace
   bool charge_susceptibility; // compute <i|nimp|j> overlap table in each subspace
   bool channel_parity;   // prints the channel parity

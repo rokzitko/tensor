@@ -2,6 +2,7 @@
 ._.DS_Store
 000_*
 *.o
+calcOverlap
 calcGS
 calcGS-g
 calcGS-middle

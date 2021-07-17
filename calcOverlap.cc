@@ -10,30 +10,31 @@
 
 #include "FindGS.h"
 
-MPS loadMPS(std::string name){
+MPS loadMPS(std::string sitesName, std::string mpsName){
 	
 	Hubbard sites;
-	readFromFile("SITES_" + name, sites);
+	readFromFile(sitesName, sites);
 	MPS psi(sites);
-	readFromFile("MPS_" + name, psi);
+	readFromFile(mpsName, psi);
 
 	return psi;
 }
 
 int main(int argc, char* argv[]) {
   
-	if (argc != 3)
-    throw std::runtime_error("Please provide the names of the two states. Usage: executable <MPS name 1> <MPS name 2>");
+	if (argc != 5)
+    throw std::runtime_error("Please provide the names of the two states. Usage: executable <SITES name1> <MPS name 1> <SITES name 2> <MPS name 2>");
 
 	std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-
- 
-  auto name1 = argv[1];
-  auto name2 = argv[2];
+	
+ 	auto SITESname1 = argv[1];
+ 	auto MPSname1 = argv[2];
+ 	auto SITESname2 = argv[3];
+  	auto MPSname2 = argv[4];
 
 	//load the two MPSs and their sites
-	MPS psi1 = loadMPS(name1);
-	MPS psi2 = loadMPS(name2);
+	MPS psi1 = loadMPS(SITESname1, MPSname1);
+	MPS psi2 = loadMPS(SITESname2, MPSname2);
 
 	// compute the overlap
 	auto res = inner(psi1, psi2);
@@ -41,5 +42,5 @@ int main(int argc, char* argv[]) {
 	std::cout << "overlap: " << res << std::endl;
 
 	std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-  std::cout << std::endl << "Wall time: " << std::chrono::duration_cast<std::chrono::seconds>(end - begin).count() << " s" << std::endl;
+  	std::cout << std::endl << "Wall time: " << std::chrono::duration_cast<std::chrono::seconds>(end - begin).count() << " s" << std::endl;
 }
