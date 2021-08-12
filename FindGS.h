@@ -259,15 +259,17 @@ class SCbath : public bath { // superconducting island bath
    double _n0;    // offset 
    double _EZ;    // Zeeman energy
    double _t;     // nearest neighbour hopping in SC
+   double _lambda;// spin orbit coupling
  public:
-   SCbath(int NBath, double alpha, double Ec, double n0, double EZ, double t) :
-     bath(NBath), _alpha(alpha), _Ec(Ec), _n0(n0), _EZ(EZ), _t(t) {};
+   SCbath(int NBath, double alpha, double Ec, double n0, double EZ, double t, double lambda) :
+     bath(NBath), _alpha(alpha), _Ec(Ec), _n0(n0), _EZ(EZ), _t(t), _lambda(lambda) {};
    auto alpha() const { return _alpha; }
    auto Ec() const { return _Ec; }
    auto n0() const { return _n0; }
    auto EZ() const { return _EZ; }
    auto g() const { return _alpha*d(); }
    auto t() const { return _t;}
+   auto lambda() const { return _lambda;}
    auto eps(bool band_level_shift = true, bool flat_band = false, double flat_band_factor = 0) const {
      auto eps = bath::eps(flat_band, flat_band_factor);
      if (band_level_shift)
@@ -419,6 +421,7 @@ class problem_type {
    virtual MPO initH(subspace_t, params &) = 0;
    virtual InitState initState(subspace_t, params &) = 0;
    virtual int numChannels() = 0;
+   virtual bool spin_conservation() = 0;
 };
 
 class imp_first : virtual public problem_type
@@ -493,6 +496,7 @@ inline void add_bath_electrons(const int nsc, const spin & Szadd, const ndx_t &b
 #include "SC_BathMPO.h"
 #include "SC_BathMPO_Ec.h"
 #include "SC_BathMPO_Ec_V.h"
+#include "SC_BathMPO_Ec_SO.h"
 #include "SC_BathMPO_MiddleImp.h"
 #include "SC_BathMPO_MiddleImp_Ec.h"
 #include "SC_BathMPO_t_SConly.h"
@@ -503,6 +507,7 @@ inline void add_bath_electrons(const int nsc, const spin & Szadd, const ndx_t &b
 #include "SC_BathMPO_ImpFirst_TwoChannel_V.h"
 #include "SC_BathMPO_ImpFirst_TwoChannel_hopping.h"
 #include "autoMPO_1ch.h"
+#include "autoMPO_1ch_so.h"
 #include "autoMPO_2ch.h"
 
 class single_channel : virtual public problem_type
@@ -633,6 +638,7 @@ namespace prob {
    class Std : public imp_first, public single_channel { // Note: avoid lowercase 'std'!!
     public:
       Std(const params &p) : imp_first(p.NBath) {}
+      bool spin_conservation() override {return true;}
       MPO initH(subspace_t sub, params &p) override {
         if (p.verbose) std::cout << "Building Hamiltonian, MPO=Std" << std::endl;
         auto [ntot, Sz] = sub;
@@ -649,6 +655,7 @@ namespace prob {
    class Ec : public imp_first, public single_channel {
     public:
       Ec(const params &p) : imp_first(p.NBath) {}
+      bool spin_conservation() override {return true;}
       MPO initH(subspace_t sub, params &p) override {
         if (p.verbose) std::cout << "Building Hamiltonian, MPO=Ec" << std::endl;
         auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
@@ -662,6 +669,7 @@ namespace prob {
    class Ec_V : public imp_first, public single_channel {
     public:
       Ec_V(const params &p) : imp_first(p.NBath) {}
+      bool spin_conservation() override {return true;}
       MPO initH(subspace_t sub, params &p) override {
         if (p.verbose) std::cout << "Building Hamiltonian, MPO=Ec_V" << std::endl;
         auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
@@ -674,9 +682,24 @@ namespace prob {
       }
    };
 
+   class Ec_SO : public imp_first, public single_channel {
+    public:
+      Ec_SO(const params &p) : imp_first(p.NBath) {}
+      bool spin_conservation() override {return false;}
+      MPO initH(subspace_t sub, params &p) override {
+        if (p.verbose) std::cout << "Building Hamiltonian, MPO=Ec_SO" << std::endl;
+        auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
+        MPO H(p.sites);
+        double Eshift = p.sc->Ec()*pow(p.sc->n0(), 2) + p.qd->U()/2;
+        Fill_SCBath_MPO_Ec_SO(H, Eshift, eps, V, p);
+        return H;
+      }
+   };
+
    class middle : public imp_middle, public single_channel {
     public:
       middle(const params &p) : imp_middle(p.NBath) {}
+      bool spin_conservation() override {return true;}
       MPO initH(subspace_t sub, params &p) override {
         if (p.verbose) std::cout << "Building Hamiltonian, MPO=middle" << std::endl;
         auto [ntot, Sz] = sub;
@@ -693,6 +716,7 @@ namespace prob {
    class middle_Ec : public imp_middle, public single_channel {
     public:
       middle_Ec(const params &p) : imp_middle(p.NBath) {}
+      bool spin_conservation() override {return true;}
       MPO initH(subspace_t sub, params &p) override {
         if (p.verbose) std::cout << "Building Hamiltonian, MPO=middle_Ec" << std::endl;
         auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
@@ -706,6 +730,7 @@ namespace prob {
    class t_SConly : public imp_first, public single_channel {
     public:
       t_SConly(const params &p) : imp_first(p.NBath) {}
+      bool spin_conservation() override {return true;}
       MPO initH(subspace_t sub, params &p) override {
         //Expects(p.sc_only);
         if (p.verbose) std::cout << "Building Hamiltonian, MPO=t_SConly" << std::endl;
@@ -720,6 +745,7 @@ namespace prob {
    class Ec_t : public imp_first, public single_channel {
     public:
       Ec_t(const params &p) : imp_first(p.NBath) {}
+      bool spin_conservation() override {return true;}
       MPO initH(subspace_t sub, params &p) override {
         if (p.verbose) std::cout << "Building Hamiltonian, MPO=Ec_t" << std::endl;
         auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
@@ -732,6 +758,7 @@ namespace prob {
    class Ec_eta : public imp_first, public single_channel_eta {
     public:
       Ec_eta(const params &p) : imp_first(p.NBath) {}
+      bool spin_conservation() override {return true;}
       MPO initH(subspace_t sub, params &p) override {
         if (p.verbose) std::cout << "Building Hamiltonian, MPO=Ec_eta" << std::endl;
         auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
@@ -747,6 +774,7 @@ namespace prob {
    class middle_2channel : public imp_middle, public single_channel {
     public:
       middle_2channel(const params &p) : imp_middle(p.NBath) {}
+      bool spin_conservation() override {return true;}
       MPO initH(subspace_t sub, params &p) override {
         if (p.verbose) std::cout << "Building Hamiltonian, MPO=middle_2channel" << std::endl;
         auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
@@ -763,6 +791,7 @@ namespace prob {
     class autoH_1ch : public imp_first, public single_channel {
     public:
       autoH_1ch(const params &p) : imp_first(p.NBath) {}
+      bool spin_conservation() override {return true;}
       MPO initH(subspace_t sub, params &p) override {
         if (p.verbose) std::cout << "Building Hamiltonian, MPO=autoH_1ch" << std::endl;
         auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
@@ -773,9 +802,24 @@ namespace prob {
       }
    };
 
+    class autoH_1ch_so : public imp_first, public single_channel {
+    public:
+      autoH_1ch_so(const params &p) : imp_first(p.NBath) {}
+      bool spin_conservation() override {return false;}
+      MPO initH(subspace_t sub, params &p) override {
+        if (p.verbose) std::cout << "Building Hamiltonian, MPO=autoH_1ch_so" << std::endl;
+        auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
+        MPO H(p.sites);
+        double Eshift = p.qd->U()/2;
+        get_autoMPO_1ch_so(H, Eshift, eps, V, p);
+        return H;
+      }
+   };
+
     class autoH_2ch : public imp_first, public two_channel {
     public:
       autoH_2ch(const params &p) : imp_first(p.NBath) {}
+      bool spin_conservation() override {return true;}
       MPO initH(subspace_t sub, params &p) override {
         if (p.verbose) std::cout << "Building Hamiltonian, MPO=autoH_2ch" << std::endl;
         auto [eps, V] = get_eps_V(p.sc1, p.Gamma1, p.sc2, p.Gamma2, p);
@@ -789,6 +833,7 @@ namespace prob {
    class twoch : public imp_middle, public two_channel {
     public:
       twoch(const params &p) : imp_middle(p.NBath) {}
+      bool spin_conservation() override {return true;}
       MPO initH(subspace_t sub, params &p) override {
         if (p.verbose) std::cout << "Building Hamiltonian, MPO=twoch" << std::endl;
         Expects(even(p.NBath)); // in 2-ch problems, NBath is the total number of bath sites in both SCs !!
@@ -805,6 +850,7 @@ namespace prob {
    class twoch_impfirst : public imp_first, public two_channel {
     public:
       twoch_impfirst(const params &p) : imp_first(p.NBath) {}
+      bool spin_conservation() override {return true;}
       MPO initH(subspace_t sub, params &p) override {
         if (p.verbose) std::cout << "Building Hamiltonian, MPO=twoch_impfirst" << std::endl;
         Expects(even(p.NBath)); // in 2-ch problems, NBath is the total number of bath sites in both SCs !!
@@ -822,6 +868,7 @@ namespace prob {
   class twoch_impfirst_V : public imp_first, public two_channel {
     public:
       twoch_impfirst_V(const params &p) : imp_first(p.NBath) {}
+      bool spin_conservation() override {return true;}
       MPO initH(subspace_t sub, params &p) override {
         if (p.verbose) std::cout << "Building Hamiltonian, MPO=twoch_impfirst_V" << std::endl;
         Expects(even(p.NBath)); // in 2-ch problems, NBath is the total number of bath sites in both SCs !!
@@ -841,6 +888,7 @@ namespace prob {
    class twoch_hopping : public imp_first, public two_channel {
     public:
       twoch_hopping(const params &p) : imp_first(p.NBath) {}
+      bool spin_conservation() override {return true;}
       MPO initH(subspace_t sub, params &p) override {
         if (p.verbose) std::cout << "Building Hamiltonian, MPO=twoch_hopping" << std::endl;
         Expects(even(p.NBath)); // in 2-ch problems, NBath is the total number of bath sites in both SCs !!
@@ -860,12 +908,14 @@ inline type_ptr set_problem(const std::string str, const params &p)
   if (str == "std") return std::make_unique<prob::Std>(p);
   if (str == "Ec") return std::make_unique<prob::Ec>(p);
   if (str == "Ec_V") return std::make_unique<prob::Ec_V>(p);
+  if (str == "Ec_SO") return std::make_unique<prob::Ec_SO>(p);
   if (str == "middle") return std::make_unique<prob::middle>(p);
   if (str == "middle_Ec") return std::make_unique<prob::middle_Ec>(p);
   if (str == "t_SConly") return std::make_unique<prob::t_SConly>(p);
   if (str == "Ec_t") return std::make_unique<prob::Ec_t>(p);
   if (str == "Ec_eta") return std::make_unique<prob::Ec_eta>(p);
   if (str == "autoH") return std::make_unique<prob::autoH_1ch>(p);
+  if (str == "autoH_so") return std::make_unique<prob::autoH_1ch_so>(p);
   if (str == "autoH_2ch") return std::make_unique<prob::autoH_2ch>(p);
   if (str == "middle_2channel") return std::make_unique<prob::middle_2channel>(p);
   if (str == "2ch") return std::make_unique<prob::twoch>(p);

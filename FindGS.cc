@@ -14,7 +14,7 @@ std::vector<subspace_t> init_subspace_lists(params &p)
 
   std::vector<subspace_t> l;
   for (const auto &ntot : n_list(nref, p.nrange)) {
-    spin szmax = even(ntot) ? (p.spin1 ? 1 : 0) : 0.5;
+    spin szmax = even(ntot) ? ( (p.spin1 && !p.problem->spin_conservation() ) ? 1 : 0) : 0.5;  // if there is not spin conservation we do not need the triplet states
     spin szmin = p.magnetic_field() ? -szmax : (even(ntot) ? 0 : 0.5);
     for (spin sz = szmin; sz <= szmax; sz += 1.0)
       l.push_back({ntot, sz});
@@ -50,14 +50,11 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.problem = set_problem(input.getString("MPO", "std"), p);  // problem type
   p.impindex = p.problem->imp_index(); // XXX: redundant?
   std::cout << "N=" << p.N << " NBath=" << p.NBath << " impindex=" << p.impindex << std::endl;
-  // sites is an ITensor thing. It defines the local hilbert space and operators living on each site of the lattice.
-  // For example sites.op("N",1) gives the pariticle number operator on the first site.
-  p.sites = Hubbard(p.N);
 
   // parameters entering the problem definition
   const double U = input.getReal("U", 0); // need to parse it first because it enters the default value for epsimp just below
   p.qd = std::make_unique<imp>(U, input.getReal("epsimp", -U/2.), input.getReal("EZ_imp", 0.));
-  p.sc = std::make_unique<SCbath>(p.NBath, input.getReal("alpha", 0), input.getReal("Ec", 0), input.getReal("n0", p.N-1), input.getReal("EZ_bulk", 0.), input.getReal("t", 0.));
+  p.sc = std::make_unique<SCbath>(p.NBath, input.getReal("alpha", 0), input.getReal("Ec", 0), input.getReal("n0", p.N-1), input.getReal("EZ_bulk", 0.), input.getReal("t", 0.), input.getReal("lambda", 0.));
   p.Gamma = std::make_unique<hyb>(input.getReal("gamma", 0));
   
   p.V12 = input.getReal("V", 0); // handled in a special way
@@ -68,8 +65,8 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.band_level_shift = input.getYesNo("band_level_shift", false);
 
   // parameters for the 2-channel problem
-  p.sc1 = std::make_unique<SCbath>(p.NBath/2, input.getReal("alpha1", 0), input.getReal("Ec1", 0), input.getReal("n01", (p.N-1)/2), input.getReal("EZ_bulk1", 0), input.getReal("t1", 0));
-  p.sc2 = std::make_unique<SCbath>(p.NBath/2, input.getReal("alpha2", 0), input.getReal("Ec2", 0), input.getReal("n02", (p.N-1)/2), input.getReal("EZ_bulk2", 0), input.getReal("t2", 0));
+  p.sc1 = std::make_unique<SCbath>(p.NBath/2, input.getReal("alpha1", 0), input.getReal("Ec1", 0), input.getReal("n01", (p.N-1)/2), input.getReal("EZ_bulk1", 0), input.getReal("t1", 0), input.getReal("lambda1", 0.));
+  p.sc2 = std::make_unique<SCbath>(p.NBath/2, input.getReal("alpha2", 0), input.getReal("Ec2", 0), input.getReal("n02", (p.N-1)/2), input.getReal("EZ_bulk2", 0), input.getReal("t2", 0), input.getReal("lambda2", 0.));
   p.Gamma1 = std::make_unique<hyb>(input.getReal("gamma1", 0));
   p.Gamma2 = std::make_unique<hyb>(input.getReal("gamma2", 0));
 
@@ -130,15 +127,23 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.evol_epsilonK2 = input.getReal("evol_epsilonK2", 1e-12);
   p.evol_numcenter = input.getInt("evol_numcenter", 1);
   my_assert(1 <= p.evol_numcenter && p.evol_numcenter <= 2, "incorrect evol_numcenter");
+
+  // sites is an ITensor thing. It defines the local hilbert space and operators living on each site of the lattice.
+  // For example sites.op("N",1) gives the pariticle number operator on the first site.
+  // If spin orbit coupling is turned on in any sc, turn of the spin conservation. 
+    
+
+  std::cout << "\nspin conservation: " << p.problem->spin_conservation() << "\n";
+  p.sites = Hubbard(p.N, {"ConserveSz", p.problem->spin_conservation()});
+
+
 }
 
-
-#include "MPO_totalSpin.h"  // WORK IN PROGRESS - problems with indeces. 
+#include "MPO_totalSpin.h"
 //#include "autoMPO_S2.h"
 
-
 //Measures the total spin of a site using a MPO
-void MeasureTotalSpin(MPS& psi, auto & file, std::string path, const params &p) {
+void MeasureTotalSpin(MPS& psi, auto & file, std::string path, params &p) {
 
   MPO S2(p.sites);
   makeS2_MPO(S2, p);
@@ -149,7 +154,7 @@ void MeasureTotalSpin(MPS& psi, auto & file, std::string path, const params &p) 
   auto res2 = inner(psi, S2, psi);
   auto res = 0.5 * std::max( -1 + std::sqrt(1 + 4*res2), -1 - std::sqrt(1 + 4*res2) );
 
-  std::cout << std::setprecision(full) << "Total S = " <<  res << ", S2 = " << res2 << std::endl;
+  std::cout << std::setprecision(full) << "Total S = " <<  res << ", S^2 = " << res2 << std::endl;
   H5Easy::dump(file, path + "/S2", res);
 }
 
@@ -570,6 +575,7 @@ auto sweeps(params &p)
 
 void solve_gs(const subspace_t &sub, store &s, params &p) {
   std::cout << "\nSweeping in the sector " << sub << ", ground state" << std::endl;
+
   auto H = p.problem->initH(sub, p);
   auto state = p.problem->initState(sub, p);
 
@@ -578,7 +584,6 @@ void solve_gs(const subspace_t &sub, store &s, params &p) {
     psi_init = applyMPO(H,psi_init);
     psi_init.noPrime().normalize();
   }
-
   auto [GSenergy, psi] = dmrg(H, psi_init, sweeps(p),
                             {"Silent", p.Silent,
                              "Quiet", p.Quiet,
