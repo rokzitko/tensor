@@ -96,10 +96,10 @@ inline void Fill_SCBath_MPO_Ec_SO(MPO& H, const double Eshift, const std::vector
         W += p.sites.op("Ntot",i)          * setElt(left(9),right(2));
 
         //The spin orbit coupling part
-        W += p.sites.op("Cdagup",i) * setElt(left(10),right(2)) * p.sc->lambda();
-        W += p.sites.op("Cdagdn",i) * setElt(left(11),right(2)) * p.sc->lambda();
-        W += p.sites.op("Cup",i)    * setElt(left(12),right(2)) * p.sc->lambda();
-        W += p.sites.op("Cdn",i)    * setElt(left(13),right(2)) * p.sc->lambda();
+        W += p.sites.op("Cdagup",i) * setElt(left(10),right(2)) * p.sc->l();
+        W += p.sites.op("Cdagdn",i) * setElt(left(11),right(2)) * p.sc->l();
+        W += p.sites.op("Cup",i)    * setElt(left(12),right(2)) * p.sc->l();
+        W += p.sites.op("Cdn",i)    * setElt(left(13),right(2)) * p.sc->l();
         
         W += p.sites.op("Cdn*F",i)    * setElt(left(1),right(10)) * (-1.);
         W += p.sites.op("Cup*F",i)    * setElt(left(1),right(11)) * (-1.);
@@ -137,10 +137,10 @@ inline void Fill_SCBath_MPO_Ec_SO(MPO& H, const double Eshift, const std::vector
         W += p.sites.op("Ntot",         i) * setElt(left(9));
     
         //The spin orbit coupling part
-        W += p.sites.op("Cdagup", i) * setElt(left(10)) * p.sc->lambda();
-        W += p.sites.op("Cdagdn", i) * setElt(left(11)) * p.sc->lambda();
-        W += p.sites.op("Cup", i)    * setElt(left(12)) * p.sc->lambda();
-        W += p.sites.op("Cdn", i)    * setElt(left(13)) * p.sc->lambda();
+        W += p.sites.op("Cdagup", i) * setElt(left(10)) * p.sc->l();
+        W += p.sites.op("Cdagdn", i) * setElt(left(11)) * p.sc->l();
+        W += p.sites.op("Cup", i)    * setElt(left(12)) * p.sc->l();
+        W += p.sites.op("Cdn", i)    * setElt(left(13)) * p.sc->l();
 
 
     }

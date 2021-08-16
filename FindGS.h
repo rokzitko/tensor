@@ -268,8 +268,9 @@ class SCbath : public bath { // superconducting island bath
    auto n0() const { return _n0; }
    auto EZ() const { return _EZ; }
    auto g() const { return _alpha*d(); }
-   auto t() const { return _t;}
-   auto lambda() const { return _lambda;}
+   auto t() const { return _t; }
+   auto lambda() const { return _lambda; }
+   auto l() const { return _lambda*d(); }
    auto eps(bool band_level_shift = true, bool flat_band = false, double flat_band_factor = 0) const {
      auto eps = bath::eps(flat_band, flat_band_factor);
      if (band_level_shift)
