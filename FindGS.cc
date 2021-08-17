@@ -1,5 +1,6 @@
 #include "FindGS.h"
 #include <cxxabi.h>
+#include <type_traits>
 
 std::vector<subspace_t> init_subspace_lists(params &p)
 {
@@ -26,6 +27,16 @@ template<typename T> void my_assert(const bool condition, T message) {
   if (!condition) {
     std::cout << "Failed assertion: " << message << std::endl;
     exit(1);
+  }
+}
+
+// Example of conditional compilation
+template<typename T>
+void report_Sz_conserved(T *prob) {
+  if constexpr (std::is_base_of_v<Sz_conserved, T>) {
+    std::cout << "spin is conserved\n";
+  } else {
+    std::cout << "spin is not conserved\n";
   }
 }
 
@@ -135,8 +146,7 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
 
   std::cout << "\nspin conservation: " << p.problem->spin_conservation() << "\n";
   p.sites = Hubbard(p.N, {"ConserveSz", p.problem->spin_conservation()});
-
-
+  report_Sz_conserved(p.problem.get());
 }
 
 #include "MPO_totalSpin.h"
