@@ -219,11 +219,13 @@ class imp {
    double _U;
    double _eps;
    double _EZ;
+   double _EZx;
  public:
-   imp(double U, double eps, double EZ) : _U(U), _eps(eps), _EZ(EZ) {};
+   imp(double U, double eps, double EZ, double EZx) : _U(U), _eps(eps), _EZ(EZ), _EZx(EZx) {};
    auto U() const { return _U; }
    auto eps() const { return _eps; }
    auto EZ() const { return _EZ; }
+   auto EZx() const { return _EZx; }
    auto nu() const { return _U != 0.0 ? 0.5-_eps/_U : std::numeric_limits<double>::quiet_NaN(); }
 };
 
@@ -258,15 +260,17 @@ class SCbath : public bath { // superconducting island bath
    double _Ec;    // charging energy
    double _n0;    // offset 
    double _EZ;    // Zeeman energy
+   double _EZx;    // Zeeman energy
    double _t;     // nearest neighbour hopping in SC
    double _lambda;// spin orbit coupling
  public:
-   SCbath(int NBath, double alpha, double Ec, double n0, double EZ, double t, double lambda) :
-     bath(NBath), _alpha(alpha), _Ec(Ec), _n0(n0), _EZ(EZ), _t(t), _lambda(lambda) {};
+   SCbath(int NBath, double alpha, double Ec, double n0, double EZ, double EZx, double t, double lambda) :
+     bath(NBath), _alpha(alpha), _Ec(Ec), _n0(n0), _EZ(EZ), _EZx(EZx), _t(t), _lambda(lambda) {};
    auto alpha() const { return _alpha; }
    auto Ec() const { return _Ec; }
    auto n0() const { return _n0; }
    auto EZ() const { return _EZ; }
+   auto EZx() const { return _EZx; }
    auto g() const { return _alpha*d(); }
    auto t() const { return _t; }
    auto lambda() const { return _lambda; }
@@ -399,7 +403,7 @@ struct params {
   double V2imp;          // QD-SC capacitive coupling, for MPO_2h_.*_V
   double eta;            // coupling reduction factor, 0<=eta<=1, for MPO_Ec_eta
 
-  bool magnetic_field() { return qd->EZ() != 0 || sc->EZ() != 0; } // true if there is magnetic field
+  bool magnetic_field() { return qd->EZ() != 0 || qd->EZx() != 0 || sc->EZ() != 0 || sc->EZx() != 0 || sc1->EZ() != 0 || sc1->EZx() != 0 || sc2->EZ() != 0 || sc2->EZx() != 0; } // true if there is magnetic field
 
   std::unique_ptr<SCbath> sc1, sc2;
   std::unique_ptr<hyb> Gamma1, Gamma2;

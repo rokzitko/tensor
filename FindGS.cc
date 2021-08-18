@@ -15,7 +15,7 @@ std::vector<subspace_t> init_subspace_lists(params &p)
 
   std::vector<subspace_t> l;
   for (const auto &ntot : n_list(nref, p.nrange)) {
-    spin szmax = even(ntot) ? ( (p.spin1 && !p.problem->spin_conservation() ) ? 1 : 0) : 0.5;  // if there is not spin conservation we do not need the triplet states
+    spin szmax = even(ntot) ? ( (p.spin1 && p.problem->spin_conservation() ) ? 1 : 0) : 0.5;  // if there is not spin conservation we do not need the triplet states
     spin szmin = p.magnetic_field() ? -szmax : (even(ntot) ? 0 : 0.5);
     for (spin sz = szmin; sz <= szmax; sz += 1.0)
       l.push_back({ntot, sz});
@@ -64,8 +64,8 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
 
   // parameters entering the problem definition
   const double U = input.getReal("U", 0); // need to parse it first because it enters the default value for epsimp just below
-  p.qd = std::make_unique<imp>(U, input.getReal("epsimp", -U/2.), input.getReal("EZ_imp", 0.));
-  p.sc = std::make_unique<SCbath>(p.NBath, input.getReal("alpha", 0), input.getReal("Ec", 0), input.getReal("n0", p.N-1), input.getReal("EZ_bulk", 0.), input.getReal("t", 0.), input.getReal("lambda", 0.));
+  p.qd = std::make_unique<imp>(U, input.getReal("epsimp", -U/2.), input.getReal("EZ_imp", 0.), input.getReal("EZx_imp", 0.));
+  p.sc = std::make_unique<SCbath>(p.NBath, input.getReal("alpha", 0), input.getReal("Ec", 0), input.getReal("n0", p.N-1), input.getReal("EZ_bulk", 0.), input.getReal("EZx_bulk", 0.), input.getReal("t", 0.), input.getReal("lambda", 0.));
   p.Gamma = std::make_unique<hyb>(input.getReal("gamma", 0));
   
   p.V12 = input.getReal("V", 0); // handled in a special way
@@ -76,8 +76,8 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.band_level_shift = input.getYesNo("band_level_shift", false);
 
   // parameters for the 2-channel problem
-  p.sc1 = std::make_unique<SCbath>(p.NBath/2, input.getReal("alpha1", 0), input.getReal("Ec1", 0), input.getReal("n01", (p.N-1)/2), input.getReal("EZ_bulk1", 0), input.getReal("t1", 0), input.getReal("lambda1", 0.));
-  p.sc2 = std::make_unique<SCbath>(p.NBath/2, input.getReal("alpha2", 0), input.getReal("Ec2", 0), input.getReal("n02", (p.N-1)/2), input.getReal("EZ_bulk2", 0), input.getReal("t2", 0), input.getReal("lambda2", 0.));
+  p.sc1 = std::make_unique<SCbath>(p.NBath/2, input.getReal("alpha1", 0), input.getReal("Ec1", 0), input.getReal("n01", (p.N-1)/2), input.getReal("EZ_bulk1", 0), input.getReal("EZx_bulk1", 0.), input.getReal("t1", 0), input.getReal("lambda1", 0.));
+  p.sc2 = std::make_unique<SCbath>(p.NBath/2, input.getReal("alpha2", 0), input.getReal("Ec2", 0), input.getReal("n02", (p.N-1)/2), input.getReal("EZ_bulk2", 0), input.getReal("EZx_bulk2", 0.), input.getReal("t2", 0), input.getReal("lambda2", 0.));
   p.Gamma1 = std::make_unique<hyb>(input.getReal("gamma1", 0));
   p.Gamma2 = std::make_unique<hyb>(input.getReal("gamma2", 0));
 

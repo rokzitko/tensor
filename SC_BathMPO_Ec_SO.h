@@ -48,6 +48,8 @@ inline void Fill_SCBath_MPO_Ec_SO(MPO& H, const double Eshift, const std::vector
         W += p.sites.op("Ntot",i)  * setElt(right(2)) * p.qd->eps(); // not eps_[i-1]!
         W += p.sites.op("Nup",i)   * setElt(right(2)) * p.qd->EZ()/2.0; // impurity Zeeman energy
         W += p.sites.op("Ndn",i)   * setElt(right(2)) * (-1) * p.qd->EZ()/2.0; // impurity Zeeman energy
+        W += p.sites.op("S+", i)   * setElt(right(2)) * p.qd->EZx()/2.0;    // magnetic field in the x direction
+        W += p.sites.op("S-", i)   * setElt(right(2)) * p.qd->EZx()/2.0;    // magnetic field in the x direction
         W += p.sites.op("Nupdn",i) * setElt(right(2)) * p.qd->U(); // not Ueff!
         W += p.sites.op("Id",i)    * setElt(right(2)) * Eshift;
 
@@ -71,6 +73,8 @@ inline void Fill_SCBath_MPO_Ec_SO(MPO& H, const double Eshift, const std::vector
         W += p.sites.op("Ntot",i)           * setElt(left(1),right(2)) * (eps_[i-1] + p.sc->Ec()*(1.0-2.0*p.sc->n0())); // !
         W += p.sites.op("Nup",i)            * setElt(left(1),right(2)) * p.sc->EZ()/2.0; // bulk Zeeman energy
         W += p.sites.op("Ndn",i)            * setElt(left(1),right(2)) * (-1.) * p.sc->EZ()/2.0; // bulk Zeeman energy
+        W += p.sites.op("S+", i)            * setElt(left(1),right(2)) * p.sc->EZx()/2.0;    // magnetic field in the x direction
+        W += p.sites.op("S-", i)            * setElt(left(1),right(2)) * p.sc->EZx()/2.0;    // magnetic field in the x direction
         W += p.sites.op("Nupdn",i)          * setElt(left(1),right(2)) * (p.sc->g() + 2.0*p.sc->Ec()); // !
 
         W += p.sites.op("Cdn*Cup",i)        * setElt(left(1),right(7)) * p.sc->g();
@@ -124,6 +128,8 @@ inline void Fill_SCBath_MPO_Ec_SO(MPO& H, const double Eshift, const std::vector
         W += p.sites.op("Ntot",  i) * setElt(left(1)) * (eps_[i-1] + p.sc->Ec()*(1.0-2.0*p.sc->n0())); // !
         W += p.sites.op("Nup",  i)  * setElt(left(1)) * p.sc->EZ()/2.0; // bulk Zeeman energy
         W += p.sites.op("Ndn",  i)  * setElt(left(1)) * (-1) * p.sc->EZ()/2.0; // bulk Zeeman energy
+        W += p.sites.op("S+", i)    * setElt(left(1)) * p.sc->EZx()/2.0;    // magnetic field in the x direction
+        W += p.sites.op("S-", i)    * setElt(left(1)) * p.sc->EZx()/2.0;    // magnetic field in the x direction
         W += p.sites.op("Nupdn",i)  * setElt(left(1)) * (p.sc->g() + 2.0*p.sc->Ec()); // !
 
         W += p.sites.op("Id",    i) * setElt(left(2)) ;
