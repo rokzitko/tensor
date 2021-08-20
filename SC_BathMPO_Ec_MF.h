@@ -1,4 +1,4 @@
-inline void Fill_SCBath_MPO_Ec(MPO& H, const double Eshift, const std::vector<double>& eps_,
+inline void Fill_SCBath_MPO_Ec_MF(MPO& H, double nSC_MF, const double Eshift, const std::vector<double>& eps_,
                 const std::vector<double>& v_, const params &p)
 {
       //QN objects are necessary to have abelian symmetries in MPS
@@ -25,6 +25,9 @@ inline void Fill_SCBath_MPO_Ec(MPO& H, const double Eshift, const std::vector<do
 
     }
 
+
+    std::cout << "nSC approximation is: " << nSC_MF << "\n"; 
+
     //then we just fill the MPO tensors which can be viewed
     //as matrices (vectors) of operators. if one multiplies
     //all matrices togehter one obtains the hamiltonian. 
@@ -50,6 +53,9 @@ inline void Fill_SCBath_MPO_Ec(MPO& H, const double Eshift, const std::vector<do
         W += p.sites.op("Cdn*F",i) * setElt(right(4))    * (-1);
         W += p.sites.op("Cdagup*F",i) * setElt(right(5)) * (+1);
         W += p.sites.op("Cdagdn*F",i) * setElt(right(6)) * (+1);
+
+        W += p.sites.op("Id",i) * setElt(right(9)) * p.sc->Ec() * 2.0 * ( nSC_MF - p.sc->n0() ); // 1 multiplied by the sum of nSC, with the correct prefactor
+
     }
 
     // sites 2 ... N-1 are matrices
@@ -62,14 +68,14 @@ inline void Fill_SCBath_MPO_Ec(MPO& H, const double Eshift, const std::vector<do
 
         W += p.sites.op("Id",i) * setElt(left(1), right(1));
 
-        W += p.sites.op("Ntot",i)           * setElt(left(1),right(2)) * (eps_[i-1] + p.sc->Ec()*(1.0-2.0*p.sc->n0())); // !
+        W += p.sites.op("Ntot",i)           * setElt(left(1),right(2)) * eps_[i-1]; // ! no Ec term here
         W += p.sites.op("Nup",i)            * setElt(left(1),right(2)) * p.sc->EZ()/2.0; // bulk Zeeman energy
         W += p.sites.op("Ndn",i)            * setElt(left(1),right(2)) * (-1.) * p.sc->EZ()/2.0; // bulk Zeeman energy
-        W += p.sites.op("Nupdn",i)          * setElt(left(1),right(2)) * (p.sc->g() + 2.0*p.sc->Ec()); // !
+        W += p.sites.op("Nupdn",i)          * setElt(left(1),right(2)) * p.sc->g(); // ! no Ec here
 
         W += p.sites.op("Cdn*Cup",i)        * setElt(left(1),right(7)) * p.sc->g();
         W += p.sites.op("Cdagup*Cdagdn",i)  * setElt(left(1),right(8)) * p.sc->g();
-        W += p.sites.op("Ntot", i)          * setElt(left(1),right(9)) * 2.0*p.sc->Ec(); // !
+        // no (1)(9) term with Ec - this would create the all-to-all product
 
         W += p.sites.op("Id",i)*setElt(left(2),right(2));
         W += p.sites.op("F" ,i)*setElt(left(3),right(3));
@@ -87,7 +93,7 @@ inline void Fill_SCBath_MPO_Ec(MPO& H, const double Eshift, const std::vector<do
 
         W += p.sites.op("Cdagup*Cdagdn",i)*setElt(left(7),right(2));
         W += p.sites.op("Cdn*Cup",i)      *setElt(left(8),right(2));
-        W += p.sites.op("Ntot",i)         *setElt(left(9),right(2)); // !
+        W += p.sites.op("Ntot",i)         *setElt(left(9),right(2)); // ! this stays
     }
 
     //site N is a vector again
@@ -98,10 +104,10 @@ inline void Fill_SCBath_MPO_Ec(MPO& H, const double Eshift, const std::vector<do
 
         W = ITensor(left, p.sites.si(i), p.sites.siP(i) );
 
-        W += p.sites.op("Ntot",  i) * setElt(left(1)) * (eps_[i-1] + p.sc->Ec()*(1.0-2.0*p.sc->n0())); // !
+        W += p.sites.op("Ntot",  i) * setElt(left(1)) * (eps_[i-1]); // !no Ec here either!
         W += p.sites.op("Nup",  i)  * setElt(left(1)) * p.sc->EZ()/2.0; // bulk Zeeman energy
         W += p.sites.op("Ndn",  i)  * setElt(left(1)) * (-1) * p.sc->EZ()/2.0; // bulk Zeeman energy
-        W += p.sites.op("Nupdn",i)  * setElt(left(1)) * (p.sc->g() + 2.0*p.sc->Ec()); // !
+        W += p.sites.op("Nupdn",i)  * setElt(left(1)) * p.sc->g(); // ! no Ec here!
 
         W += p.sites.op("Id",    i) * setElt(left(2)) ;
         W += p.sites.op("Cdagup",i) * setElt(left(3)) * v_[i-1];
@@ -111,7 +117,7 @@ inline void Fill_SCBath_MPO_Ec(MPO& H, const double Eshift, const std::vector<do
 
         W += p.sites.op("Cdagup*Cdagdn",i) * setElt(left(7));
         W += p.sites.op("Cdn*Cup",      i) * setElt(left(8));
-        W += p.sites.op("Ntot",         i) * setElt(left(9)); // !
+        W += p.sites.op("Ntot",         i) * setElt(left(9)); // ! this stays
     }
 
   }
