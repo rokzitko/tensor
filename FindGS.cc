@@ -861,8 +861,9 @@ auto one_channel_number_op(const int channelNum, auto &psi1, auto &psi2, const p
 
     psi1.position(i);
 
-    res += abs(inner(psi1, newpsi)); //absolute value!!!
+    res += inner(psi1, newpsi); 
   }
+  res = abs(res); // absolute value only here!
   return res;
 }
 
@@ -897,8 +898,8 @@ void calculate_transition_dipole_moments(store &s, auto &file, params &p) {
     
     if (ntot1 == ntot2 && Sz1 == Sz2 && i < j) { // for now only for Sz1==Sz2
       auto o = calculate_transition_dipole_moment(st1.second.psi(), st2.second.psi(), p);
-
       o = abs(o);
+
       std::cout << fmt::format(FMT_STRING("n = {:<5}  Sz = {:4}  i = {:<3}  j = {:<3}  |<i|nsc1 - nsc2|j>| = {:<22.15}"),
                                ntot1, Sz_string(Sz1), i, j, o) << std::endl;
       H5Easy::dump(file, "transition_dipole_moment/" + ij_path(ntot1, Sz1, i, j), o);
@@ -918,6 +919,7 @@ void calculate_transition_quadrupole_moments(store &s, auto &file, params &p) {
     if (ntot1 == ntot2 && Sz1 == Sz2 && i < j) { // for now only for Sz1==Sz2
       auto o = calculate_transition_quadrupole_moment(st1.second.psi(), st2.second.psi(), p);
       o = abs(o);
+      
       std::cout << fmt::format(FMT_STRING("n = {:<5}  Sz = {:4}  i = {:<3}  j = {:<3}  |<i|nsc1 + nsc2|j>| = {:<22.15}"),
                                ntot1, Sz_string(Sz1), i, j, o) << std::endl;
       H5Easy::dump(file, "transition_quadrupole_moment/" + ij_path(ntot1, Sz1, i, j), o);
