@@ -10,6 +10,7 @@
 
 #include "FindGS.h"
 
+
 int main(int argc, char* argv[]) {
   std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
   params p;

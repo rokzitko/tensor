@@ -1,0 +1,23 @@
+
+The following have been reloaded with a version change:
+  1) GCC/9.3.0 => GCC/10.3.0             3) XZ/5.2.5-GCCcore-9.3.0 => XZ/5.2.5-GCCcore-10.3.0                 5) zlib/1.2.11-GCCcore-9.3.0 => zlib/1.2.11-GCCcore-10.3.0
+  2) GCCcore/9.3.0 => GCCcore/10.3.0     4) binutils/2.34-GCCcore-9.3.0 => binutils/2.36.1-GCCcore-10.3.0
+
+rm: cannot remove ‘calcPT’: No such file or directory
+make: *** [clean] Error 1
+In file included from calcGS.cc:11:
+FindGS.h:416:12: error: ‘state_T’ was not declared in this scope; did you mean ‘state_t’?
+  416 |   std::map<state_T, double> MFnSCs; // Maps an approximate nSC to a given state (n, Sz, i). Used for the iterative mean field calculation.
+      |            ^~~~~~~
+      |            state_t
+FindGS.h:416:27: error: template argument 1 is invalid
+  416 |   std::map<state_T, double> MFnSCs; // Maps an approximate nSC to a given state (n, Sz, i). Used for the iterative mean field calculation.
+      |                           ^
+FindGS.h:416:27: error: template argument 3 is invalid
+FindGS.h:416:27: error: template argument 4 is invalid
+In file included from calcGS.cc:11:
+FindGS.h: In member function ‘virtual itensor::MPO prob::Ec_MF::initH(state_t, params&)’:
+FindGS.h:698:73: error: no match for ‘operator[]’ (operand types are ‘int’ and ‘state_t’ {aka ‘std::tuple<int, double, int>’})
+  698 |         double Eshift = p.sc->Ec() * ( pow(p.sc->n0(), 2) - pow(p.MFnSCs[st], 2) ) + p.qd->U()/2;
+      |                                                                         ^
+make: *** [calcGS.o] Error 1

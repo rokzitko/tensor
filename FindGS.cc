@@ -118,6 +118,7 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.sc_only = input.getYesNo("sc_only", false);
   p.Weight = input.getReal("Weight", p.N);  // weight is implemented as the energy cost of the overlap between the GS and the ES; as energy of the GS is on the order of -N/2, the default weight should probs be on this scale.  
   p.transition_dipole_moment = input.getYesNo("transition_dipole_moment", false);
+  p.transition_quadrupole_moment = input.getYesNo("transition_quadrupole_moment", false);
   p.overlaps = input.getYesNo("overlaps", false);
   p.flat_band = input.getYesNo("flat_band", false);
   p.flat_band_factor = input.getReal("flat_band_factor", 0);
@@ -138,6 +139,8 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.evol_epsilonK2 = input.getReal("evol_epsilonK2", 1e-12);
   p.evol_numcenter = input.getInt("evol_numcenter", 1);
   my_assert(1 <= p.evol_numcenter && p.evol_numcenter <= 2, "incorrect evol_numcenter");
+
+  p.MF_precision = input.getReal("MF_precision", 1e-5);
 
   // sites is an ITensor thing. It defines the local hilbert space and operators living on each site of the lattice.
   // For example sites.op("N",1) gives the pariticle number operator on the first site.
@@ -449,7 +452,7 @@ void MeasureTotalSpinz(MPS& psi, H5Easy::File &file, std::string path, const par
 }
 
 // occupation numbers of levels 'sites'
-auto calcOccupancy(MPS &psi, const ndx_t &all_sites, const params &p) {
+std::vector<double> calcOccupancy(MPS &psi, const ndx_t &all_sites, const params &p) {
   std::vector<double> r;
   for(const auto i : all_sites) {
     // position call very important! otherwise one would need to contract the whole tensor network of <psi|O|psi> this way, only the local operator at site i is needed
@@ -583,11 +586,11 @@ auto sweeps(params &p)
   return Sweeps(p.nrsweeps, sw_table);
 }
 
-void solve_gs(const subspace_t &sub, store &s, params &p) {
-  std::cout << "\nSweeping in the sector " << sub << ", ground state" << std::endl;
+void solve_gs(const state_t &st, store &s, params &p) {
+  std::cout << "\nSweeping in the sector " << st <<  std::endl;
 
-  auto H = p.problem->initH(sub, p);
-  auto state = p.problem->initState(sub, p);
+  auto H = p.problem->initH(st, p);
+  auto state = p.problem->initState(st, p);
 
   MPS psi_init(state);
   for(auto i : range1(p.nrH)){
@@ -598,23 +601,25 @@ void solve_gs(const subspace_t &sub, store &s, params &p) {
                             {"Silent", p.Silent,
                              "Quiet", p.Quiet,
                              "EnergyErrgoal", p.EnergyErrgoal});
-  s.eigen[gs(sub)] = eigenpair(GSenergy, psi);
+  s.eigen[st] = eigenpair(GSenergy, psi);
 }
 
 
-void solve_es(const subspace_t &sub, store &s, params &p, int n) {
-  std::cout << "\nSweeping in the sector " << sub << ", excited state n=" << n << std::endl;
-  auto H = p.problem->initH(sub, p);
-  MPS psi_init_es = s.eigen[es(sub, n-1)].psi();
-  std::vector<MPS> wfs(n);
-  for (auto m = 0; m < n; m++)
-    wfs[m] = s.eigen[es(sub, m)].psi();
+void solve_es(const state_t &st, store &s, params &p) {
+  std::cout << "\nSweeping in the sector " << st  << std::endl;
+  const auto [n, Sz, i] = st;  
+  
+  auto H = p.problem->initH(st, p);
+  MPS psi_init_es = s.eigen[es({n, Sz}, i-1)].psi();
+  std::vector<MPS> wfs(i);
+  for (auto m = 0; m < i; m++)
+    wfs[m] = s.eigen[es({n, Sz}, m)].psi();
   auto [ESenergy, psi] = dmrg(H, wfs, psi_init_es, sweeps(p),
                             {"Silent", p.Silent,
                              "Quiet", p.Quiet,
                              "EnergyErrgoal", p.EnergyErrgoal,
                              "Weight", p.Weight});
-  s.eigen[es(sub, n)] = eigenpair(ESenergy, psi);
+  s.eigen[st] = eigenpair(ESenergy, psi);
 }
 
 void get_stats(store &s, params &p)
@@ -622,7 +627,7 @@ void get_stats(store &s, params &p)
   for (const auto &[state, ep] : s.eigen) {
     std::cout << "get_stats" << state << std::endl;
     const auto &[n, sz, i] = state;
-    auto H = p.problem->initH(subspace_t(n, sz), p);
+    auto H = p.problem->initH(state, p);
     s.stats[state] = psi_stats(ep.psi(), H);
   }
 }
@@ -668,27 +673,27 @@ std::optional<eigenpair> load(const state_t &st, params &p, const subspace_t &su
 
   std::cout<<"psi loaded\n";
 
-  auto H = p.problem->initH(sub, p);
+  auto H = p.problem->initH(st, p);
   auto E = inner(psi, H, psi);
 
   return eigenpair(E, psi);
 }
 
-void solve_state(const subspace_t &sub, store &s, params &p, int n)
+void solve_state(const state_t &st, store &s, params &p)
 {
-  if (n == 0)
-    solve_gs(sub, s, p);
+  const auto [n, Sz, i] = st;  
+  if (i == 0)
+    solve_gs(st, s, p);
   else
-    solve_es(sub, s, p, n);
+    solve_es(st, s, p);
   if (p.save) {
-    auto st = es(sub, n);
     save(st, s.eigen[st], p);
   }
 }
 
 void obtain_result(const subspace_t &sub, store &s, params &p)
 {
-  for (int n =0; n <= std::min(p.excited_states, p.stop_n); n++) {
+  for (int n = 0; n <= std::min(p.excited_states, p.stop_n); n++) {
     auto st = es(sub, n);
 
     try {
@@ -702,7 +707,7 @@ void obtain_result(const subspace_t &sub, store &s, params &p)
 
     if (s.eigen.count(st) == 0) {
       std::cout << "solve=" << sub << std::endl;
-      solve_state(sub, s, p, n);   // fallback: compute
+      solve_state(st, s, p);   // fallback: compute
     }
   }
 }
@@ -710,7 +715,7 @@ void obtain_result(const subspace_t &sub, store &s, params &p)
 void solve(const std::vector<subspace_t> &l, store &s, params &p) {
   Expects(p.solve_ndx == -1 || (0 <= p.solve_ndx && p.solve_ndx < int(l.size())));
 
-  auto obtain_result_l = [&s,&p](const auto  &sub) { obtain_result(sub, s, p); };
+  auto obtain_result_l = [&s,&p](const auto &sub) { obtain_result(sub, s, p); };
 
   std::cout << "ndx=" << p.solve_ndx << std::endl;
   if (p.solve_ndx == -1) { // solve all
@@ -838,7 +843,8 @@ void calculate_overlaps(store &s, auto &file, params &p) {
   }
 }
 
-auto one_channel_tdm(const int channelNum, auto &psi1, auto &psi2, const params &p){
+// THIS IS FOR THE TWO CHANNEL MODEL ONLY - IT TAKES channelNum AS AN ARGUMENT FOR THE bath_indexes()!
+auto one_channel_number_op(const int channelNum, auto &psi1, auto &psi2, const params &p){
 
   double res = 0.0;
 
@@ -864,8 +870,18 @@ auto calculate_transition_dipole_moment(auto &psi1, auto &psi2, params &p){
   // < i | nsc1 | j > - < i | nsc2 | j > 
 
   double res = 0.0;
-  res += one_channel_tdm(1, psi1, psi2, p);
-  res -= one_channel_tdm(2, psi1, psi2, p);
+  res += one_channel_number_op(1, psi1, psi2, p);
+  res -= one_channel_number_op(2, psi1, psi2, p);
+  
+  return res;
+}
+
+auto calculate_transition_quadrupole_moment(auto &psi1, auto &psi2, params &p){
+  // < i | nsc1 | j > + < i | nsc2 | j > 
+
+  double res = 0.0;
+  res += one_channel_number_op(1, psi1, psi2, p);
+  res += one_channel_number_op(2, psi1, psi2, p);
   
   return res;
 }
@@ -881,6 +897,7 @@ void calculate_transition_dipole_moments(store &s, auto &file, params &p) {
     
     if (ntot1 == ntot2 && Sz1 == Sz2 && i < j) { // for now only for Sz1==Sz2
       auto o = calculate_transition_dipole_moment(st1.second.psi(), st2.second.psi(), p);
+
       o = abs(o);
       std::cout << fmt::format(FMT_STRING("n = {:<5}  Sz = {:4}  i = {:<3}  j = {:<3}  |<i|nsc1 - nsc2|j>| = {:<22.15}"),
                                ntot1, Sz_string(Sz1), i, j, o) << std::endl;
@@ -888,6 +905,26 @@ void calculate_transition_dipole_moments(store &s, auto &file, params &p) {
     }
   }
 }
+
+void calculate_transition_quadrupole_moments(store &s, auto &file, params &p) {
+
+  skip_line();  
+  std::cout << "Transition quadrupole moments:\n";
+
+  for (const auto & [st1, st2] : itertools::product(s.eigen, s.eigen)) {
+    const auto [ntot1, Sz1, i] = st1.first;
+    const auto [ntot2, Sz2, j] = st2.first;
+    
+    if (ntot1 == ntot2 && Sz1 == Sz2 && i < j) { // for now only for Sz1==Sz2
+      auto o = calculate_transition_quadrupole_moment(st1.second.psi(), st2.second.psi(), p);
+      o = abs(o);
+      std::cout << fmt::format(FMT_STRING("n = {:<5}  Sz = {:4}  i = {:<3}  j = {:<3}  |<i|nsc1 + nsc2|j>| = {:<22.15}"),
+                               ntot1, Sz_string(Sz1), i, j, o) << std::endl;
+      H5Easy::dump(file, "transition_quadrupole_moment/" + ij_path(ntot1, Sz1, i, j), o);
+    }
+  }
+}
+
 
 auto calculate_charge_susceptibility(MPS &psi1, MPS &psi2, const params &p)
 {
@@ -973,7 +1010,7 @@ void calculate_dynamical_charge_susceptibility(store &s, const state_t GS, const
   if (p.debug)
     std::cout << "omega_0=" << w0 << " omega'_0=" << w0p << std::endl;
 
-  auto H = p.problem->initH(subspace(GS), p);
+  auto H = p.problem->initH(GS, p);
   if (p.debug) {
     const auto E0 = inner(psi0, H, psi0);
     std::cout << "E0=" << E0 << " EGS=" << EGS << std::endl;
@@ -1081,6 +1118,8 @@ void process_and_save_results(store &s, params &p, std::string h5_filename) {
   }
   if (p.transition_dipole_moment)
     calculate_transition_dipole_moments(s, file, p);
+  if (p.transition_quadrupole_moment)
+    calculate_transition_quadrupole_moments(s, file, p);
   if (p.overlaps)
     calculate_overlaps(s, file, p);
   if (p.charge_susceptibility)
