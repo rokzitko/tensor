@@ -141,6 +141,7 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   my_assert(1 <= p.evol_numcenter && p.evol_numcenter <= 2, "incorrect evol_numcenter");
 
   p.MF_precision = input.getReal("MF_precision", 1e-5);
+  p.max_iter = input.getReal("max_iter", 5.);
 
   // sites is an ITensor thing. It defines the local hilbert space and operators living on each site of the lattice.
   // For example sites.op("N",1) gives the pariticle number operator on the first site.
@@ -694,6 +695,7 @@ void solve_state(const state_t &st, store &s, params &p)
 void obtain_result(const subspace_t &sub, store &s, params &p)
 {
   for (int n = 0; n <= std::min(p.excited_states, p.stop_n); n++) {
+    
     auto st = es(sub, n);
 
     try {

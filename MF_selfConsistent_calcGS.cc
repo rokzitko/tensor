@@ -45,18 +45,37 @@ void update_MFnSCs(auto &nSCs, store &s, params &p){
 }
 
 
-bool test_convergence(auto oldnSCs, auto newnSCs, store &s, params &p){
-  // compares old and new values of nSC, only if they are converged for all states gives true
+void update_state_convergence_map(auto &oldnSCs, auto &newnSCs, auto &state_convergence_map, store &s, params &p){
+  // compares old and new values of nSC, saves a map of state : true/false telling wether the state is converged or not
 
   for (const auto &[state, ep] : s.eigen) {
     double dif = std::abs( (oldnSCs[state] - newnSCs[state].back()) / newnSCs[state].back() );
 
     if (dif > p.MF_precision) {
-      return false;      
+       state_convergence_map[state] = false;      
+    }
+    else {
+      state_convergence_map[state] = true; 
     }
   }
-  return true;
 }
+
+void update_s_struct(auto &state_convergence_map, auto &s){
+  // if the state is not conserved, its data has to be removed from s as it has to be computed in the next iteration of solve()
+
+
+  for ( const auto & state : state_convergence_map ){
+    state_t st = state.first;
+    bool converged = state.second;
+
+    if (!converged){
+      s.eigen.erase(st);
+      s.stats.erase(st);
+    }
+  }
+}
+
+
 
 void print_iteration_results(auto Es, auto nSCs, store &s){
 
@@ -93,20 +112,28 @@ int main(int argc, char* argv[]) {
   std::map< state_t, std::vector<double> > Es;   // The actual values of energy for all states 
   std::map< state_t, std::vector<double> > nSCs; // The actual values of nSC for all states 
 
-  bool converged = false;
+  bool stop = false;
+  std::map<state_t, bool> state_convergence_map;
   int iter_count = 0;
-  while ( !converged ) {
+  
+  // The iteration will stop if it performs max_iter steps, but also if all states converge. This is because after each step the entries of non-converged states are removed from the stats s structure. 
+  // If the state is there (meaning it has converged), the obtain_result() function does not run the calculation. 
+  while ( iter_count <= p.max_iter ) {
     iter_count ++;
 
     std::cout << "\n\n ITERATION NUMBER: " << iter_count << "\n\n";
-    
+
     solve(l, s, p);
-
+  
     get_and_append_nSCs_Es(nSCs, Es, s, p);
-
-    converged = test_convergence(p.MFnSCs, nSCs, s, p);
-
+    update_state_convergence_map(p.MFnSCs, nSCs, state_convergence_map, s, p);
     update_MFnSCs(nSCs, s, p);
+
+    // do not delete the stats of non converged states in the last or second to last iterations  
+    if ( iter_count < p.max_iter-1 ) {
+      update_s_struct(state_convergence_map, s);
+    }
+
   }
 
   process_and_save_results(s, p);

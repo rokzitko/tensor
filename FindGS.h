@@ -415,8 +415,8 @@ struct params {
 
   std::map<state_t, double> MFnSCs; // Maps an approximate nSC to a given state (n, Sz, i). Used for the iterative mean field calculation.
 
-  double MF_precision;
-
+  double MF_precision;  // convergence precision required to stop the MF iteration 
+  double max_iter;        // maximum number of iterations in the mf loop
 
   std::unique_ptr<SCbath> sc1, sc2;
   std::unique_ptr<hyb> Gamma1, Gamma2;
