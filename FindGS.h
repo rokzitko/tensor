@@ -219,11 +219,13 @@ class imp {
    double _U;
    double _eps;
    double _EZ;
+   double _EZx;
  public:
-   imp(double U, double eps, double EZ) : _U(U), _eps(eps), _EZ(EZ) {};
+   imp(double U, double eps, double EZ, double EZx) : _U(U), _eps(eps), _EZ(EZ), _EZx(EZx) {};
    auto U() const { return _U; }
    auto eps() const { return _eps; }
    auto EZ() const { return _EZ; }
+   auto EZx() const { return _EZx; }
    auto nu() const { return _U != 0.0 ? 0.5-_eps/_U : std::numeric_limits<double>::quiet_NaN(); }
 };
 
@@ -258,15 +260,17 @@ class SCbath : public bath { // superconducting island bath
    double _Ec;    // charging energy
    double _n0;    // offset 
    double _EZ;    // Zeeman energy
+   double _EZx;    // Zeeman energy
    double _t;     // nearest neighbour hopping in SC
    double _lambda;// spin orbit coupling
  public:
-   SCbath(int NBath, double alpha, double Ec, double n0, double EZ, double t, double lambda) :
-     bath(NBath), _alpha(alpha), _Ec(Ec), _n0(n0), _EZ(EZ), _t(t), _lambda(lambda) {};
+   SCbath(int NBath, double alpha, double Ec, double n0, double EZ, double EZx, double t, double lambda) :
+     bath(NBath), _alpha(alpha), _Ec(Ec), _n0(n0), _EZ(EZ), _EZx(EZx), _t(t), _lambda(lambda) {};
    auto alpha() const { return _alpha; }
    auto Ec() const { return _Ec; }
    auto n0() const { return _n0; }
    auto EZ() const { return _EZ; }
+   auto EZx() const { return _EZx; }
    auto g() const { return _alpha*d(); }
    auto t() const { return _t; }
    auto lambda() const { return _lambda; }
@@ -323,6 +327,13 @@ class psi_stats {
    }
 };
 
+// lists of quantities calculated in FindGS
+struct store
+{
+  std::map<state_t, eigenpair> eigen;
+  std::map<state_t, psi_stats> stats;
+};
+
 // parameters from the input file
 struct params {
   string inputfn;       // filename of the input file
@@ -348,6 +359,7 @@ struct params {
   bool hoppingExpectation;//compute the hopping expectation value 1/sqrt(N) \sum_sigma \sum_i <d^dag c_i> + <c^dag_i d>
   bool printTotSpinZ;    // prints total Nup, Ndn and Sz
   bool transition_dipole_moment; // compute < i | nsc1 - ncs2 | j > 
+  bool transition_quadrupole_moment; // compute < i | nsc1 + ncs2 | j > 
   bool overlaps;         // compute <i|j> overlap table in each subspace
   bool charge_susceptibility; // compute <i|nimp|j> overlap table in each subspace
   bool channel_parity;   // prints the channel parity
@@ -399,18 +411,16 @@ struct params {
   double V2imp;          // QD-SC capacitive coupling, for MPO_2h_.*_V
   double eta;            // coupling reduction factor, 0<=eta<=1, for MPO_Ec_eta
 
-  bool magnetic_field() { return qd->EZ() != 0 || sc->EZ() != 0; } // true if there is magnetic field
+  bool magnetic_field() { return qd->EZ() != 0 || qd->EZx() != 0 || sc->EZ() != 0 || sc->EZx() != 0 || sc1->EZ() != 0 || sc1->EZx() != 0 || sc2->EZ() != 0 || sc2->EZx() != 0; } // true if there is magnetic field
+
+  std::map<state_t, double> MFnSCs; // Maps an approximate nSC to a given state (n, Sz, i). Used for the iterative mean field calculation.
+
+  double MF_precision;  // convergence precision required to stop the MF iteration 
+  double max_iter;        // maximum number of iterations in the mf loop
 
   std::unique_ptr<SCbath> sc1, sc2;
   std::unique_ptr<hyb> Gamma1, Gamma2;
   double SCSCinteraction = 0.0;  // test parameter for the 2 channel MPO
-};
-
-// lists of quantities calculated in FindGS
-struct store
-{
-  std::map<state_t, eigenpair> eigen;
-  std::map<state_t, psi_stats> stats;
 };
 
 class problem_type {
@@ -419,8 +429,8 @@ class problem_type {
    virtual ndx_t all_indexes() = 0;            // all indexes
    virtual ndx_t bath_indexes() = 0;           // all bath indexes
    virtual ndx_t bath_indexes(const int) = 0;  // per channel bath indexes
-   virtual MPO initH(subspace_t, params &) = 0;
-   virtual InitState initState(subspace_t, params &) = 0;
+   virtual MPO initH(state_t, params &) = 0;
+   virtual InitState initState(state_t, params &) = 0;
    virtual int numChannels() = 0;
    virtual bool spin_conservation() = 0;
 };
@@ -508,6 +518,7 @@ inline void add_bath_electrons(const int nsc, const spin & Szadd, const ndx_t &b
 // The functions in these headers take a class params argument
 #include "SC_BathMPO.h"
 #include "SC_BathMPO_Ec.h"
+#include "SC_BathMPO_Ec_MF.h"
 #include "SC_BathMPO_Ec_V.h"
 #include "SC_BathMPO_Ec_SO.h"
 #include "SC_BathMPO_MiddleImp.h"
@@ -537,8 +548,8 @@ class single_channel : virtual public problem_type
      auto V = shift1(V0);
      return std::make_pair(eps, V);
    }
-   InitState initState(subspace_t sub, params &p) override {
-     const auto [ntot, Sz] = sub; // Sz is the z-component of the total spin.
+   InitState initState(state_t st, params &p) override {
+     const auto [ntot, Sz, ii] = st; // Sz is the z-component of the total spin.
      Expects(0 <= ntot && ntot <= 2*p.N);
      Expects(Sz == -1 || Sz == -0.5 || Sz == 0 || Sz == +0.5 || Sz == +1);
      int tot = 0;      // electron counter, for assertion test
@@ -609,8 +620,8 @@ class two_channel : virtual public problem_type
      auto V = shift1(concat(V1, V2));
      return std::make_pair(eps, V);
    }
-   InitState initState(subspace_t sub, params &p) override {
-     const auto [ntot, Sz] = sub; // Sz is the z-component of the total spin.
+   InitState initState(state_t st, params &p) override {
+     const auto [ntot, Sz, ii] = st; // Sz is the z-component of the total spin.
      Expects(0 <= ntot && ntot <= 2*p.N);
      Expects(Sz == -1 || Sz == -0.5 || Sz == 0 || Sz == +0.5 || Sz == +1);
      int tot = 0;      // electron counter, for assertion test
@@ -651,9 +662,9 @@ namespace prob {
    class Std : public imp_first, public single_channel, public Sz_conserved { // Note: avoid lowercase 'std'!!
     public:
       Std(const params &p) : imp_first(p.NBath) {}
-      MPO initH(subspace_t sub, params &p) override {
+      MPO initH(state_t st, params &p) override {
         if (p.verbose) std::cout << "Building Hamiltonian, MPO=Std" << std::endl;
-        auto [ntot, Sz] = sub;
+        auto [ntot, Sz, i] = st;
         auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
         MPO H(p.sites); // MPO is the hamiltonian in the "MPS-form"
         double Eshift = p.sc->Ec()*pow(ntot-p.sc->n0(),2) + p.qd->U()/2; // occupancy dependent effective energy shift
@@ -667,7 +678,7 @@ namespace prob {
    class Ec : public imp_first, public single_channel, public Sz_conserved {
     public:
       Ec(const params &p) : imp_first(p.NBath) {}
-      MPO initH(subspace_t sub, params &p) override {
+      MPO initH(state_t st, params &p) override {
         if (p.verbose) std::cout << "Building Hamiltonian, MPO=Ec" << std::endl;
         auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
         MPO H(p.sites);
@@ -677,10 +688,24 @@ namespace prob {
       }
    };
 
+   class Ec_MF : public imp_first, public single_channel, public Sz_conserved {
+    public:
+      Ec_MF(const params &p) : imp_first(p.NBath) {}
+      MPO initH(state_t st, params &p) override {
+        if (p.verbose) std::cout << "Building Hamiltonian, MPO=Ec_MF" << std::endl;
+        auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
+        MPO H(p.sites);
+
+        double Eshift = p.sc->Ec() * ( pow(p.sc->n0(), 2) - pow(p.MFnSCs[st], 2) ) + p.qd->U()/2;
+        Fill_SCBath_MPO_Ec_MF(H, p.MFnSCs[st], Eshift, eps, V, p);
+        return H;
+      }
+   };
+
    class Ec_V : public imp_first, public single_channel, public Sz_conserved  {
     public:
       Ec_V(const params &p) : imp_first(p.NBath) {}
-      MPO initH(subspace_t sub, params &p) override {
+      MPO initH(state_t st, params &p) override {
         if (p.verbose) std::cout << "Building Hamiltonian, MPO=Ec_V" << std::endl;
         auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
         MPO H(p.sites);
@@ -695,7 +720,7 @@ namespace prob {
    class Ec_SO : public imp_first, public single_channel, public Sz_non_conserved  {
     public:
       Ec_SO(const params &p) : imp_first(p.NBath) {}
-      MPO initH(subspace_t sub, params &p) override {
+      MPO initH(state_t st, params &p) override {
         if (p.verbose) std::cout << "Building Hamiltonian, MPO=Ec_SO" << std::endl;
         auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
         MPO H(p.sites);
@@ -708,9 +733,9 @@ namespace prob {
    class middle : public imp_middle, public single_channel, public Sz_conserved  {
     public:
       middle(const params &p) : imp_middle(p.NBath) {}
-      MPO initH(subspace_t sub, params &p) override {
+      MPO initH(state_t st, params &p) override {
         if (p.verbose) std::cout << "Building Hamiltonian, MPO=middle" << std::endl;
-        auto [ntot, Sz] = sub;
+        auto [ntot, Sz, i] = st;
         auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
         MPO H(p.sites);
         double Eshift = p.sc->Ec()*pow(ntot-p.sc->n0(),2) + p.qd->U()/2;
@@ -724,7 +749,7 @@ namespace prob {
    class middle_Ec : public imp_middle, public single_channel, public Sz_conserved  {
     public:
       middle_Ec(const params &p) : imp_middle(p.NBath) {}
-      MPO initH(subspace_t sub, params &p) override {
+      MPO initH(state_t st, params &p) override {
         if (p.verbose) std::cout << "Building Hamiltonian, MPO=middle_Ec" << std::endl;
         auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
         MPO H(p.sites);
@@ -737,7 +762,7 @@ namespace prob {
    class t_SConly : public imp_first, public single_channel, public Sz_conserved  {
     public:
       t_SConly(const params &p) : imp_first(p.NBath) {}
-      MPO initH(subspace_t sub, params &p) override {
+      MPO initH(state_t st, params &p) override {
         //Expects(p.sc_only);
         if (p.verbose) std::cout << "Building Hamiltonian, MPO=t_SConly" << std::endl;
         auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
@@ -751,7 +776,7 @@ namespace prob {
    class Ec_t : public imp_first, public single_channel, public Sz_conserved  {
     public:
       Ec_t(const params &p) : imp_first(p.NBath) {}
-      MPO initH(subspace_t sub, params &p) override {
+      MPO initH(state_t st, params &p) override {
         if (p.verbose) std::cout << "Building Hamiltonian, MPO=Ec_t" << std::endl;
         auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
         MPO H(p.sites);
@@ -763,7 +788,7 @@ namespace prob {
    class Ec_eta : public imp_first, public single_channel_eta, public Sz_conserved  {
     public:
       Ec_eta(const params &p) : imp_first(p.NBath) {}
-      MPO initH(subspace_t sub, params &p) override {
+      MPO initH(state_t st, params &p) override {
         if (p.verbose) std::cout << "Building Hamiltonian, MPO=Ec_eta" << std::endl;
         auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
         MPO H(p.sites);
@@ -778,7 +803,7 @@ namespace prob {
    class middle_2channel : public imp_middle, public single_channel, public Sz_conserved  {
     public:
       middle_2channel(const params &p) : imp_middle(p.NBath) {}
-      MPO initH(subspace_t sub, params &p) override {
+      MPO initH(state_t st, params &p) override {
         if (p.verbose) std::cout << "Building Hamiltonian, MPO=middle_2channel" << std::endl;
         auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
         MPO H(p.sites);
@@ -794,7 +819,7 @@ namespace prob {
     class autoH_1ch : public imp_first, public single_channel, public Sz_conserved  {
     public:
       autoH_1ch(const params &p) : imp_first(p.NBath) {}
-      MPO initH(subspace_t sub, params &p) override {
+      MPO initH(state_t st, params &p) override {
         if (p.verbose) std::cout << "Building Hamiltonian, MPO=autoH_1ch" << std::endl;
         auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
         MPO H(p.sites);
@@ -807,7 +832,7 @@ namespace prob {
     class autoH_1ch_so : public imp_first, public single_channel, public Sz_conserved  {
     public:
       autoH_1ch_so(const params &p) : imp_first(p.NBath) {}
-      MPO initH(subspace_t sub, params &p) override {
+      MPO initH(state_t st, params &p) override {
         if (p.verbose) std::cout << "Building Hamiltonian, MPO=autoH_1ch_so" << std::endl;
         auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
         MPO H(p.sites);
@@ -820,7 +845,7 @@ namespace prob {
     class autoH_2ch : public imp_first, public two_channel, public Sz_conserved  {
     public:
       autoH_2ch(const params &p) : imp_first(p.NBath) {}
-      MPO initH(subspace_t sub, params &p) override {
+      MPO initH(state_t st, params &p) override {
         if (p.verbose) std::cout << "Building Hamiltonian, MPO=autoH_2ch" << std::endl;
         auto [eps, V] = get_eps_V(p.sc1, p.Gamma1, p.sc2, p.Gamma2, p);
         MPO H(p.sites);
@@ -833,7 +858,7 @@ namespace prob {
    class twoch : public imp_middle, public two_channel, public Sz_conserved  {
     public:
       twoch(const params &p) : imp_middle(p.NBath) {}
-      MPO initH(subspace_t sub, params &p) override {
+      MPO initH(state_t st, params &p) override {
         if (p.verbose) std::cout << "Building Hamiltonian, MPO=twoch" << std::endl;
         Expects(even(p.NBath)); // in 2-ch problems, NBath is the total number of bath sites in both SCs !!
         Expects(p.sc1->NBath() + p.sc2->NBath() == p.NBath);
@@ -849,7 +874,7 @@ namespace prob {
    class twoch_impfirst : public imp_first, public two_channel, public Sz_conserved  {
     public:
       twoch_impfirst(const params &p) : imp_first(p.NBath) {}
-      MPO initH(subspace_t sub, params &p) override {
+      MPO initH(state_t st, params &p) override {
         if (p.verbose) std::cout << "Building Hamiltonian, MPO=twoch_impfirst" << std::endl;
         Expects(even(p.NBath)); // in 2-ch problems, NBath is the total number of bath sites in both SCs !!
         Expects(p.sc1->NBath() + p.sc2->NBath() == p.NBath);
@@ -866,7 +891,7 @@ namespace prob {
   class twoch_impfirst_V : public imp_first, public two_channel, public Sz_conserved  {
     public:
       twoch_impfirst_V(const params &p) : imp_first(p.NBath) {}
-      MPO initH(subspace_t sub, params &p) override {
+      MPO initH(state_t st, params &p) override {
         if (p.verbose) std::cout << "Building Hamiltonian, MPO=twoch_impfirst_V" << std::endl;
         Expects(even(p.NBath)); // in 2-ch problems, NBath is the total number of bath sites in both SCs !!
         Expects(p.sc1->NBath() + p.sc2->NBath() == p.NBath);
@@ -885,7 +910,7 @@ namespace prob {
    class twoch_hopping : public imp_first, public two_channel, public Sz_conserved  {
     public:
       twoch_hopping(const params &p) : imp_first(p.NBath) {}
-      MPO initH(subspace_t sub, params &p) override {
+      MPO initH(state_t st, params &p) override {
         if (p.verbose) std::cout << "Building Hamiltonian, MPO=twoch_hopping" << std::endl;
         Expects(even(p.NBath)); // in 2-ch problems, NBath is the total number of bath sites in both SCs !!
         Expects(p.sc1->NBath() + p.sc2->NBath() == p.NBath);
@@ -903,6 +928,7 @@ inline type_ptr set_problem(const std::string str, const params &p)
 {
   if (str == "std") return std::make_unique<prob::Std>(p);
   if (str == "Ec") return std::make_unique<prob::Ec>(p);
+  if (str == "Ec_MF") return std::make_unique<prob::Ec_MF>(p);
   if (str == "Ec_V") return std::make_unique<prob::Ec_V>(p);
   if (str == "Ec_SO") return std::make_unique<prob::Ec_SO>(p);
   if (str == "middle") return std::make_unique<prob::middle>(p);
@@ -925,5 +951,7 @@ void parse_cmd_line(int, char * [], params &);
 std::vector<subspace_t> init_subspace_lists(params &p);
 void solve(const std::vector<subspace_t> &l, store &s, params &);
 void process_and_save_results(store &, params &, std::string = "solution.h5");
+
+std::vector<double> calcOccupancy(MPS &psi, const ndx_t &all_sites, const params &p); // this has to be defined here as it is used in MF_selfConsistent_calcGS.cc
 
 #endif

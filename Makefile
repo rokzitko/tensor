@@ -37,15 +37,19 @@ calcOverlap: calcOverlap.o FindGS.o $(ITENSOR_LIBS) $(TENSOR_HEADERS)
 calcOverlap-g: mkdebugdir .debug_objs/calcOverlap.o .debug_objs/FindGS.o $(ITENSOR_GLIBS) $(TENSOR_HEADERS)
 	$(CCCOM) $(CCGFLAGS) .debug_objs/calcOverlap.o .debug_objs/FindGS.o -o calcOverlap-g $(LIBGFLAGS)
 
-# calcPT targets -----------------
+# MF_selfConsistent_calcGS targets -----------------
 
-calcPT: calcPT.o FindGS.o $(ITENSOR_LIBS) $(TENSOR_HEADERS)
-	$(CCCOM) $(CCFLAGS) calcPT.o FindGS.o -o calcPT $(LIBFLAGS)
+MF_selfConsistent_calcGS: MF_selfConsistent_calcGS.o FindGS.o $(ITENSOR_LIBS) $(TENSOR_HEADERS)
+	$(CCCOM) $(CCFLAGS) MF_selfConsistent_calcGS.o FindGS.o -o MF_selfConsistent_calcGS $(LIBFLAGS)
 
-buildPT: calcPT
+MF_selfConsistent_calcGS-g: mkdebugdir .debug_objs/MF_selfConsistent_calcGS.o .debug_objs/FindGS.o $(ITENSOR_GLIBS) $(TENSOR_HEADERS)
+	$(CCCOM) $(CCGFLAGS) .debug_objs/MF_selfConsistent_calcGS.o .debug_objs/FindGS.o -o MF_selfConsistent_calcGS-g $(LIBGFLAGS)
+
+
 buildGS: calcGS
 buildOverlap: calcOverlap
-build: calcGS calcOverlap
+buildMF_selfConsistent_calcGS: MF_selfConsistent_calcGS
+build: calcGS calcOverlap MF_selfConsistent_calcGS
 debug: calcGS-g
 
 clean:

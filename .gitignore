@@ -8,6 +8,7 @@ calcGS-g
 calcGS-middle
 calcPT
 calcPT-middle
+MF_selfConsistent_calcGS
 1_build_luka
 2_build_local
 Makefile_luka
