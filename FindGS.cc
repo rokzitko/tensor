@@ -73,6 +73,7 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.V2imp = input.getReal("V2imp", 0); // capacitive coupling between sc2 and imp
 
   p.eta = input.getReal("eta", 1.0);
+  p.etasite = input.getInt("etasite", p.NBath/2); // Fermi-level !
   p.band_level_shift = input.getYesNo("band_level_shift", false);
 
   // parameters for the 2-channel problem

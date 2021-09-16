@@ -410,6 +410,7 @@ struct params {
   double V1imp;          // QD-SC capacitive coupling, for MPO_2h_.*_V
   double V2imp;          // QD-SC capacitive coupling, for MPO_2h_.*_V
   double eta;            // coupling reduction factor, 0<=eta<=1, for MPO_Ec_eta
+  int etasite;           // site with reduced pairing
 
   bool magnetic_field() { return qd->EZ() != 0 || qd->EZx() != 0 || sc->EZ() != 0 || sc->EZx() != 0 || sc1->EZ() != 0 || sc1->EZx() != 0 || sc2->EZ() != 0 || sc2->EZx() != 0; } // true if there is magnetic field
 
@@ -594,7 +595,7 @@ class single_channel_eta : public single_channel
      }
      auto V0 = Gamma->V(sc->NBath());
      if (p.verbose) {
-       std::cout << "eta=" << p.eta << std::endl;
+       std::cout << "eta=" << p.eta << " on site " << p.etasite << std::endl;
        std::cout << "eps=" << eps0 << std::endl;
        std::cout << "V=" << V0 << std::endl;
      }

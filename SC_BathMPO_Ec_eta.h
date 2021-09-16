@@ -5,8 +5,10 @@ inline double y(const int i, const params &p)
 {
   const auto L = p.NBath;
   assert(0.0 <= p.eta && p.eta <= 1.0);
-  assert(i >= 2 && i <= L+1); // 1 is impurity site, 2 is special SC site, 3,4,... are regular SC sites
-  return i == 2 ? p.eta : sqrt( (L-p.eta*p.eta)/(L-1) );
+  assert(i >= 2 && i <= L+1); // 1 is impurity site
+  assert(1 <= p.etasite && p.etasite <= L); // L/2 and L/2+1 are at Fermi level!
+  const auto etasite = 1+p.etasite; // 1-based
+  return i == etasite ? p.eta : sqrt( (L-p.eta*p.eta)/(L-1) );
 }
 
 inline void Fill_SCBath_MPO_Ec_eta(MPO& H, const double Eshift, const std::vector<double>& eps_,
