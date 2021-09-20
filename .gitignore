@@ -4,6 +4,8 @@
 *.o
 calcOverlap
 calcOverlap-g
+calcEnergy
+calcEnergy-g
 calcGS
 calcGS-g
 calcGS-middle

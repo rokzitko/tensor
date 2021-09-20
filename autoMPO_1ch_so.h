@@ -1,7 +1,6 @@
 inline void get_autoMPO_1ch_so(MPO& H, const double Eshift, const std::vector<double>& eps_,
                 const std::vector<double>& v_, const params &p)
 {
-
     auto ampo = AutoMPO(p.sites);
 
     ampo += Eshift,"Id",1;
@@ -40,8 +39,8 @@ inline void get_autoMPO_1ch_so(MPO& H, const double Eshift, const std::vector<do
     for (auto i : range(2, p.N)){
         for (auto j : range(2, p.N)){
             if (i != j){
-                ampo += p.sc->lambda(),"Cdagup",i,"Cdn",j;
-                ampo += p.sc->lambda(),"Cdagdn",i,"Cup",j;
+                ampo += p.sc->l(),"Cdagup",i,"Cdn",j;
+                ampo += p.sc->l(),"Cdagdn",i,"Cup",j;
             }
         }
     }

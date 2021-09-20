@@ -24,8 +24,16 @@ void initial_guess_nSCs(const std::vector<subspace_t> &l, params &p){
   // for all subspaces, for all excited states (that will be computed), insert the initial guess
   for (const auto [n,  Sz] : l){
     for (int i = 0; i <= std::min(p.excited_states, p.stop_n); i++) {
+      
+      double guess = n - (0.5 - (p.qd->eps()/p.qd->U()));
+      
+      //THIS INITIAL guess DOES NOT WORK AS WELL
+      //if (p.qd->U()/2 > p.sc->Ec()) guess = n - (0.5 - (p.qd->eps()/p.qd->U()));
+      //else guess = p.sc->n0();
+
+
       state_t key = {n, Sz, i};
-      p.MFnSCs.insert({key, n - (0.5 - (p.qd->eps()/p.qd->U())) });
+      p.MFnSCs.insert({key, guess });
     }
   }
 }
@@ -75,9 +83,18 @@ void update_s_struct(auto &state_convergence_map, auto &s){
   }
 }
 
+double get_fullH_energy(const MPS &psi, const state_t &st, params &p){
+  // computes the expected value of energy < psi | H | psi >, where H is the real Hamiltonian without the mean field approximation
 
+  // create the instace of the full problem
+  auto fullProblem = set_problem("Ec", p);  // problem type with hard-coded type "Ec", gives the full Hamiltonian
 
-void print_iteration_results(auto Es, auto nSCs, store &s){
+  MPO fullH = fullProblem->initH(st, p);
+
+  return inner(psi, fullH, psi);
+} 
+
+void print_iteration_results(auto Es, auto nSCs, store &s, params &p){
 
   H5Easy::File file("solution.h5", H5Easy::File::ReadWrite);
 
@@ -88,11 +105,17 @@ void print_iteration_results(auto Es, auto nSCs, store &s){
     std::cout << "n = " << n << ", Sz = " << Sz << ", i = " << i << ": \n";  
     std::cout << "SC occupancies = " << std::setprecision(full) << nSCs[state] << std::endl;
     std::cout << "energies = " << std::setprecision(full) << Es[state] << std::endl;
+
+    // PRINT THE ENERGY OBTAINED BY FULL H
+    double fullE = get_fullH_energy(ep.psi(), state, p);
+    std::cout << "full H energy = " << std::setprecision(full) << fullE << std::endl;
+
     std::cout << "\n";
 
     const auto path = state_path(state);
     H5Easy::dump(file, path + "/iteration/nSCs", nSCs[state]);
     H5Easy::dump(file, path + "/iteration/Es", Es[state]);
+    H5Easy::dump(file, path + "/iteration/fullHE", fullE);
 
   }
 }
@@ -138,7 +161,7 @@ int main(int argc, char* argv[]) {
 
   process_and_save_results(s, p);
   
-  print_iteration_results(Es, nSCs, s);
+  print_iteration_results(Es, nSCs, s, p);
 
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
   std::cout << std::endl << "Wall time: " << std::chrono::duration_cast<std::chrono::seconds>(end - begin).count() << " s" << std::endl;

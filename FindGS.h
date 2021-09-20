@@ -355,6 +355,7 @@ struct params {
   bool chargeCorrelation;// compute the impurity-superconductor correlation <n_imp n_i>
   bool spinCorrelation;  // compute the impurity-superconductor correlation <S_imp S_i>
   bool spinCorrelationMatrix;  // compute the full correlation matrix <S_i S_j>
+  bool channelDensityMatrix; // compute the channel correlation matrix <cdag_i c_j>
   bool pairCorrelation;  // compute the impurity-superconductor correlation <d d c_i^dag c_i^dag>
   bool hoppingExpectation;//compute the hopping expectation value 1/sqrt(N) \sum_sigma \sum_i <d^dag c_i> + <c^dag_i d>
   bool printTotSpinZ;    // prints total Nup, Ndn and Sz
@@ -830,7 +831,7 @@ namespace prob {
       }
    };
 
-    class autoH_1ch_so : public imp_first, public single_channel, public Sz_conserved  {
+    class autoH_1ch_so : public imp_first, public single_channel, public Sz_non_conserved  {
     public:
       autoH_1ch_so(const params &p) : imp_first(p.NBath) {}
       MPO initH(state_t st, params &p) override {
