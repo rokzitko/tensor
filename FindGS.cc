@@ -168,7 +168,7 @@ void MeasureTotalSpin(MPS& psi, auto & file, std::string path, params &p) {
   // res2 is the result of \hat{S}^2 = S(S+1)
   // Actual S is obtained by solving the quadratic equation, always taking the largest result.
 
-  auto res2 = inner(psi, S2, psi);
+  auto res2 = std::real(innerC(psi, S2, psi));
   auto res = 0.5 * std::max( -1 + std::sqrt(1 + 4*res2), -1 - std::sqrt(1 + 4*res2) );
 
   std::cout << std::setprecision(full) << "Total S = " <<  res << ", S^2 = " << res2 << std::endl;
@@ -194,7 +194,7 @@ auto Correlator(MPS& psi, const int i, const auto op_i, const int j, const auto 
   const auto lj = rightLinkIndex(psi, second);
   C *= prime(psi(second), lj) * (first == i ? op_j : op_i);
   C *= prime(psidag(second), "Site");
-  return elt(C);
+  return std::real(eltC(C));
 }
 
 auto ImpurityCorrelator(MPS& psi, const auto impOp, const int j, const auto opj, const params &p) {
@@ -252,7 +252,7 @@ auto SzSz_SpSm_SmSp(const int i, const params &p) {
 
 auto vev(MPS &psi, const int i, auto &op) {
   psi.position(i);
-  return elt(psi(i) * op *  dag(prime(psi(i),"Site")));
+  return std::real(eltC(psi(i) * op *  dag(prime(psi(i),"Site"))));
 }
 
 // <S_imp S_i> = <Sz_imp Sz_i> + 1/2 ( <S+_imp S-_i> + <S-_imp S+_i> )
@@ -583,7 +583,7 @@ auto calcEntropy(MPS& psi, const params &p) {
   //Apply von Neumann formula to the squares of the singular values
   double SvN = 0.;
   for(auto n : range1(dim(u))) {
-    auto Sn = elt(S,n,n);
+    auto Sn = std::real(eltC(S,n,n));
     auto pp = sqr(Sn);
     if(pp > 1E-12) SvN += -pp*log(pp);
   }
@@ -607,11 +607,11 @@ auto calculate_imp_density_matrix(MPS &psi, const params &p)
 
 void MeasureImpDensityMatrix(MPS& psi, auto & file, std::string path, const params &p){
     const auto psipsi = calculate_imp_density_matrix(psi, p);
-    std::cout << "imp amplitudes: " << psipsi.real(1,1) << " " << psipsi.real(2,2) << " " << psipsi.real(3,3) << " " << psipsi.real(4,4) << "\n";
-    H5Easy::dump(file, path + "/imp_amplitudes/0",    sqrt(psipsi.real(1,1)));
-    H5Easy::dump(file, path + "/imp_amplitudes/up",   sqrt(psipsi.real(2,2)));
-    H5Easy::dump(file, path + "/imp_amplitudes/down", sqrt(psipsi.real(3,3)));
-    H5Easy::dump(file, path + "/imp_amplitudes/2",    sqrt(psipsi.real(4,4)));
+    std::cout << "imp amplitudes: " << std::real(psipsi.cplx(1,1)) << " " << std::real(psipsi.cplx(2,2)) << " " << std::real(psipsi.cplx(3,3)) << " " << std::real(psipsi.cplx(4,4)) << "\n";
+    H5Easy::dump(file, path + "/imp_amplitudes/0",    sqrt(std::real(psipsi.cplx(1,1))));
+    H5Easy::dump(file, path + "/imp_amplitudes/up",   sqrt(std::real(psipsi.cplx(2,2))));
+    H5Easy::dump(file, path + "/imp_amplitudes/down", sqrt(std::real(psipsi.cplx(3,3))));
+    H5Easy::dump(file, path + "/imp_amplitudes/2",    sqrt(std::real(psipsi.cplx(4,4))));
 }
 
 auto sweeps(params &p)
@@ -822,7 +822,7 @@ auto ExpectationValueAddEl(MPS psi1, MPS psi2, const std::string spin, const int
   psi2.position(position);                                                      // set orthogonality center
   auto newTensor = noPrime(op(p.sites,"Cdag"+spin, position)*psi2(position)); // apply the local operator
   psi2.set(position,newTensor);                                                 // plug in the new tensor, with the operator applied
-  return inner(psi1, psi2);
+  return abs(innerC(psi1, psi2));
 }
 
 // calculates <psi1|c|psi2>
@@ -830,7 +830,7 @@ auto ExpectationValueTakeEl(MPS psi1, MPS psi2, const std::string spin, const in
   psi2.position(position);
   auto newTensor = noPrime(op(p.sites,"C"+spin, position)*psi2(position));
   psi2.set(position,newTensor);
-  return inner(psi1, psi2);
+  return abs(innerC(psi1, psi2));
 }
 
 void calc_weight(store &s, state_t GS, state_t ES, int q, std::string sz, auto & file, params &p)
@@ -861,7 +861,7 @@ void calculate_spectral_weights(store &s, state_t GS, auto &file, params &p, int
 
 auto calculate_overlap(const auto &psi1, const auto &psi2)
 {
-  return inner(psi1, psi2);
+  return abs(innerC(psi1, psi2)); // abs because of random global phases!!
 }
 
 auto calculate_overlaps(store &s, auto &file, params &p) {
@@ -872,7 +872,6 @@ auto calculate_overlaps(store &s, auto &file, params &p) {
     const auto [ntot2, Sz2, j] = st2.first;
     if (ntot1 == ntot2 && Sz1 == Sz2 && i < j) {
       auto o = calculate_overlap(st1.second.psi(), st2.second.psi());
-      o = abs(o); // because of random global phases!!
       std::cout << fmt::format(FMT_STRING("n = {:<5}  Sz = {:4}  i = {:<3}  j = {:<3}  |<i|j>| = {:<22.15}"),
                                ntot1, Sz_string(Sz1), i, j, o) << std::endl;
       H5Easy::dump(file, "overlaps/" + ij_path(ntot1, Sz1, i, j), o);
@@ -883,12 +882,10 @@ auto calculate_overlaps(store &s, auto &file, params &p) {
 auto calculate_cdag_overlap(auto &psi1, auto &psi2, auto szchange, const params &p){
   // computes the overlap < psi1 | cdag_szchange | psi2 >
   std::vector<double> res;
- 
   for (const int i : p.problem->all_indexes()) {
     auto r = abs(ExpectationValueAddEl(psi1, psi2, szchange, i, p));
     res.push_back(r);
   }
-
   return res;
 }
 
@@ -934,9 +931,8 @@ auto one_channel_number_op(const int channelNum, auto &psi1, auto &psi2, const p
 
     psi1.position(i);
 
-    res += inner(psi1, newpsi); 
+    res += abs(innerC(psi1, newpsi)); 
   }
-  res = abs(res); // absolute value only here!
   return res;
 }
 

@@ -320,9 +320,9 @@ class psi_stats {
  public:
    psi_stats() {}
    psi_stats(const MPS &psi, MPO &H) {
-     _norm = inner(psi, psi);
-     _E = inner(psi, H, psi);
-     _deltaE2 = inner(H, psi, H, psi) - pow(_E,2);
+     _norm = std::real(innerC(psi, psi));
+     _E = std::real(innerC(psi, H, psi));
+     _deltaE2 = std::real(innerC(H, psi, H, psi)) - pow(_E,2);
    }
    void dump() const {
      std::cout << fmt::format("norm: <psi|psi> = {}", _norm) << std::endl
