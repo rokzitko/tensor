@@ -111,6 +111,11 @@ inline auto ij_path(const charge ntot, const spin Sz, const int i, const int j)
   return fmt::format("{}/{}/{}/{}", ntot, Sz_string(Sz), i, j);
 }
 
+inline auto n1n2S1S2ij_path(const charge ntot1, const charge ntot2, const spin Sz1, const spin Sz2, const int i, const int j)
+{
+  return fmt::format("{}/{}/{}/{}/{}/{}", ntot1, ntot2, Sz_string(Sz1), Sz_string(Sz2), i, j);
+}
+
 class problem_type;
 using type_ptr = std::unique_ptr<problem_type>;
 
@@ -362,6 +367,7 @@ struct params {
   bool transition_dipole_moment; // compute < i | nsc1 - ncs2 | j > 
   bool transition_quadrupole_moment; // compute < i | nsc1 + ncs2 | j > 
   bool overlaps;         // compute <i|j> overlap table in each subspace
+  bool cdag_overlaps;    // compute <i|cdag|j> overlap between subspaces which differ by 1 in total charge and 0.5 in total Sz
   bool charge_susceptibility; // compute <i|nimp|j> overlap table in each subspace
   bool channel_parity;   // prints the channel parity
 

@@ -122,6 +122,7 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.transition_dipole_moment = input.getYesNo("transition_dipole_moment", false);
   p.transition_quadrupole_moment = input.getYesNo("transition_quadrupole_moment", false);
   p.overlaps = input.getYesNo("overlaps", false);
+  p.cdag_overlaps = input.getYesNo("cdag_overlaps", false);
   p.flat_band = input.getYesNo("flat_band", false);
   p.flat_band_factor = input.getReal("flat_band_factor", 0);
 
@@ -817,18 +818,18 @@ void print_energies(store &s, double EGS, params &p) {
 }
 
 // calculates <psi1|c_dag|psi2>, according to http://itensor.org/docs.cgi?vers=cppv3&page=formulas/mps_onesite_op
-auto ExpectationValueAddEl(MPS psi1, MPS psi2, std::string spin, const params &p){
-  psi2.position(p.impindex);                                                      // set orthogonality center
-  auto newTensor = noPrime(op(p.sites,"Cdag"+spin, p.impindex)*psi2(p.impindex)); // apply the local operator
-  psi2.set(p.impindex,newTensor);                                                 // plug in the new tensor, with the operator applied
+auto ExpectationValueAddEl(MPS psi1, MPS psi2, const std::string spin, const int position, const params &p){
+  psi2.position(position);                                                      // set orthogonality center
+  auto newTensor = noPrime(op(p.sites,"Cdag"+spin, position)*psi2(position)); // apply the local operator
+  psi2.set(position,newTensor);                                                 // plug in the new tensor, with the operator applied
   return inner(psi1, psi2);
 }
 
 // calculates <psi1|c|psi2>
-auto ExpectationValueTakeEl(MPS psi1, MPS psi2, std::string spin, const params &p){
-  psi2.position(p.impindex);
-  auto newTensor = noPrime(op(p.sites,"C"+spin, p.impindex)*psi2(p.impindex));
-  psi2.set(p.impindex,newTensor);
+auto ExpectationValueTakeEl(MPS psi1, MPS psi2, const std::string spin, const int position, const params &p){
+  psi2.position(position);
+  auto newTensor = noPrime(op(p.sites,"C"+spin, position)*psi2(position));
+  psi2.set(position,newTensor);
   return inner(psi1, psi2);
 }
 
@@ -838,7 +839,7 @@ void calc_weight(store &s, state_t GS, state_t ES, int q, std::string sz, auto &
   MPS & psiGS = s.eigen[GS].psi();
   if (s.eigen.count(ES)) {
     MPS & psiES = s.eigen[ES].psi();
-    res = (q == +1 ? ExpectationValueAddEl(psiES, psiGS, sz, p) : ExpectationValueTakeEl(psiES, psiGS, sz, p));
+    res = (q == +1 ? ExpectationValueAddEl(psiES, psiGS, sz, p.impindex, p) : ExpectationValueTakeEl(psiES, psiGS, sz, p.impindex, p));
     std::cout << "weight w" << (q == +1 ? "+" : "-") << " " << sz << ": " << res << std::endl;
   } else {
     res = std::numeric_limits<double>::quiet_NaN();
@@ -863,7 +864,7 @@ auto calculate_overlap(const auto &psi1, const auto &psi2)
   return inner(psi1, psi2);
 }
 
-void calculate_overlaps(store &s, auto &file, params &p) {
+auto calculate_overlaps(store &s, auto &file, params &p) {
   skip_line();
   std::cout << "Overlaps:\n" ;
   for (const auto & [st1, st2] : itertools::product(s.eigen, s.eigen)) {
@@ -878,6 +879,42 @@ void calculate_overlaps(store &s, auto &file, params &p) {
     }
   }
 }
+
+auto calculate_cdag_overlap(auto &psi1, auto &psi2, auto szchange, const params &p){
+  // computes the overlap < psi1 | cdag_szchange | psi2 >
+  std::vector<double> res;
+ 
+  for (const int i : p.problem->all_indexes()) {
+    auto r = abs(ExpectationValueAddEl(psi1, psi2, szchange, i, p));
+    res.push_back(r);
+  }
+
+  return res;
+}
+
+void calculate_cdag_overlaps(store &s, auto &file, const params &p) {
+  skip_line();
+  std::cout << "<cdag_i>:\n" ;
+  for (const auto & [st1, st2] : itertools::product(s.eigen, s.eigen)) {
+    const auto [ntot1, Sz1, i] = st1.first;
+    const auto [ntot2, Sz2, j] = st2.first;
+    
+    if ( ntot1 == ntot2 + 1. ){
+      auto sz_change = Sz1 == Sz2 + 0.5 ? "up" : "dn";
+
+      auto res = calculate_cdag_overlap(st1.second.psi(), st2.second.psi(), sz_change, p);
+      double tot = std::accumulate(res.begin(), res.end(), 0.0);
+
+      std::cout << fmt::format("<{}, {}, {}| cdag |{}, {}, {}>:\n", ntot1, Sz1, i, ntot2, Sz2, j);
+      std::cout << "ci overlaps = " << std::setprecision(full) << res << std::endl;
+      std::cout << "tot = " << tot << std::endl;
+      
+      H5Easy::dump(file, "cdag_overlaps/" + n1n2S1S2ij_path(ntot1, ntot2, Sz1, Sz2, i, j), res);
+      H5Easy::dump(file, "cdag_overlaps/tot/" + n1n2S1S2ij_path(ntot1, ntot2, Sz1, Sz2, i, j), tot);
+    }
+  }
+} 
+
 
 // THIS IS FOR THE TWO CHANNEL MODEL ONLY - IT TAKES channelNum AS AN ARGUMENT FOR THE bath_indexes()!
 auto one_channel_number_op(const int channelNum, auto &psi1, auto &psi2, const params &p){
@@ -1160,6 +1197,8 @@ void process_and_save_results(store &s, params &p, std::string h5_filename) {
     calculate_transition_quadrupole_moments(s, file, p);
   if (p.overlaps)
     calculate_overlaps(s, file, p);
+  if (p.cdag_overlaps)
+    calculate_cdag_overlaps(s, file, p);
   if (p.charge_susceptibility)
     calculate_charge_susceptibilities(s, file, p);
   if (p.chi)
