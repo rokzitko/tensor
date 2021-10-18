@@ -97,6 +97,7 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   // parameters controlling the postprocessing and output
   p.totalSpin = input.getYesNo("totalSpin", false);
   p.computeEntropy = input.getYesNo("computeEntropy", false);
+  p.computeEntropy_beforeAfter = input.getYesNo("computeEntropy_beforeAfter", false);
   p.impNupNdn = input.getYesNo("impNupNdn", false);
   p.chargeCorrelation = input.getYesNo("chargeCorrelation", false);
   p.spinCorrelation = input.getYesNo("spinCorrelation", false);
@@ -572,13 +573,12 @@ void MeasureAmplitudes(MPS& psi, auto & file, std::string path, const params &p)
 // Computed entanglement/von Neumann entropy between the impurity and the system.
 // Copied from https://www.itensor.org/docs.cgi?vers=cppv3&page=formulas/entanglement_mps
 // von Neumann entropy at the bond between impurity and next site.
-auto calcEntropy(MPS& psi, const params &p) {
-  Expects(p.impindex == 1); // Works as intended only if p.impindex=1.
-  psi.position(p.impindex);
+auto calcEntropy(MPS& psi, const int bond, const params &p) {
+  psi.position(bond);
   // SVD this wavefunction to get the spectrum of density-matrix eigenvalues
-  auto l = leftLinkIndex(psi, p.impindex);
-  auto s = siteIndex(psi, p.impindex);
-  auto [U,S,V] = svd(psi(p.impindex), {l,s});
+  auto l = leftLinkIndex(psi, bond);
+  auto s = siteIndex(psi, bond);
+  auto [U,S,V] = svd(psi(bond), {l,s});
   auto u = commonIndex(U,S);
   //Apply von Neumann formula to the squares of the singular values
   double SvN = 0.;
@@ -591,9 +591,23 @@ auto calcEntropy(MPS& psi, const params &p) {
 }
 
 void MeasureEntropy(MPS& psi, auto & file, std::string path, const params &p) {
-  const auto SvN = calcEntropy(psi, p);
+  Expects(p.impindex == 1); // Works as intended only if p.impindex=1.
+  const auto SvN = calcEntropy(psi, p.impindex, p);
   std::cout << fmt::format("Entanglement entropy across impurity bond b={}, SvN = {:10}", p.impindex, SvN) << std::endl;
   H5Easy::dump(file, path + "/entanglement_entropy_imp", SvN);
+}
+
+void MeasureEntropy_beforeAfter(MPS& psi, auto & file, std::string path, const params &p) {
+  Expects(p.impindex != 1); // Works as intended only if p.impindex=1.
+
+  const auto SvN1 = calcEntropy(psi, p.impindex-1, p);
+  const auto SvN2 = calcEntropy(psi, p.impindex, p);
+
+  std::cout << fmt::format("Entanglement entropy before the impurity bond b={}, SvN = {:10}", p.impindex-1, SvN1) << std::endl;
+  std::cout << fmt::format("Entanglement entropy after the impurity bond b={}, SvN = {:10}", p.impindex, SvN2) << std::endl;
+  
+  H5Easy::dump(file, path + "/entanglement_entropy_imp/before", SvN1);
+  H5Easy::dump(file, path + "/entanglement_entropy_imp/after", SvN2);
 }
 
 //contract all other tensors except the impurity one. The diagonal terms are the squares of the amplitudes for the impurity states |0>, |up>, |dn>, |2>. 
@@ -781,6 +795,7 @@ void calc_properties(const state_t st, H5Easy::File &file, store &s, params &p)
   MeasureImpDensityMatrix(psi, file, path, p);
   if (p.totalSpin) MeasureTotalSpin(psi, file, path, p);
   if (p.computeEntropy) MeasureEntropy(psi, file, path, p);
+  if (p.computeEntropy_beforeAfter) MeasureEntropy_beforeAfter(psi, file, path, p);
   if (p.impNupNdn) MeasureImpurityUpDn(psi, file, path, p);
   if (p.chargeCorrelation) MeasureChargeCorrelation(psi, file, path, p);
   if (p.spinCorrelation) MeasureSpinCorrelation(psi, file, path, p);

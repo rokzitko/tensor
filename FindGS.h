@@ -356,6 +356,7 @@ struct params {
   // all bools have default value false
   bool totalSpin;        // measure total spin of the state - uses autoMPO
   bool computeEntropy;   // von Neumann entropy at the bond between impurity and next site. Works as intended if p.impindex=1.
+  bool computeEntropy_beforeAfter;   // von Neumann entropy at the bond before the impurity and after it. Works as intended if p.impindex!=1.
   bool impNupNdn;        // print the number of up and dn electrons on the impurity
   bool chargeCorrelation;// compute the impurity-superconductor correlation <n_imp n_i>
   bool spinCorrelation;  // compute the impurity-superconductor correlation <S_imp S_i>
