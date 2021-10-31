@@ -97,6 +97,7 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   // parameters controlling the postprocessing and output
   p.totalSpin = input.getYesNo("totalSpin", false);
   p.computeEntropy = input.getYesNo("computeEntropy", false);
+  p.computeEntropy_beforeAfter = input.getYesNo("computeEntropy_beforeAfter", false);
   p.impNupNdn = input.getYesNo("impNupNdn", false);
   p.chargeCorrelation = input.getYesNo("chargeCorrelation", false);
   p.spinCorrelation = input.getYesNo("spinCorrelation", false);
@@ -122,6 +123,7 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.transition_dipole_moment = input.getYesNo("transition_dipole_moment", false);
   p.transition_quadrupole_moment = input.getYesNo("transition_quadrupole_moment", false);
   p.overlaps = input.getYesNo("overlaps", false);
+  p.cdag_overlaps = input.getYesNo("cdag_overlaps", false);
   p.flat_band = input.getYesNo("flat_band", false);
   p.flat_band_factor = input.getReal("flat_band_factor", 0);
 
@@ -167,7 +169,7 @@ void MeasureTotalSpin(MPS& psi, auto & file, std::string path, params &p) {
   // res2 is the result of \hat{S}^2 = S(S+1)
   // Actual S is obtained by solving the quadratic equation, always taking the largest result.
 
-  auto res2 = inner(psi, S2, psi);
+  auto res2 = std::real(innerC(psi, S2, psi));
   auto res = 0.5 * std::max( -1 + std::sqrt(1 + 4*res2), -1 - std::sqrt(1 + 4*res2) );
 
   std::cout << std::setprecision(full) << "Total S = " <<  res << ", S^2 = " << res2 << std::endl;
@@ -193,7 +195,7 @@ auto Correlator(MPS& psi, const int i, const auto op_i, const int j, const auto 
   const auto lj = rightLinkIndex(psi, second);
   C *= prime(psi(second), lj) * (first == i ? op_j : op_i);
   C *= prime(psidag(second), "Site");
-  return elt(C);
+  return std::real(eltC(C));
 }
 
 auto ImpurityCorrelator(MPS& psi, const auto impOp, const int j, const auto opj, const params &p) {
@@ -251,7 +253,7 @@ auto SzSz_SpSm_SmSp(const int i, const params &p) {
 
 auto vev(MPS &psi, const int i, auto &op) {
   psi.position(i);
-  return elt(psi(i) * op *  dag(prime(psi(i),"Site")));
+  return std::real(eltC(psi(i) * op *  dag(prime(psi(i),"Site"))));
 }
 
 // <S_imp S_i> = <Sz_imp Sz_i> + 1/2 ( <S+_imp S-_i> + <S-_imp S+_i> )
@@ -571,18 +573,17 @@ void MeasureAmplitudes(MPS& psi, auto & file, std::string path, const params &p)
 // Computed entanglement/von Neumann entropy between the impurity and the system.
 // Copied from https://www.itensor.org/docs.cgi?vers=cppv3&page=formulas/entanglement_mps
 // von Neumann entropy at the bond between impurity and next site.
-auto calcEntropy(MPS& psi, const params &p) {
-  Expects(p.impindex == 1); // Works as intended only if p.impindex=1.
-  psi.position(p.impindex);
+auto calcEntropy(MPS& psi, const int bond, const params &p) {
+  psi.position(bond);
   // SVD this wavefunction to get the spectrum of density-matrix eigenvalues
-  auto l = leftLinkIndex(psi, p.impindex);
-  auto s = siteIndex(psi, p.impindex);
-  auto [U,S,V] = svd(psi(p.impindex), {l,s});
+  auto l = leftLinkIndex(psi, bond);
+  auto s = siteIndex(psi, bond);
+  auto [U,S,V] = svd(psi(bond), {l,s});
   auto u = commonIndex(U,S);
   //Apply von Neumann formula to the squares of the singular values
   double SvN = 0.;
   for(auto n : range1(dim(u))) {
-    auto Sn = elt(S,n,n);
+    auto Sn = std::real(eltC(S,n,n));
     auto pp = sqr(Sn);
     if(pp > 1E-12) SvN += -pp*log(pp);
   }
@@ -590,9 +591,23 @@ auto calcEntropy(MPS& psi, const params &p) {
 }
 
 void MeasureEntropy(MPS& psi, auto & file, std::string path, const params &p) {
-  const auto SvN = calcEntropy(psi, p);
+  Expects(p.impindex == 1); // Works as intended only if p.impindex=1.
+  const auto SvN = calcEntropy(psi, p.impindex, p);
   std::cout << fmt::format("Entanglement entropy across impurity bond b={}, SvN = {:10}", p.impindex, SvN) << std::endl;
   H5Easy::dump(file, path + "/entanglement_entropy_imp", SvN);
+}
+
+void MeasureEntropy_beforeAfter(MPS& psi, auto & file, std::string path, const params &p) {
+  Expects(p.impindex != 1); // Works as intended only if p.impindex=1.
+
+  const auto SvN1 = calcEntropy(psi, p.impindex-1, p);
+  const auto SvN2 = calcEntropy(psi, p.impindex, p);
+
+  std::cout << fmt::format("Entanglement entropy before the impurity bond b={}, SvN = {:10}", p.impindex-1, SvN1) << std::endl;
+  std::cout << fmt::format("Entanglement entropy after the impurity bond b={}, SvN = {:10}", p.impindex, SvN2) << std::endl;
+  
+  H5Easy::dump(file, path + "/entanglement_entropy_imp/before", SvN1);
+  H5Easy::dump(file, path + "/entanglement_entropy_imp/after", SvN2);
 }
 
 //contract all other tensors except the impurity one. The diagonal terms are the squares of the amplitudes for the impurity states |0>, |up>, |dn>, |2>. 
@@ -606,11 +621,11 @@ auto calculate_imp_density_matrix(MPS &psi, const params &p)
 
 void MeasureImpDensityMatrix(MPS& psi, auto & file, std::string path, const params &p){
     const auto psipsi = calculate_imp_density_matrix(psi, p);
-    std::cout << "imp amplitudes: " << psipsi.real(1,1) << " " << psipsi.real(2,2) << " " << psipsi.real(3,3) << " " << psipsi.real(4,4) << "\n";
-    H5Easy::dump(file, path + "/imp_amplitudes/0",    sqrt(psipsi.real(1,1)));
-    H5Easy::dump(file, path + "/imp_amplitudes/up",   sqrt(psipsi.real(2,2)));
-    H5Easy::dump(file, path + "/imp_amplitudes/down", sqrt(psipsi.real(3,3)));
-    H5Easy::dump(file, path + "/imp_amplitudes/2",    sqrt(psipsi.real(4,4)));
+    std::cout << "imp amplitudes: " << std::real(psipsi.cplx(1,1)) << " " << std::real(psipsi.cplx(2,2)) << " " << std::real(psipsi.cplx(3,3)) << " " << std::real(psipsi.cplx(4,4)) << "\n";
+    H5Easy::dump(file, path + "/imp_amplitudes/0",    sqrt(std::real(psipsi.cplx(1,1))));
+    H5Easy::dump(file, path + "/imp_amplitudes/up",   sqrt(std::real(psipsi.cplx(2,2))));
+    H5Easy::dump(file, path + "/imp_amplitudes/down", sqrt(std::real(psipsi.cplx(3,3))));
+    H5Easy::dump(file, path + "/imp_amplitudes/2",    sqrt(std::real(psipsi.cplx(4,4))));
 }
 
 auto sweeps(params &p)
@@ -780,6 +795,7 @@ void calc_properties(const state_t st, H5Easy::File &file, store &s, params &p)
   MeasureImpDensityMatrix(psi, file, path, p);
   if (p.totalSpin) MeasureTotalSpin(psi, file, path, p);
   if (p.computeEntropy) MeasureEntropy(psi, file, path, p);
+  if (p.computeEntropy_beforeAfter) MeasureEntropy_beforeAfter(psi, file, path, p);
   if (p.impNupNdn) MeasureImpurityUpDn(psi, file, path, p);
   if (p.chargeCorrelation) MeasureChargeCorrelation(psi, file, path, p);
   if (p.spinCorrelation) MeasureSpinCorrelation(psi, file, path, p);
@@ -817,19 +833,19 @@ void print_energies(store &s, double EGS, params &p) {
 }
 
 // calculates <psi1|c_dag|psi2>, according to http://itensor.org/docs.cgi?vers=cppv3&page=formulas/mps_onesite_op
-auto ExpectationValueAddEl(MPS psi1, MPS psi2, std::string spin, const params &p){
-  psi2.position(p.impindex);                                                      // set orthogonality center
-  auto newTensor = noPrime(op(p.sites,"Cdag"+spin, p.impindex)*psi2(p.impindex)); // apply the local operator
-  psi2.set(p.impindex,newTensor);                                                 // plug in the new tensor, with the operator applied
-  return inner(psi1, psi2);
+auto ExpectationValueAddEl(MPS psi1, MPS psi2, const std::string spin, const int position, const params &p){
+  psi2.position(position);                                                      // set orthogonality center
+  auto newTensor = noPrime(op(p.sites,"Cdag"+spin, position)*psi2(position)); // apply the local operator
+  psi2.set(position,newTensor);                                                 // plug in the new tensor, with the operator applied
+  return abs(innerC(psi1, psi2));
 }
 
 // calculates <psi1|c|psi2>
-auto ExpectationValueTakeEl(MPS psi1, MPS psi2, std::string spin, const params &p){
-  psi2.position(p.impindex);
-  auto newTensor = noPrime(op(p.sites,"C"+spin, p.impindex)*psi2(p.impindex));
-  psi2.set(p.impindex,newTensor);
-  return inner(psi1, psi2);
+auto ExpectationValueTakeEl(MPS psi1, MPS psi2, const std::string spin, const int position, const params &p){
+  psi2.position(position);
+  auto newTensor = noPrime(op(p.sites,"C"+spin, position)*psi2(position));
+  psi2.set(position,newTensor);
+  return abs(innerC(psi1, psi2));
 }
 
 void calc_weight(store &s, state_t GS, state_t ES, int q, std::string sz, auto & file, params &p)
@@ -838,7 +854,7 @@ void calc_weight(store &s, state_t GS, state_t ES, int q, std::string sz, auto &
   MPS & psiGS = s.eigen[GS].psi();
   if (s.eigen.count(ES)) {
     MPS & psiES = s.eigen[ES].psi();
-    res = (q == +1 ? ExpectationValueAddEl(psiES, psiGS, sz, p) : ExpectationValueTakeEl(psiES, psiGS, sz, p));
+    res = (q == +1 ? ExpectationValueAddEl(psiES, psiGS, sz, p.impindex, p) : ExpectationValueTakeEl(psiES, psiGS, sz, p.impindex, p));
     std::cout << "weight w" << (q == +1 ? "+" : "-") << " " << sz << ": " << res << std::endl;
   } else {
     res = std::numeric_limits<double>::quiet_NaN();
@@ -860,10 +876,10 @@ void calculate_spectral_weights(store &s, state_t GS, auto &file, params &p, int
 
 auto calculate_overlap(const auto &psi1, const auto &psi2)
 {
-  return inner(psi1, psi2);
+  return abs(innerC(psi1, psi2)); // abs because of random global phases!!
 }
 
-void calculate_overlaps(store &s, auto &file, params &p) {
+auto calculate_overlaps(store &s, auto &file, params &p) {
   skip_line();
   std::cout << "Overlaps:\n" ;
   for (const auto & [st1, st2] : itertools::product(s.eigen, s.eigen)) {
@@ -871,13 +887,46 @@ void calculate_overlaps(store &s, auto &file, params &p) {
     const auto [ntot2, Sz2, j] = st2.first;
     if (ntot1 == ntot2 && Sz1 == Sz2 && i < j) {
       auto o = calculate_overlap(st1.second.psi(), st2.second.psi());
-      o = abs(o); // because of random global phases!!
       std::cout << fmt::format(FMT_STRING("n = {:<5}  Sz = {:4}  i = {:<3}  j = {:<3}  |<i|j>| = {:<22.15}"),
                                ntot1, Sz_string(Sz1), i, j, o) << std::endl;
       H5Easy::dump(file, "overlaps/" + ij_path(ntot1, Sz1, i, j), o);
     }
   }
 }
+
+auto calculate_cdag_overlap(auto &psi1, auto &psi2, auto szchange, const params &p){
+  // computes the overlap < psi1 | cdag_szchange | psi2 >
+  std::vector<double> res;
+  for (const int i : p.problem->all_indexes()) {
+    auto r = abs(ExpectationValueAddEl(psi1, psi2, szchange, i, p));
+    res.push_back(r);
+  }
+  return res;
+}
+
+void calculate_cdag_overlaps(store &s, auto &file, const params &p) {
+  skip_line();
+  std::cout << "<cdag_i>:\n" ;
+  for (const auto & [st1, st2] : itertools::product(s.eigen, s.eigen)) {
+    const auto [ntot1, Sz1, i] = st1.first;
+    const auto [ntot2, Sz2, j] = st2.first;
+    
+    if ( ntot1 == ntot2 + 1. ){
+      auto sz_change = Sz1 == Sz2 + 0.5 ? "up" : "dn";
+
+      auto res = calculate_cdag_overlap(st1.second.psi(), st2.second.psi(), sz_change, p);
+      double tot = std::accumulate(res.begin(), res.end(), 0.0);
+
+      std::cout << fmt::format("<{}, {}, {}| cdag |{}, {}, {}>:\n", ntot1, Sz1, i, ntot2, Sz2, j);
+      std::cout << "ci overlaps = " << std::setprecision(full) << res << std::endl;
+      std::cout << "tot = " << tot << std::endl;
+      
+      H5Easy::dump(file, "cdag_overlaps/" + n1n2S1S2ij_path(ntot1, ntot2, Sz1, Sz2, i, j), res);
+      H5Easy::dump(file, "cdag_overlaps/tot/" + n1n2S1S2ij_path(ntot1, ntot2, Sz1, Sz2, i, j), tot);
+    }
+  }
+} 
+
 
 // THIS IS FOR THE TWO CHANNEL MODEL ONLY - IT TAKES channelNum AS AN ARGUMENT FOR THE bath_indexes()!
 auto one_channel_number_op(const int channelNum, auto &psi1, auto &psi2, const params &p){
@@ -897,9 +946,8 @@ auto one_channel_number_op(const int channelNum, auto &psi1, auto &psi2, const p
 
     psi1.position(i);
 
-    res += inner(psi1, newpsi); 
+    res += abs(innerC(psi1, newpsi)); 
   }
-  res = abs(res); // absolute value only here!
   return res;
 }
 
@@ -1160,6 +1208,8 @@ void process_and_save_results(store &s, params &p, std::string h5_filename) {
     calculate_transition_quadrupole_moments(s, file, p);
   if (p.overlaps)
     calculate_overlaps(s, file, p);
+  if (p.cdag_overlaps)
+    calculate_cdag_overlaps(s, file, p);
   if (p.charge_susceptibility)
     calculate_charge_susceptibilities(s, file, p);
   if (p.chi)

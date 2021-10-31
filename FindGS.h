@@ -111,6 +111,11 @@ inline auto ij_path(const charge ntot, const spin Sz, const int i, const int j)
   return fmt::format("{}/{}/{}/{}", ntot, Sz_string(Sz), i, j);
 }
 
+inline auto n1n2S1S2ij_path(const charge ntot1, const charge ntot2, const spin Sz1, const spin Sz2, const int i, const int j)
+{
+  return fmt::format("{}/{}/{}/{}/{}/{}", ntot1, ntot2, Sz_string(Sz1), Sz_string(Sz2), i, j);
+}
+
 class problem_type;
 using type_ptr = std::unique_ptr<problem_type>;
 
@@ -315,9 +320,9 @@ class psi_stats {
  public:
    psi_stats() {}
    psi_stats(const MPS &psi, MPO &H) {
-     _norm = inner(psi, psi);
-     _E = inner(psi, H, psi);
-     _deltaE2 = inner(H, psi, H, psi) - pow(_E,2);
+     _norm = std::real(innerC(psi, psi));
+     _E = std::real(innerC(psi, H, psi));
+     _deltaE2 = std::real(innerC(H, psi, H, psi)) - pow(_E,2);
    }
    void dump() const {
      std::cout << fmt::format("norm: <psi|psi> = {}", _norm) << std::endl
@@ -351,6 +356,7 @@ struct params {
   // all bools have default value false
   bool totalSpin;        // measure total spin of the state - uses autoMPO
   bool computeEntropy;   // von Neumann entropy at the bond between impurity and next site. Works as intended if p.impindex=1.
+  bool computeEntropy_beforeAfter;   // von Neumann entropy at the bond before the impurity and after it. Works as intended if p.impindex!=1.
   bool impNupNdn;        // print the number of up and dn electrons on the impurity
   bool chargeCorrelation;// compute the impurity-superconductor correlation <n_imp n_i>
   bool spinCorrelation;  // compute the impurity-superconductor correlation <S_imp S_i>
@@ -362,6 +368,7 @@ struct params {
   bool transition_dipole_moment; // compute < i | nsc1 - ncs2 | j > 
   bool transition_quadrupole_moment; // compute < i | nsc1 + ncs2 | j > 
   bool overlaps;         // compute <i|j> overlap table in each subspace
+  bool cdag_overlaps;    // compute <i|cdag|j> overlap between subspaces which differ by 1 in total charge and 0.5 in total Sz
   bool charge_susceptibility; // compute <i|nimp|j> overlap table in each subspace
   bool channel_parity;   // prints the channel parity
 

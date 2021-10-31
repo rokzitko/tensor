@@ -39,8 +39,12 @@ inline void get_autoMPO_1ch_so(MPO& H, const double Eshift, const std::vector<do
     for (auto i : range(2, p.N)){
         for (auto j : range(2, p.N)){
             if (i != j){
-                ampo += p.sc->l(),"Cdagup",i,"Cdn",j;
-                ampo += p.sc->l(),"Cdagdn",i,"Cup",j;
+
+                auto so_prefactor = Complex_i * p.sc->l();
+                so_prefactor *=  i < j ? 1 : -1;
+
+                ampo += so_prefactor,"Cdagup",i,"Cdn",j;
+                ampo += so_prefactor,"Cdagdn",i,"Cup",j;
             }
         }
     }
