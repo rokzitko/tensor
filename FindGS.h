@@ -370,6 +370,7 @@ struct params {
   bool overlaps;         // compute <i|j> overlap table in each subspace
   bool cdag_overlaps;    // compute <i|cdag|j> overlap between subspaces which differ by 1 in total charge and 0.5 in total Sz
   bool charge_susceptibility; // compute <i|nimp|j> overlap table in each subspace
+  bool measureChannelsEnergy; // measure the energy gain for each channel separately
   bool channel_parity;   // prints the channel parity
 
   bool calcweights;      // calculates the spectral weights of the two closes spectroscopically availabe excitations
@@ -543,6 +544,9 @@ inline void add_bath_electrons(const int nsc, const spin & Szadd, const ndx_t &b
 #include "autoMPO_1ch_so.h"
 #include "autoMPO_2ch.h"
 
+#include "MPO_2ch_channel1_only.h"
+#include "MPO_2ch_channel2_only.h"
+
 class single_channel : virtual public problem_type
 {
  public:
@@ -616,7 +620,7 @@ class single_channel_eta : public single_channel
 class two_channel : virtual public problem_type
 {
  public:
-   auto get_eps_V(auto & sc1, auto & Gamma1, auto & sc2, auto & Gamma2, params &p) const {
+  auto get_eps_V(auto & sc1, auto & Gamma1, auto & sc2, auto & Gamma2, params &p) const {
      auto eps1 = sc1->eps(p.band_level_shift, p.flat_band, p.flat_band_factor);
      auto eps2 = sc2->eps(p.band_level_shift, p.flat_band, p.flat_band_factor);
      auto V1 = Gamma1->V(sc1->NBath());
@@ -628,8 +632,8 @@ class two_channel : virtual public problem_type
      auto eps = shift1(concat(eps1, eps2));
      auto V = shift1(concat(V1, V2));
      return std::make_pair(eps, V);
-   }
-   InitState initState(state_t st, params &p) override {
+    }
+  InitState initState(state_t st, params &p) override {
      const auto [ntot, Sz, ii] = st; // Sz is the z-component of the total spin.
      Expects(0 <= ntot && ntot <= 2*p.N);
      Expects(Sz == -1 || Sz == -0.5 || Sz == 0 || Sz == +0.5 || Sz == +1);
@@ -661,10 +665,29 @@ class two_channel : virtual public problem_type
      Ensures(tot == ntot);
      Ensures(Sztot == Sz);
      return state;
-   }
-   int numChannels() {
+  }
+  auto get_one_channel_MPOs_and_impOp(MPO& Hch1, MPO& Hch2, params &p){
+    auto [eps, V] = get_eps_V(p.sc1, p.Gamma1, p.sc2, p.Gamma2, p);
+    double Eshift = p.sc1->Ec()*pow(p.sc1->n0(), 2) + p.sc2->Ec()*pow(p.sc2->n0(), 2) + p.qd->U()/2 + p.V1imp * p.sc1->n0() * p.qd->nu() + p.V2imp * p.sc2->n0() * p.qd->nu();
+    double epsishift1 = - p.V1imp * p.qd->nu();
+    double epsishift2 = - p.V2imp * p.qd->nu();
+    double epseff = p.qd->eps() - p.V1imp * p.sc1->n0() - p.V2imp * p.sc2->n0();
+    // initialize the MPOs
+    
+    channel1_only(Hch1, Eshift, epsishift1, epsishift2, epseff, eps, V, p);
+    channel2_only(Hch2, Eshift, epsishift1, epsishift2, epseff, eps, V, p);
+ 
+    //accumulate the imp operator
+    auto impOp = epseff * p.sites.op("Ntot",p.impindex);  
+    impOp += p.qd->U() * p.sites.op("Nupdn",p.impindex);
+    impOp += 0.5 * p.qd->EZ() * p.sites.op("Nup",p.impindex);
+    impOp += (-1) * 0.5 * p.qd->EZ() * p.sites.op("Ndn",p.impindex);
+    impOp += Eshift * p.sites.op("Id",p.impindex);
+    return impOp;
+  }
+  int numChannels() {
     return 2;
-   }
+  }
 };
 
 namespace prob {
@@ -914,7 +937,7 @@ namespace prob {
         Fill_SCBath_MPO_ImpFirst_TwoChannel_V(H, Eshift, epsishift1, epsishift2, epseff, eps, V, p);
         return H;
       }
-   };
+    };
 
    class twoch_hopping : public imp_first, public two_channel, public Sz_conserved  {
     public:

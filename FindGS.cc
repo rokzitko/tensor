@@ -108,6 +108,7 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.calcweights = input.getYesNo("calcweights", false);
   p.printTotSpinZ = input.getYesNo("printTotSpinZ", false);
   p.charge_susceptibility = input.getYesNo("charge_susceptibility", false);
+  p.measureChannelsEnergy = input.getYesNo("measureChannelsEnergy", false);
   // parameters controlling the calculation
   p.save = input.getYesNo("save", false) || (p.solve_ndx >= 0);
   p.nrsweeps = input.getInt("nrsweeps", 15);
@@ -155,6 +156,34 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   std::cout << "\nspin conservation: " << p.problem->spin_conservation() << "\n";
   p.sites = Hubbard(p.N, {"ConserveSz", p.problem->spin_conservation()});
   report_Sz_conserved(p.problem.get());
+}
+
+void MeasureChannelsEnergy(MPS& psi, H5Easy::File & file, std::string path, params &p) {  
+  MPO Hch1(p.sites);
+  MPO Hch2(p.sites);
+
+  prob::twoch_impfirst_V new2chProblem(p); 
+
+  auto impOp = new2chProblem.get_one_channel_MPOs_and_impOp(Hch1, Hch2, p);
+  double ch1EnergyGain = std::real(innerC(psi, Hch1, psi));
+  double ch2EnergyGain = std::real(innerC(psi, Hch2, psi));
+
+  print("HERE THE PROBLEM STARTS\n");
+  psi.position(p.impindex);
+  print("A\n");
+  auto res = psi(p.impindex) * impOp * dag(prime(psi(p.impindex),"Site"));
+  print("B\n");
+  double impEnergy = std::real(res.cplx());
+  print("HERE THE PROBLEM ENDS\n");
+
+  std::cout << std::setprecision(full) << "Energy gain: " << std::endl;
+  std::cout << std::setprecision(full) << "channel1 : " <<  ch1EnergyGain << std::endl;
+  std::cout << std::setprecision(full) << "channel2 : " <<  ch2EnergyGain << std::endl;  
+  std::cout << std::setprecision(full) << "impurity : " <<  impEnergy << std::endl;  
+  std::cout << std::setprecision(full) << "sum = " << ch1EnergyGain + ch2EnergyGain + impEnergy << std::endl;  
+  H5Easy::dump(file, path + "/channel_energy_gain/1", ch1EnergyGain);
+  H5Easy::dump(file, path + "/channel_energy_gain/2", ch2EnergyGain);
+  H5Easy::dump(file, path + "/channel_energy_gain/imp", impEnergy);
 }
 
 #include "MPO_totalSpin.h"
@@ -804,6 +833,7 @@ void calc_properties(const state_t st, H5Easy::File &file, store &s, params &p)
   if (p.pairCorrelation) MeasurePairCorrelation(psi, file, path, p);
   if (p.hoppingExpectation) MeasureHopping(psi, file, path, p);
   if (p.printTotSpinZ) MeasureTotalSpinz(psi, file, path, p);
+  if (p.measureChannelsEnergy) MeasureChannelsEnergy(psi, file, path, p);
   s.stats[st].dump();
 }
 
