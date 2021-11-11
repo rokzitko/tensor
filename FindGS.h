@@ -242,10 +242,11 @@ class bath { // normal-state bath
  public:
    bath(int NBath, double D = 1.0) : _NBath(NBath), _D(D) {};
    auto NBath() const { return _NBath; }
+   auto D() const { return _D; }
    auto d() const { // inter-level spacing
      return 2.0*_D/_NBath;
    }
-   auto eps(bool flat_band = false, double flat_band_factor = 0) const {
+   auto eps(const bool flat_band = false, const double flat_band_factor = 0) const {
      std::vector<double> eps;
      for (auto k: range1(_NBath))
        if (flat_band) {
@@ -256,7 +257,7 @@ class bath { // normal-state bath
        else eps.push_back( -_D + (k-0.5)*d() );
      return eps;
    }
-   void set_NBath(int NBath) { _NBath = NBath; }
+   void set_NBath(const int NBath) { _NBath = NBath; }
 };
 
 class SCbath : public bath { // superconducting island bath
@@ -269,14 +270,14 @@ class SCbath : public bath { // superconducting island bath
    double _t;     // nearest neighbour hopping in SC
    double _lambda;// spin orbit coupling
  public:
-   SCbath(int NBath, double alpha, double Ec, double n0, double EZ, double EZx, double t, double lambda) :
-     bath(NBath), _alpha(alpha), _Ec(Ec), _n0(n0), _EZ(EZ), _EZx(EZx), _t(t), _lambda(lambda) {};
+   SCbath(int NBath, double D, double alpha, double Ec, double n0, double EZ, double EZx, double t, double lambda) :
+     bath(NBath, D), _alpha(alpha), _Ec(Ec), _n0(n0), _EZ(EZ), _EZx(EZx), _t(t), _lambda(lambda) {};
    auto alpha() const { return _alpha; }
    auto Ec() const { return _Ec; }
    auto n0() const { return _n0; }
    auto EZ() const { return _EZ; }
    auto EZx() const { return _EZx; }
-   auto g() const { return _alpha*d(); }
+   auto g() const { return _alpha*d(); } // NOTE: bandwidth correctly incorporated by using d()
    auto t() const { return _t; }
    auto lambda() const { return _lambda; }
    auto l() const { return _lambda*d(); }
@@ -350,6 +351,7 @@ struct params {
   int NBath;            // number of bath sites
   int NImp;             // number of impurity orbitals
   int impindex;         // impurity position in the chain (1 based)
+  double D;             // half bandwidth
 
   Hubbard sites;        // itensor object
 
@@ -359,7 +361,7 @@ struct params {
   bool computeEntropy_beforeAfter;   // von Neumann entropy at the bond before the impurity and after it. Works as intended if p.impindex!=1.
   bool impNupNdn;        // print the number of up and dn electrons on the impurity
   bool chargeCorrelation;// compute the impurity-superconductor correlation <n_imp n_i>
-  bool spinCorrelation;  // compute the impurity-superconductor correlation <S_imp S_i>
+  bool spinCorrelation;  // compute the impurity-superconductor correlation <S_imp S_i>. NOTE: sum over i includes the impurity site!
   bool spinCorrelationMatrix;  // compute the full correlation matrix <S_i S_j>
   bool channelDensityMatrix; // compute the channel correlation matrix <cdag_i c_j>
   bool pairCorrelation;  // compute the impurity-superconductor correlation <d d c_i^dag c_i^dag>

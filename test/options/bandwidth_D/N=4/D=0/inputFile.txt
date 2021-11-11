@@ -1,0 +1,60 @@
+params{
+     D=0
+
+     Ec=0
+     alpha=0
+     t=1.0
+
+     NBath = 4
+     nref = 1
+     nrange = 0
+     verbose = true
+     band_level_shift = true
+
+     parallel = false
+     sc_only = true
+     MPO = t_SConly
+
+     nrsweeps=30
+}
+
+
+sweeps
+{
+
+sweeps
+     {
+     maxdim  mindim  cutoff  niter  noise
+     20      20      1E-7    3     0
+     20      20      1E-7    3     0
+     20      20      1E-7    3     0
+     20      20      1E-7    3     0
+     20      20      1E-7    3     0
+     40      1      1E-8    3     0
+     40      1      1E-8    3     0
+     40      1      1E-8    3     0
+     40      1      1E-8    3     0
+     40      1      1E-8    3     0
+     160     1      1E-12   3      0
+     160     1      1E-12   5      0
+     160     1      1E-12   5      0
+     160     1      1E-12   5      0
+     160     1      1E-12   5      0
+     240     1      1E-12   5      0
+     240     1      1E-12   5      0
+     240     1      1E-12   5      0
+     240     1      1E-12   5      0
+     240     1      1E-12   5      0
+     400     1      1E-12   5      0
+     400     1      1E-12   5      0
+     400     1      1E-12   5      0
+     400     1      1E-12   5      0
+     400     1      1E-12   5      0
+     400     1      1E-12   5      0
+     400     1      1E-12   5      0
+     400     1      1E-12   5      0
+     400     1      1E-12   5      0
+     400     1      1E-12   5      0
+     }
+
+}
