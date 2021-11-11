@@ -302,7 +302,7 @@ auto calcSpinCorrelation(MPS& psi, const ndx_t &bath_sites, const params &p) {
   double tot = 0;                     // sum over all three contributions and over i
   // Sz Sz
   const auto onSiteSzSz = vev(psi, p.impindex, impSzSz);
-  tot += onSiteSzSz;
+  tot += onSiteSzSz; // VERY IMPORTANT WARNING: tot also contains <Simp.Simp> contribution!!!
   tot += sum(impSz, [&p](const int j){ return Sz(j, p); }, rzz);
   // S+ S-
   const auto onSiteSpSm = vev(psi, p.impindex, impSpSm);
