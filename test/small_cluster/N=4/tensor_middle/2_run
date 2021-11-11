@@ -1,6 +1,8 @@
 #!/bin/bash
+rm -f solution.h5
 calcGS inputFile_0.1.txt >result_0.1.dat
 mv solution.h5 solution1.h5
+rm -f solution.h5
 calcGS inputFile_1.txt >result_1.dat
 mv solution.h5 solution2.h5
 h5diff -d 1e-6 solution1.h5 solution1.h5.ref

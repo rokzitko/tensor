@@ -3,8 +3,10 @@
 #COMPARE the new calcGS results (result_A.dat) with the reference calcGS-middle results (result_A.dat.ref) and the opposite,
 #new calcGS-middle results (result_B.dat) with the reference calcGS results (result_B.dat.ref)
 
+rm -f solution.h5
 calcGS inputFile.txt > result_A.dat
 mv solution.h5 solution1.h5
+rm -f solution.h5
 calcGS inputFile-m.txt >result_B.dat
 mv solution.h5 solution2.h5
 h5diff -d 1e-6 solution1.h5 solution1.h5.ref

@@ -2,5 +2,6 @@
 PATH=../../../..:../../..:../..:..:$PATH
 export OMP_NUM_THREADS=1
 export MKL_NUM_THREADS=1
+rm -f solution.h5
 calcGS inputFile.txt >result.dat
 h5diff -d 1e-6 solution.h5 solution.h5.ref
