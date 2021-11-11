@@ -1,0 +1,81 @@
+params{
+     MPO = Ec_SO
+     U = 0.8
+     epsimp = -0.4
+
+     EZx_imp = 0
+     EZ_imp = 0.1
+     EZx_bulk = 0
+     EZ_bulk = 0
+
+     gamma = 0.1
+     NBath = 4
+     alpha = 0
+     Ec = 0
+     n0 = 0
+
+     verbose = true
+     band_level_shift = true
+
+     nrange = 1
+     calcweights = true
+
+     excited_states = 1
+}
+
+
+sweeps
+{
+
+sweeps
+     {
+     maxdim  mindim  cutoff  niter  noise
+     20      20      1E-7    3     1e-4
+     20      20      1E-7    3     1e-4
+     20      20      1E-7    3     0
+     20      20      1E-7    3     0
+     20      20      1E-7    3     0
+     40      1      1E-8    3     0
+     40      1      1E-8    3     0
+     40      1      1E-8    3     0
+     40      1      1E-8    3     0
+     40      1      1E-8    3     0
+     160     1      1E-12   3      0
+     160     1      1E-12   5      0
+     160     1      1E-12   5      0
+     160     1      1E-12   5      0
+     160     1      1E-12   5      0
+     240     1      1E-12   5      0
+     240     1      1E-12   5      0
+     240     1      1E-12   5      0
+     400     1      1E-12   5      0
+     400     1      1E-12   5      0
+     }
+
+sweeps2
+     {
+     maxdim  mindim  cutoff  niter  noise
+     20      20      1E-7    5     1E-8
+     20      20      1E-7    5     1E-8
+     20      20      1E-7    5     1E-8
+     20      20      1E-7    5     1E-8
+     20      20      1E-7    5     1E-8
+     40      1      1E-8    5     1E-9
+     40      1      1E-8    5     1E-9
+     40      1      1E-8    5     1E-9
+     40      1      1E-8    5     1E-9
+     40      1      1E-8    5     1E-9
+     160     1      1E-12   5      0
+     160     1      1E-12   10      0
+     160     1      1E-12   10      0
+     160     1      1E-12   10      0
+     160     1      1E-12   10      0
+     240     1      1E-12   10      0
+     240     1      1E-12   10      0
+     240     1      1E-12   10      0
+     240     1      1E-12   10      0
+     240     1      1E-12   10      0
+     }
+
+
+}
