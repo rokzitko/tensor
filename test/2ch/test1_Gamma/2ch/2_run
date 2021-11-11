@@ -1,4 +1,5 @@
 #!/bin/bash
 PATH=../../../..:../../..:../..:..:$PATH
+rm -f solution.h5
 calcGS inputFile.txt >result.dat
 h5diff -d 1e-4 solution.h5 solution.h5.ref
