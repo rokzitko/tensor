@@ -249,9 +249,9 @@ class bath { // normal-state bath
      std::vector<double> eps;
      for (auto k: range1(_NBath))
        if (flat_band) {
-        if (k < NBath()/2) eps.push_back(-1. * flat_band_factor);
+        if (k < NBath()/2) eps.push_back(-(_D) * flat_band_factor);
         else if (k == NBath()/2) eps.push_back(0);
-        else if (k > NBath()/2) eps.push_back(flat_band_factor); 
+        else if (k > NBath()/2) eps.push_back(_D*flat_band_factor); 
        }
        else eps.push_back( -_D + (k-0.5)*d() );
      return eps;
