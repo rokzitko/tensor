@@ -249,10 +249,12 @@ class bath { // normal-state bath
    auto eps(const bool flat_band = false, const double flat_band_factor = 0) const {
      std::vector<double> eps;
      for (auto k: range1(_NBath))
+       // flat band: half of the levels at some negative energy (set by flat_band_factor),
+       // half of the levels at the corresponding positive energy, one level at 0.
        if (flat_band) {
-        if (k < NBath()/2) eps.push_back(-(_D) * flat_band_factor);
-        else if (k == NBath()/2) eps.push_back(0);
-        else if (k > NBath()/2) eps.push_back(_D*flat_band_factor); 
+         if (k < NBath()/2) eps.push_back(-(_D) * flat_band_factor);
+         else if (k == NBath()/2) eps.push_back(0);
+         else if (k > NBath()/2) eps.push_back(_D*flat_band_factor); 
        }
        else eps.push_back( -_D + (k-0.5)*d() );
      return eps;
@@ -265,22 +267,22 @@ class SCbath : public bath { // superconducting island bath
    double _alpha; // pairing strength
    double _Ec;    // charging energy
    double _n0;    // offset 
-   double _EZ;    // Zeeman energy
-   double _EZx;    // Zeeman energy
+   double _EZ;    // Zeeman energy (z-axis)
+   double _EZx;   // Zeeman energy (x-axis)
    double _t;     // nearest neighbour hopping in SC
    double _lambda;// spin orbit coupling
  public:
    SCbath(int NBath, double D, double alpha, double Ec, double n0, double EZ, double EZx, double t, double lambda) :
      bath(NBath, D), _alpha(alpha), _Ec(Ec), _n0(n0), _EZ(EZ), _EZx(EZx), _t(t), _lambda(lambda) {};
    auto alpha() const { return _alpha; }
+   auto g() const { return _alpha*d(); } // NOTE: bandwidth incorporated by using d()
    auto Ec() const { return _Ec; }
    auto n0() const { return _n0; }
    auto EZ() const { return _EZ; }
    auto EZx() const { return _EZx; }
-   auto g() const { return _alpha*d(); } // NOTE: bandwidth correctly incorporated by using d()
    auto t() const { return _t; }
    auto lambda() const { return _lambda; }
-   auto l() const { return _lambda*d(); }
+   auto l() const { return _lambda*d(); } // NOTE: bandwidth incorporated by using d()
    auto eps(bool band_level_shift = true, bool flat_band = false, double flat_band_factor = 0) const {
      auto eps = bath::eps(flat_band, flat_band_factor);
      if (band_level_shift)
