@@ -128,6 +128,7 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.cdag_overlaps = input.getYesNo("cdag_overlaps", false);
   p.flat_band = input.getYesNo("flat_band", false);
   p.flat_band_factor = input.getReal("flat_band_factor", 0);
+  p.band_rescale = input.getReal("band_rescale", 1.0);
 
   // dynamical charge susceptibility calculations
   p.chi = input.getYesNo("chi", false);

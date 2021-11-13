@@ -262,6 +262,7 @@ class bath { // normal-state bath
    void set_NBath(const int NBath) { _NBath = NBath; }
 };
 
+// Class containing SC bath parameters. The code makes use only of class SCbath, not of class bath directly.
 class SCbath : public bath { // superconducting island bath
  private:
    double _alpha; // pairing strength
@@ -283,11 +284,14 @@ class SCbath : public bath { // superconducting island bath
    auto t() const { return _t; }
    auto lambda() const { return _lambda; }
    auto l() const { return _lambda*d(); } // NOTE: bandwidth incorporated by using d()
-   auto eps(bool band_level_shift = true, bool flat_band = false, double flat_band_factor = 0) const {
+   auto eps(bool band_level_shift = true, bool flat_band = false, double flat_band_factor = 0, double band_rescale = 1.0) const {
      auto eps = bath::eps(flat_band, flat_band_factor);
      if (band_level_shift)
        for (auto &x: eps)
          x += -g()/2.0;
+     // Apply rescaling here. Since the code only uses SCbath (not bath directly), it's appropriate to do this at this point.
+     for (auto &x: eps)
+       x *= band_rescale;
      return eps;
    };
 };
@@ -401,6 +405,9 @@ struct params {
   bool spin1;            // include sz=1 for even charge sectors.
   bool flat_band;        // set energies of half of the levels to -flat_band_factor, and half of the levels to +flat_band_factor
   float flat_band_factor;
+  double band_rescale;   // rescale the level energies of the band by the factor band_rescale. Note that this does not affect
+                         // the rescaling of alpha (pairing strength) and lambda (SOC strength) parameters, thus the effect is
+                         // different compared to changing the half-bandwidth D.
 
   bool chi;              // calculate Re[chi(omega_r+i eta_r)] by tabulating over [0:tau_max] in steps of tau_step
   double omega_r;
@@ -555,7 +562,7 @@ class single_channel : virtual public problem_type
 {
  public:
    auto get_eps_V(auto & sc, auto & Gamma, params &p) const {
-     auto eps0 = sc->eps(p.band_level_shift, p.flat_band, p.flat_band_factor);
+     auto eps0 = sc->eps(p.band_level_shift, p.flat_band, p.flat_band_factor, p.band_rescale);
      auto V0 = Gamma->V(sc->NBath());
      if (p.verbose) {
        std::cout << "eps=" << eps0 << std::endl;
@@ -603,12 +610,15 @@ class single_channel_eta : public single_channel
    }
 
    auto get_eps_V(auto & sc, auto & Gamma, params &p) const {
-     auto eps0 = sc->eps(false, p.flat_band, p.flat_band_factor); // no band_level_shift here
+     auto eps0 = sc->eps(false, p.flat_band, p.flat_band_factor, 1.0); // no band_level_shift here, no band_rescale either
      if (p.band_level_shift) { // we do it here, in a site-dependent way
        const auto L = p.NBath;
        for (unsigned int i = 0; i < eps0.size(); i++) 
          eps0[i] += -sc->g()/2.0 * pow(y(i+1, p), 2);
      }
+     // rescale the band energy levels here, because we did not do it in sc->eps() call
+     for (auto &x: eps0) 
+       x *= p.band_rescale;
      auto V0 = Gamma->V(sc->NBath());
      if (p.verbose) {
        std::cout << "eta=" << p.eta << " on site " << p.etasite << std::endl;
@@ -625,8 +635,8 @@ class two_channel : virtual public problem_type
 {
  public:
   auto get_eps_V(auto & sc1, auto & Gamma1, auto & sc2, auto & Gamma2, params &p) const {
-     auto eps1 = sc1->eps(p.band_level_shift, p.flat_band, p.flat_band_factor);
-     auto eps2 = sc2->eps(p.band_level_shift, p.flat_band, p.flat_band_factor);
+     auto eps1 = sc1->eps(p.band_level_shift, p.flat_band, p.flat_band_factor, p.band_rescale);
+     auto eps2 = sc2->eps(p.band_level_shift, p.flat_band, p.flat_band_factor, p.band_rescale);
      auto V1 = Gamma1->V(sc1->NBath());
      auto V2 = Gamma2->V(sc2->NBath());
      if (p.verbose) {
