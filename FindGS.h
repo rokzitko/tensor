@@ -547,6 +547,7 @@ inline void add_bath_electrons(const int nsc, const spin & Szadd, const ndx_t &b
 #include "SC_BathMPO_t_SConly.h"
 #include "SC_BathMPO_Ec_t.h"
 #include "SC_BathMPO_Ec_eta.h"
+#include "SC_BathMPO_Ec_V_eta.h" // included after SC_BathMPO_Ec_eta.h
 #include "SC_BathMPO_MiddleImp_TwoChannel.h"
 #include "SC_BathMPO_ImpFirst_TwoChannel.h"
 #include "SC_BathMPO_ImpFirst_TwoChannel_V.h"
@@ -843,6 +844,22 @@ namespace prob {
         return H;
       }
    };
+
+   class Ec_V_eta : public imp_first, public single_channel_eta, public Sz_conserved  {
+    public:
+      Ec_V_eta(const params &p) : imp_first(p.NBath) {}
+      MPO initH(state_t st, params &p) override {
+        if (p.verbose) std::cout << "Building Hamiltonian, MPO=Ec_V_eta" << std::endl;
+        auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
+        MPO H(p.sites);
+        double Eshift = p.sc->Ec()*pow(p.sc->n0(), 2) + p.V12 * p.sc->n0() * p.qd->nu() + p.qd->U()/2;
+        double epseff = p.qd->eps() - p.V12 * p.sc->n0();
+        double epsishift = -p.V12 * p.qd->nu();
+        Fill_SCBath_MPO_Ec_V_eta(H, Eshift, eps, V, epseff, epsishift, p);
+        return H;
+      }
+   };
+   
    // For testing only!! This is the same as 'middle_Ec', but using the MPO for the
    // 2-ch problem. It uses Gamma for hybridisation, but alpha1,alpha2, etc. for
    // channel parameters. Use with care!
@@ -982,6 +999,7 @@ inline type_ptr set_problem(const std::string str, const params &p)
   if (str == "t_SConly") return std::make_unique<prob::t_SConly>(p);
   if (str == "Ec_t") return std::make_unique<prob::Ec_t>(p);
   if (str == "Ec_eta") return std::make_unique<prob::Ec_eta>(p);
+  if (str == "Ec_V_eta") return std::make_unique<prob::Ec_V_eta>(p);
   if (str == "autoH") return std::make_unique<prob::autoH_1ch>(p);
   if (str == "autoH_so") return std::make_unique<prob::autoH_1ch_so>(p);
   if (str == "autoH_2ch") return std::make_unique<prob::autoH_2ch>(p);

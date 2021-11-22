@@ -1,0 +1,6 @@
+#!/bin/bash
+PATH=../../..:../..:$PATH
+rm -f solution.h5
+calcGS inputFile-Ec_V.txt >result-Ec_V.dat
+mv solution.h5 solution2.h5
+h5diff -d 1e-6 solution2.h5 solution2.h5.ref
