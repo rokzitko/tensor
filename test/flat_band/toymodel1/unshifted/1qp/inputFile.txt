@@ -17,7 +17,7 @@ params{
      flat_band_factor = 0
 
      band_level_shift = false
-     calcweights = true
+     calcweights = false
      impNupNdn = true
      MPO = Ec
      EnergyErrgoal = 1e-7
