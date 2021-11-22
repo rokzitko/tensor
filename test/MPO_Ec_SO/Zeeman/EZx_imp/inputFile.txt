@@ -18,7 +18,7 @@ params{
      band_level_shift = true
 
      nrange = 1
-     calcweights = true
+     calcweights = false
 
      excited_states = 1
 }
