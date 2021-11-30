@@ -398,12 +398,13 @@ auto calcMatrix(const std::string which, MPS& psi, const ndx_t &all_sites, const
   return m;
 }
 
+// Spin correlation matrix
 void MeasureSpinCorrelationMatrix(MPS &psi, H5Easy::File &file, std::string path, const params &p) {
   const auto m = calcMatrix("spin", psi, p.problem->all_indexes(), p);
   h5_dump_matrix(file, path + "/spin_correlation_matrix", m);
 }
 
-
+// Charge density matrix, <psi| c^\dag_i c_j |psi>
 void MeasureChannelDensityMatrix(MPS &psi, H5Easy::File &file, std::string path, const params &p) {
   const auto m = calcMatrix("density", psi, p.problem->all_indexes(), p, true);
   h5_dump_matrix(file, path + "/channel_density_matrix", m);
