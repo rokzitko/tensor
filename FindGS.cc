@@ -641,13 +641,18 @@ void MeasureEntropy_beforeAfter(MPS& psi, auto & file, std::string path, const p
   H5Easy::dump(file, path + "/entanglement_entropy_imp/after", SvN2);
 }
 
-//contract all other tensors except the impurity one. The diagonal terms are the squares of the amplitudes for the impurity states |0>, |up>, |dn>, |2>. 
+// Contract all other tensors except one (site indexed by i). The diagonal terms are the squares of the amplitudes for the impurity states |0>, |up>, |dn>, |2>. 
+auto calculate_density_matrix(MPS &psi, const int i, const params &p)
+{
+  psi.position(i);
+  auto psidag = dag(psi);
+  auto psipsi = psi(i)*prime(psidag(i),"Site");
+  return psipsi;
+}
+
 auto calculate_imp_density_matrix(MPS &psi, const params &p)
 {
-  psi.position(p.impindex);
-  auto psidag = dag(psi);
-  auto imp_psipsi = psi(p.impindex)*prime(psidag(p.impindex),"Site");
-  return imp_psipsi;
+  return calculate_density_matrix(psi, p.impindex, p);
 }
 
 void MeasureImpDensityMatrix(MPS& psi, auto & file, std::string path, const params &p){
