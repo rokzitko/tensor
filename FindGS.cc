@@ -656,6 +656,18 @@ auto calculate_imp_density_matrix(MPS &psi, const params &p)
   return calculate_density_matrix(psi, p.impindex, p);
 }
 
+void MeasureOnSiteDensityMatrices(MPS& psi, auto & file, std::string path, const params &p) {
+  const auto all_sites = p.problem->all_indexes();
+  for (const auto i: all_sites) {
+    const auto psipsi = calculate_density_matrix(psi, i, p);
+    std::cout << "site " << i <<" amplitudes: " << std::real(psipsi.cplx(1,1)) << " " << std::real(psipsi.cplx(2,2)) << " " << std::real(psipsi.cplx(3,3)) << " " << std::real(psipsi.cplx(4,4)) << "\n";
+    H5Easy::dump(file, path + "/" + std::to_string(i) + "/amplitudes/0",    sqrt(std::real(psipsi.cplx(1,1))));
+    H5Easy::dump(file, path + "/" + std::to_string(i) + "/amplitudes/up",   sqrt(std::real(psipsi.cplx(2,2))));
+    H5Easy::dump(file, path + "/" + std::to_string(i) + "/amplitudes/down", sqrt(std::real(psipsi.cplx(3,3))));
+    H5Easy::dump(file, path + "/" + std::to_string(i) + "/amplitudes/2",    sqrt(std::real(psipsi.cplx(4,4))));
+  }
+}
+
 void MeasureImpDensityMatrix(MPS& psi, auto & file, std::string path, const params &p){
     const auto psipsi = calculate_imp_density_matrix(psi, p);
     std::cout << "imp amplitudes: " << std::real(psipsi.cplx(1,1)) << " " << std::real(psipsi.cplx(2,2)) << " " << std::real(psipsi.cplx(3,3)) << " " << std::real(psipsi.cplx(4,4)) << "\n";
@@ -830,6 +842,7 @@ void calc_properties(const state_t st, H5Easy::File &file, store &s, params &p)
   MeasurePairing(psi, file, path, p);
   MeasureAmplitudes(psi, file, path, p);
   MeasureImpDensityMatrix(psi, file, path, p);
+  MeasureOnSiteDensityMatrices(psi, file, path, p);
   if (p.totalSpin) MeasureTotalSpin(psi, file, path, p);
   if (p.computeEntropy) MeasureEntropy(psi, file, path, p);
   if (p.computeEntropy_beforeAfter) MeasureEntropy_beforeAfter(psi, file, path, p);
