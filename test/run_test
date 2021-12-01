@@ -9,3 +9,6 @@ test=$(basename "$1")
 echo $dir $test
 cd $dir
 ./$test
+
+# empty line
+echo
