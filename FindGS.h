@@ -362,17 +362,14 @@ struct params {
   Hubbard sites;        // itensor object
 
   // all bools have default value false
-  bool totalSpin;        // measure total spin of the state - uses autoMPO
   bool computeEntropy;   // von Neumann entropy at the bond between impurity and next site. Works as intended if p.impindex=1.
   bool computeEntropy_beforeAfter;   // von Neumann entropy at the bond before the impurity and after it. Works as intended if p.impindex!=1.
-  bool impNupNdn;        // print the number of up and dn electrons on the impurity
   bool chargeCorrelation;// compute the impurity-superconductor correlation <n_imp n_i>
   bool spinCorrelation;  // compute the impurity-superconductor correlation <S_imp S_i>. NOTE: sum over i includes the impurity site!
   bool spinCorrelationMatrix;  // compute the full correlation matrix <S_i S_j>
   bool channelDensityMatrix; // compute the channel correlation matrix <cdag_i c_j>
   bool pairCorrelation;  // compute the impurity-superconductor correlation <d d c_i^dag c_i^dag>
   bool hoppingExpectation;//compute the hopping expectation value 1/sqrt(N) \sum_sigma \sum_i <d^dag c_i> + <c^dag_i d>
-  bool printTotSpinZ;    // prints total Nup, Ndn and Sz
   bool transition_dipole_moment; // compute < i | nsc1 - ncs2 | j > 
   bool transition_quadrupole_moment; // compute < i | nsc1 + ncs2 | j > 
   bool overlaps;         // compute <i|j> overlap table in each subspace

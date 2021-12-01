@@ -96,10 +96,8 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
     p.excited_states = 1; // override
 
   // parameters controlling the postprocessing and output
-  p.totalSpin = input.getYesNo("totalSpin", false);
   p.computeEntropy = input.getYesNo("computeEntropy", false);
   p.computeEntropy_beforeAfter = input.getYesNo("computeEntropy_beforeAfter", false);
-  p.impNupNdn = input.getYesNo("impNupNdn", false);
   p.chargeCorrelation = input.getYesNo("chargeCorrelation", false);
   p.spinCorrelation = input.getYesNo("spinCorrelation", false);
   p.spinCorrelationMatrix = input.getYesNo("spinCorrelationMatrix", false);
@@ -107,7 +105,6 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.pairCorrelation = input.getYesNo("pairCorrelation", false);
   p.hoppingExpectation = input.getYesNo("hoppingExpectation", false);
   p.calcweights = input.getYesNo("calcweights", false);
-  p.printTotSpinZ = input.getYesNo("printTotSpinZ", false);
   p.charge_susceptibility = input.getYesNo("charge_susceptibility", false);
   p.measureChannelsEnergy = input.getYesNo("measureChannelsEnergy", false);
   // parameters controlling the calculation
@@ -843,17 +840,17 @@ void calc_properties(const state_t st, H5Easy::File &file, store &s, params &p)
   MeasureAmplitudes(psi, file, path, p);
   MeasureImpDensityMatrix(psi, file, path, p);
   MeasureOnSiteDensityMatrices(psi, file, path, p);
-  if (p.totalSpin) MeasureTotalSpin(psi, file, path, p);
+  MeasureTotalSpin(psi, file, path, p);
   if (p.computeEntropy) MeasureEntropy(psi, file, path, p);
   if (p.computeEntropy_beforeAfter) MeasureEntropy_beforeAfter(psi, file, path, p);
-  if (p.impNupNdn) MeasureImpurityUpDn(psi, file, path, p);
+  MeasureImpurityUpDn(psi, file, path, p);
   if (p.chargeCorrelation) MeasureChargeCorrelation(psi, file, path, p);
   if (p.spinCorrelation) MeasureSpinCorrelation(psi, file, path, p);
   if (p.channelDensityMatrix) MeasureChannelDensityMatrix(psi, file, path, p);
   if (p.spinCorrelationMatrix) MeasureSpinCorrelationMatrix(psi, file, path, p);
   if (p.pairCorrelation) MeasurePairCorrelation(psi, file, path, p);
   if (p.hoppingExpectation) MeasureHopping(psi, file, path, p);
-  if (p.printTotSpinZ) MeasureTotalSpinz(psi, file, path, p);
+  MeasureTotalSpinz(psi, file, path, p);
   if (p.measureChannelsEnergy) MeasureChannelsEnergy(psi, file, path, p);
   s.stats[st].dump();
 }
