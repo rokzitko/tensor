@@ -703,7 +703,7 @@ void MeasureImpDensityMatrix(MPS &psi, auto &file, std::string path, const param
     const auto Pu = std::real(psipsi.cplx(2,2));
     const auto Pd = std::real(psipsi.cplx(3,3));
     const auto P2 = std::real(psipsi.cplx(4,4));
-    std::cout << "imp amplitudes: " << P0 << " " << Pu  << " " << Pd << " " << P2 << "\n";
+    std::cout << "P_imp: " << P0 << " " << Pu  << " " << Pd << " " << P2 << "\n";
     H5Easy::dump(file, path + "/P_imp/0",    P0);
     H5Easy::dump(file, path + "/P_imp/up",   Pu);
     H5Easy::dump(file, path + "/P_imp/down", Pd);
