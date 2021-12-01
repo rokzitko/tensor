@@ -15,10 +15,18 @@ std::vector<subspace_t> init_subspace_lists(params &p)
 
   std::vector<subspace_t> l;
   for (const auto &ntot : n_list(nref, p.nrange)) {
-    spin szmax = even(ntot) ? ( p.spin1 ? 1 : 0) : 0.5;  // if there is not spin conservation we do not need the triplet states
-    spin szmin = p.magnetic_field() ? -szmax : (even(ntot) ? 0 : 0.5);
-    for (spin sz = szmin; sz <= szmax; sz += 1.0)
-      l.push_back({ntot, sz});
+    if (p.problem->spin_conservation()) { 
+      spin szmax = even(ntot) ? ( p.spin1 ? 1 : 0) : 0.5;  
+      spin szmin = p.magnetic_field() ? -szmax : (even(ntot) ? 0 : 0.5);
+      for (spin sz = szmin; sz <= szmax; sz += 1.0)
+        l.push_back({ntot, sz});      
+    }
+    else { // if there is not spin conservation we do not need the triplet and the Sz=-1/2 states
+      spin sz =  even(ntot) ? ( p.spin1 ? 1 : 0) : 0.5;
+      l.push_back({ntot, sz});      
+    }
+
+
   }
   return l;
 }
