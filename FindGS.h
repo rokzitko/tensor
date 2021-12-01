@@ -401,6 +401,8 @@ struct params {
   int nref;              // central value of the occupancy.
   int nrange;            // number of occupancies considered is 2*nrange + 1, i.e. [nref-nrange:nref+nrange]
   bool spin1;            // include sz=1 for even charge sectors.
+  bool sz_override;      // if true, the sz ranges are controlled by sz_{even|odd}_{min|max}
+  double sz_even_max, sz_even_min, sz_odd_max, sz_odd_min;
   bool flat_band;        // set energies of half of the levels to -flat_band_factor, and half of the levels to +flat_band_factor
   float flat_band_factor;
   double band_rescale;   // rescale the level energies of the band by the factor band_rescale. Note that this does not affect
@@ -502,11 +504,11 @@ class imp_middle : virtual public problem_type
 
 inline void add_imp_electron(const double Sz, const int impindex, auto & state, charge & tot, spin & Sztot)
 {
-  if (Sz == -1 || Sz == -0.5) {
+  if (Sz < 0) {
     state.set(impindex, "Dn");
     Sztot -= 0.5;
   }
-  if (Sz == 0 || Sz == +0.5 || Sz == +1) {
+  if (Sz == 0 || Sz >0) {
     state.set(impindex, "Up");
     Sztot += 0.5;
   }
@@ -516,6 +518,8 @@ inline void add_imp_electron(const double Sz, const int impindex, auto & state, 
 // nsc = number of electrons to add, Szadd = spin of the unpaired electron in the case of odd nsc
 inline void add_bath_electrons(const int nsc, const spin & Szadd, const ndx_t &bath, auto & state, charge & tot, spin & Sztot)
 {
+  // TODO: Generalize to arbitrary Szadd
+  Expects(Szadd == -0.5 || Szadd == 0.0 || Szadd == +0.5);
   const size_t npair = nsc/2;            // number of pairs to add
   Expects(bath.size() >= npair);
   for (size_t j = 0; j < npair; j++)

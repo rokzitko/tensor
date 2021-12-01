@@ -12,21 +12,27 @@ std::vector<subspace_t> init_subspace_lists(params &p)
     if (p.problem->numChannels() == 1) nref = round(p.sc->n0() + 0.5 - (p.qd->eps()/p.qd->U())); // calculation of the energies is centered around this n
     else if (p.problem->numChannels() == 2) nref = round(p.sc1->n0() + p.sc2->n0() + 0.5 - (p.qd->eps()/p.qd->U()));
   }
-
   std::vector<subspace_t> l;
   for (const auto &ntot : n_list(nref, p.nrange)) {
+    spin szmin, szmax;
+    // set up the defaults...
     if (p.problem->spin_conservation()) { 
-      spin szmax = even(ntot) ? ( p.spin1 ? 1 : 0) : 0.5;  
-      spin szmin = p.magnetic_field() ? -szmax : (even(ntot) ? 0 : 0.5);
-      for (spin sz = szmin; sz <= szmax; sz += 1.0)
-        l.push_back({ntot, sz});      
+      szmax = even(ntot) ? ( p.spin1 ? 1 : 0) : 0.5;
+      szmin = p.magnetic_field() ? -szmax : (even(ntot) ? 0 : 0.5);
+    } else { // if there is no spin conservation, we ignore the parameter spin1 and the magnetic_field() setting
+      szmax = even(ntot) ? 0 : 0.5;
+      szmin = szmax;
     }
-    else { // if there is not spin conservation we do not need the triplet and the Sz=-1/2 states
-      spin sz =  even(ntot) ? ( p.spin1 ? 1 : 0) : 0.5;
+    // ...and override, if so requested
+    if (p.sz_override) {
+      szmax = even(ntot) ? p.sz_even_max : p.sz_odd_max;
+      szmin = even(ntot) ? p.sz_even_min : p.sz_odd_min;
+    }
+    // half-integers are exactly representable as floating points, thus the following loop will work correctly
+    for (spin sz = szmin; sz <= szmax; sz += 1.0) {
+      assert(abs(abs(2.0*sz)-int(abs(2.0*sz))) < 1e-10);
       l.push_back({ntot, sz});      
     }
-
-
   }
   return l;
 }
@@ -96,6 +102,11 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.nrange = input.getInt("nrange", 1);
   p.refisn0 = input.getYesNo("refisn0", false);
   p.spin1 = input.getYesNo("spin1", false);
+  p.sz_override = input.getYesNo("sz_override", false);
+  p.sz_even_max = input.getReal("sz_even_max", 0);
+  p.sz_even_min = input.getReal("sz_even_min", 0);
+  p.sz_odd_max = input.getReal("sz_odd_max", 0.5);
+  p.sz_odd_min = input.getReal("sz_odd_min", 0.5);
   p.excited_state = input.getYesNo("excited_state", false);
   p.excited_states = input.getInt("excited_states", 0);
   if (p.excited_states >= 1)
@@ -649,38 +660,56 @@ void MeasureEntropy_beforeAfter(MPS& psi, auto & file, std::string path, const p
 }
 
 // Contract all other tensors except one (site indexed by i). The diagonal terms are the squares of the amplitudes for the impurity states |0>, |up>, |dn>, |2>. 
-auto calculate_density_matrix(MPS &psi, const int i, const params &p)
-{
+auto calculate_density_matrix(MPS &psi, const int i, const params &p) {
   psi.position(i);
   auto psidag = dag(psi);
   auto psipsi = psi(i)*prime(psidag(i),"Site");
   return psipsi;
 }
 
-auto calculate_imp_density_matrix(MPS &psi, const params &p)
-{
+auto calculate_imp_density_matrix(MPS &psi, const params &p) {
   return calculate_density_matrix(psi, p.impindex, p);
 }
 
-void MeasureOnSiteDensityMatrices(MPS& psi, auto & file, std::string path, const params &p) {
+auto to_real_matrix(auto &obj, const int dim1, const int dim2) {
+  auto mat = matrix_t(dim1, dim2); // 0-based
+  for (int i = 1; i <= dim1; i++) // 1-based
+    for (int j = 1; j <= dim2; j++)
+      mat(i-1, j-1) = std::real(obj.cplx(i,j));
+  return mat;
+}
+
+void MeasureOnSiteDensityMatrices(MPS &psi, auto &file, std::string path, const params &p)  {
   const auto all_sites = p.problem->all_indexes();
   for (const auto i: all_sites) {
     const auto psipsi = calculate_density_matrix(psi, i, p);
-    std::cout << "site " << i <<" amplitudes: " << std::real(psipsi.cplx(1,1)) << " " << std::real(psipsi.cplx(2,2)) << " " << std::real(psipsi.cplx(3,3)) << " " << std::real(psipsi.cplx(4,4)) << "\n";
-    H5Easy::dump(file, path + "/" + std::to_string(i) + "/amplitudes/0",    sqrt(std::real(psipsi.cplx(1,1))));
-    H5Easy::dump(file, path + "/" + std::to_string(i) + "/amplitudes/up",   sqrt(std::real(psipsi.cplx(2,2))));
-    H5Easy::dump(file, path + "/" + std::to_string(i) + "/amplitudes/down", sqrt(std::real(psipsi.cplx(3,3))));
-    H5Easy::dump(file, path + "/" + std::to_string(i) + "/amplitudes/2",    sqrt(std::real(psipsi.cplx(4,4))));
+    const auto P0 = std::real(psipsi.cplx(1,1));
+    const auto Pu = std::real(psipsi.cplx(2,2));
+    const auto Pd = std::real(psipsi.cplx(3,3));
+    const auto P2 = std::real(psipsi.cplx(4,4));
+    std::cout << "site " << i <<" P: " << P0 << " " << Pu << " " << Pd << " " << P2 << "\n";
+    H5Easy::dump(file, path + "/" + std::to_string(i) + "/P/0",    P0);
+    H5Easy::dump(file, path + "/" + std::to_string(i) + "/P/up",   Pu);
+    H5Easy::dump(file, path + "/" + std::to_string(i) + "/P/down", Pd);
+    H5Easy::dump(file, path + "/" + std::to_string(i) + "/P/2",    P2);
+    const auto mat = to_real_matrix(psipsi, 4, 4); // WARNING: in general, rho is complex!
+    H5Easy::dump(file, path + "/" + std::to_string(i) + "/density_matrix", mat);
   }
 }
 
-void MeasureImpDensityMatrix(MPS& psi, auto & file, std::string path, const params &p){
+void MeasureImpDensityMatrix(MPS &psi, auto &file, std::string path, const params &p) {
     const auto psipsi = calculate_imp_density_matrix(psi, p);
-    std::cout << "imp amplitudes: " << std::real(psipsi.cplx(1,1)) << " " << std::real(psipsi.cplx(2,2)) << " " << std::real(psipsi.cplx(3,3)) << " " << std::real(psipsi.cplx(4,4)) << "\n";
-    H5Easy::dump(file, path + "/imp_amplitudes/0",    sqrt(std::real(psipsi.cplx(1,1))));
-    H5Easy::dump(file, path + "/imp_amplitudes/up",   sqrt(std::real(psipsi.cplx(2,2))));
-    H5Easy::dump(file, path + "/imp_amplitudes/down", sqrt(std::real(psipsi.cplx(3,3))));
-    H5Easy::dump(file, path + "/imp_amplitudes/2",    sqrt(std::real(psipsi.cplx(4,4))));
+    const auto P0 = std::real(psipsi.cplx(1,1));
+    const auto Pu = std::real(psipsi.cplx(2,2));
+    const auto Pd = std::real(psipsi.cplx(3,3));
+    const auto P2 = std::real(psipsi.cplx(4,4));
+    std::cout << "imp amplitudes: " << P0 << " " << Pu  << " " << Pd << " " << P2 << "\n";
+    H5Easy::dump(file, path + "/P_imp/0",    P0);
+    H5Easy::dump(file, path + "/P_imp/up",   Pu);
+    H5Easy::dump(file, path + "/P_imp/down", Pd);
+    H5Easy::dump(file, path + "/P_imp/2",    P2);
+    const auto mat = to_real_matrix(psipsi, 4, 4); // WARNING: in general, rho is complex!
+    H5Easy::dump(file, path + "/density_matrix_imp", mat);
 }
 
 auto sweeps(params &p)

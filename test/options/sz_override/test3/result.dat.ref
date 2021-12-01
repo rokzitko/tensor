@@ -1,0 +1,208 @@
+Got params.N = 5
+Got params.MPO = std
+Def params.D = 1
+N=5 NBath=4 D=1 impindex=1
+Got params.U = 0.1
+Def params.EZx_imp = 0
+Got params.EZ_imp = 0.03
+Got params.epsimp = 0.01
+Def params.lambda = 0
+Def params.t = 0
+Def params.EZx_bulk = 0
+Got params.EZ_bulk = 0.04
+Got params.n0 = 2.1
+Got params.Ec = 0.1
+Got params.alpha = -0.23
+Got params.gamma = 0.05
+Def params.V = 0
+Def params.V1imp = 0
+Def params.V2imp = 0
+Def params.eta = 1
+Def params.etasite = 2
+Got params.band_level_shift = true
+Def params.lambda1 = 0
+Def params.t1 = 0
+Def params.EZx_bulk1 = 0
+Def params.EZ_bulk1 = 0
+Def params.n01 = 2
+Def params.Ec1 = 0
+Def params.alpha1 = 0
+Def params.lambda2 = 0
+Def params.t2 = 0
+Def params.EZx_bulk2 = 0
+Def params.EZ_bulk2 = 0
+Def params.n02 = 2
+Def params.Ec2 = 0
+Def params.alpha2 = 0
+Def params.gamma1 = 0
+Def params.gamma2 = 0
+Def params.nref = -1
+Got params.nrange = 1
+Def params.refisn0 = 0
+Def params.spin1 = 0
+Got params.sz_override = true
+Got params.sz_even_max = -1
+Got params.sz_even_min = -1
+Got params.sz_odd_max = -0.5
+Got params.sz_odd_min = -0.5
+Def params.excited_state = 0
+Def params.excited_states = 0
+Def params.result_verbosity = 0
+Def params.computeEntropy = 0
+Def params.computeEntropy_beforeAfter = 0
+Def params.chargeCorrelation = 0
+Def params.spinCorrelation = 0
+Def params.spinCorrelationMatrix = 0
+Def params.channelDensityMatrix = 0
+Def params.pairCorrelation = 0
+Def params.hoppingExpectation = 0
+Def params.calcweights = 0
+Def params.charge_susceptibility = 0
+Def params.measureChannelsEnergy = 0
+Def params.save = 0
+Def params.nrsweeps = 15
+Def params.parallel = 1
+Def params.Quiet = 1
+Def params.Silent = 1
+Got params.verbose = true
+Def params.debug = 0
+Def params.EnergyErrgoal = 0
+Def params.nrH = 5
+Def params.sc_only = 0
+Def params.Weight = 5
+Def params.transition_dipole_moment = 0
+Def params.transition_quadrupole_moment = 0
+Def params.overlaps = 0
+Def params.cdag_overlaps = 0
+Def params.flat_band = 0
+Def params.flat_band_factor = 0
+Def params.band_rescale = 1
+Def params.chi = 0
+Def params.omega_r = 0
+Def params.eta_r = 0.01
+Def params.tau_max = 1
+Def params.tau_step = 0.1
+Def params.evol_nr_expansion = 3
+Def params.evol_krylovord = 3
+Def params.evol_nrsweeps = 1
+Def params.evol_sweeps_cutoff = 1e-08
+Def params.evol_sweeps_maxdim = 2000
+Def params.evol_sweeps_niter = 10
+Def params.evol_epsilonK1 = 1e-12
+Def params.evol_epsilonK2 = 1e-12
+Def params.evol_numcenter = 1
+Def params.MF_precision = 1e-05
+Def params.max_iter = 5
+
+spin conservation: 1
+spin is not conserved
+ndx=-1
+solve=5,-0.5
+
+Sweeping in the sector [5,-0.5,0]
+Building Hamiltonian, MPO=Std
+eps=-0.6925 -0.1925 0.3075 0.8075 
+V=0.0892062 0.0892062 0.0892062 0.0892062 
+solve=6,-1
+
+Sweeping in the sector [6,-1,0]
+Building Hamiltonian, MPO=Std
+solve=4,eps=-0.6925 -0.1925 0.3075 0.8075 
+V=0.0892062 0.0892062 0.0892062 0.0892062 
+-1
+
+Sweeping in the sector [4,-1,0]
+Building Hamiltonian, MPO=Std
+eps=-0.6925 -0.1925 0.3075 0.8075 
+V=0.0892062 0.0892062 0.0892062 0.0892062 
+get_stats[4,-1,0]
+Building Hamiltonian, MPO=Std
+eps=-0.6925 -0.1925 0.3075 0.8075 
+V=0.0892062 0.0892062 0.0892062 0.0892062 
+get_stats[5,-0.5,0]
+Building Hamiltonian, MPO=Std
+eps=-0.6925 -0.1925 0.3075 0.8075 
+V=0.0892062 0.0892062 0.0892062 0.0892062 
+get_stats[6,-1,0]
+Building Hamiltonian, MPO=Std
+eps=-0.6925 -0.1925 0.3075 0.8075 
+V=0.0892062 0.0892062 0.0892062 0.0892062 
+
+
+RESULTS FOR THE SECTOR WITH 4 PARTICLES, Sz -1, state 0:
+Energy = -1.6287418536802418
+site occupancies = 0.98187284053642154 1.9778001168749069 0.99961682733906743 0.030871287865761904 0.0098389273838408418 
+tot = 3.9999999999999982
+site pairing = (-0,-0.0014729911680468359) (-0.0079904060366977371,-0) (-2.3564913718490979e-05,-0) (-0.0065465772273226785,-0) (-0.004552810245651108,-0) 
+tot = (-0.019113358423390014,0)
+amplitudes vu = [v=(0.10601328689793338,0) u=(0.17136503862364097,0) pdt=(0.018166971003883484,0)] [v=(0.99131964801974082,0) u=(0.070103692307007123,0) pdt=(0.069495167582666509,0)] [v=(0.019088983030695408,0) u=(0.027341578851235893,0) pdt=(0.00052192293472366237,0)] [v=(0.057741319756010857,0) u=(0.98613527071158125,0) pdt=(0.056940751988837739,0)] [v=(0.039756993216094466,0) u=(0.99586228522107589,0) pdt=(0.039592490117698644,0)] 
+tot = (-0.019153288251751555,0)
+imp amplitudes: 0.02936597646248202 0.00051528824719477239 0.95887991829141894 0.011238816998903533
+site 1 P: 0.02936597646248202 0.00051528824719477239 0.95887991829141894 0.011238816998903533
+site 2 P: 0.0049145276750755243 0.0001521399154461476 0.012218687859494979 0.98271464454998281
+site 3 P: 0.0007475619340783496 2.3067105004618263e-07 0.99888781812172511 0.00036438927314617718
+site 4 P: 0.97246277214140386 6.6014574888024157e-05 0.02413715327654219 0.0033340600071658853
+site 5 P: 0.99174169112574373 3.3797252637482679e-05 0.0066438931120342158 0.0015806185095845787
+Total S = 1.0000000115486261, S^2 = 2.0000000346458786
+impurity nup ndn = 0.011754105246098302 0.97011873529032222 sz = -0.47918231502211195
+Total spin z:  Nup = 0.99999999999999978 Ndn = 2.9999999999999982 Sztot = -0.99999999999999922
+norm: <psi|psi> = 0.9999999999999997
+E: <psi|H|psi> = -1.628741853680241
+deltaE^2: <psi|H^2|psi> - <psi|H|psi>^2 = 2.6645352591003757e-15
+rel error: (<psi|H^2|psi> - <psi|H|psi>^2)/<psi|H|psi>^2 = 1.004423715717703e-15
+
+
+RESULTS FOR THE SECTOR WITH 5 PARTICLES, Sz -0.5, state 0:
+Energy = -1.6987097731092455
+site occupancies = 1.1765738275930282 1.974778797573665 1.7832737914315828 0.048936067813448322 0.016437515588272725 
+tot = 4.9999999999999964
+site pairing = (-0,-0.00532626402607966) (-0.008619737416020342,-0) (-0.012458165435543019,-0) (-0.014004547644680411,-0) (-0.0081442192258786138,-0) 
+tot = (-0.043226669722122385,0)
+amplitudes vu = [v=(0.43659485955719146,0) u=(0.11849575434898839,0) pdt=(0.051734637228120044,0)] [v=(0.99020706427292104,0) u=(0.075704904480038734,0) pdt=(0.074963531216241067,0)] [v=(0.89332066617112738,0) u=(0.12144143105564635,0) pdt=(0.10848614009140503,0)] [v=(0.1240612520474892,0) u=(0.98308449608675086,0) pdt=(0.12196269345299732,0)] [v=(0.071263758526388193,0) u=(0.9943042832508735,0) pdt=(0.070857860343343737,0)] 
+tot = (-0.04327107588695852,0)
+imp amplitudes: 0.014041243798735817 0.0061091898283212797 0.78923449498117826 0.19061507139176365
+site 1 P: 0.014041243798735817 0.0061091898283212797 0.78923449498117826 0.19061507139176365
+site 2 P: 0.0057312325623317889 0.00010201261952445838 0.013656724682145531 0.98051003013599691
+site 3 P: 0.014748021176843294 0.00017881617991154206 0.18705135003481702 0.79802181260842697
+site 4 P: 0.96645512644614118 0.0029501643573453138 0.015203514936921731 0.015391194259590658
+site 5 P: 0.98864100769103347 0.00104318533980952 0.0052372836898484697 0.0050785232793073678
+Total S = 0.50000050156731235, S^2 = 0.75000100313487594
+impurity nup ndn = 0.19672426122008474 0.97984956637294163 sz = -0.39156265257642842
+Total spin z:  Nup = 1.9999999999999969 Ndn = 2.9999999999999956 Sztot = -0.49999999999999933
+norm: <psi|psi> = 0.999999999999999
+E: <psi|H|psi> = -1.6987097731092442
+deltaE^2: <psi|H^2|psi> - <psi|H|psi>^2 = 1.7763568394002505e-15
+rel error: (<psi|H^2|psi> - <psi|H|psi>^2)/<psi|H|psi>^2 = 6.155904045100622e-16
+
+
+RESULTS FOR THE SECTOR WITH 6 PARTICLES, Sz -1, state 0:
+Energy = -0.985796074664669
+site occupancies = 1.6618270283061407 1.9890769657915404 1.3225605929115316 1.0129568996494829 0.013578513341305921 
+tot = 6.0000000000000018
+site pairing = (-0,-0.0023328787764770489) (-0.0044036260194404413,-0) (-0.0020460947288741434,-0) (-0.00011659560568003891,-0) (-0.0057387731220162694,-0) 
+tot = (-0.012305089476010892,0)
+amplitudes vu = [v=(0.81431507132939207,0) u=(0.03580512656104122,0) pdt=(0.029156654189512191,0)] [v=(0.99526749449787655,0) u=(0.038476223990153095,0) pdt=(0.038294135048418762,0)] [v=(0.56881834760079264,0) u=(0.031523319237746712,0) pdt=(0.017931042359707362,0)] [v=(0.11462876334562302,0) u=(0.013522342129395499,0) pdt=(0.0015500493558290248,0)] [v=(0.050352611811792056,0) u=(0.99446310749819311,0) pdt=(0.050073814813004949,0)] 
+tot = (-0.012402639781350411,0)
+imp amplitudes: 0.0012820070880521786 0.0038022995914603706 0.33180665792629527 0.66310903539419286
+site 1 P: 0.0012820070880521786 0.0038022995914603706 0.33180665792629527 0.66310903539419286
+site 2 P: 0.0014804198125404323 1.6722530637862111e-05 0.0079454720527411295 0.9905573856040808
+site 3 P: 0.00099371965576489194 7.3469510871620563e-06 0.67544462082585177 0.32355431256729617
+site 4 P: 0.00018285373666442436 1.3932748248647448e-06 0.98667599960236385 0.013139753386146839
+site 5 P: 0.98895687217496275 0.0032763651840047171 0.0052313771247631674 0.0025353855162690221
+Total S = 1.0000000783114487, S^2 = 2.000000234934352
+impurity nup ndn = 0.66691133498565325 0.99491569332048813 sz = -0.16400217916741744
+Total spin z:  Nup = 2.0000000000000004 Ndn = 4.0000000000000009 Sztot = -1.0000000000000002
+norm: <psi|psi> = 1.0000000000000004
+E: <psi|H|psi> = -0.9857960746646689
+deltaE^2: <psi|H^2|psi> - <psi|H|psi>^2 = 5.551115123125783e-16
+rel error: (<psi|H^2|psi> - <psi|H|psi>^2)/<psi|H|psi>^2 = 5.71223498976209e-16
+
+N_GS = 5
+SZ_GS = -0.5
+E_GS = -1.6987097731092455
+
+n = 4      Sz = -1    i = 0    E = -1.62874185368024       DeltaE = 0.0699679194290037    
+n = 5      Sz = -0.5  i = 0    E = -1.69870977310925       DeltaE = 0.00000000000000      
+n = 6      Sz = -1    i = 0    E = -0.985796074664669      DeltaE = 0.712913698444577     
+
+Wall time: 2 s
