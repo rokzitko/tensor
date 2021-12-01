@@ -96,6 +96,7 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
     p.excited_states = 1; // override
 
   // parameters controlling the postprocessing and output
+  p.result_verbosity = input.getInt("result_verbosity", 0);
   p.computeEntropy = input.getYesNo("computeEntropy", false);
   p.computeEntropy_beforeAfter = input.getYesNo("computeEntropy_beforeAfter", false);
   p.chargeCorrelation = input.getYesNo("chargeCorrelation", false);
@@ -113,7 +114,7 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.parallel = input.getYesNo("parallel", true); // parallel by default!
   p.Quiet = input.getYesNo("Quiet", true);
   p.Silent = input.getYesNo("Silent", p.parallel);
-  p.verbose = input.getYesNo("verbose", !p.parallel);
+  p.verbose = input.getYesNo("verbose", !p.parallel); // add veryverbose ?
   p.debug = input.getYesNo("debug", false);
   p.EnergyErrgoal = input.getReal("EnergyErrgoal", 0);
   p.nrH = input.getInt("nrH", 5);
@@ -377,10 +378,10 @@ auto calcMatrix(const std::string which, MPS& psi, const ndx_t &all_sites, const
   if (p.verbose) { std::cout << "Computing " << which << " correlation matrix" << std::endl; }
   auto m = matrix_t(all_sites.size(), all_sites.size(), 0.0);
   for (const auto i: all_sites) {
-    if (p.verbose) { std::cout << "row " << i << std::endl; }
+//    if (p.veryverbose) { std::cout << "row " << i << std::endl; }
     for (const auto j: all_sites) {
       if (full || i <= j) {
-        if (p.verbose) { std::cout << "column " << j << std::endl; }
+//        if (p.veryverbose) { std::cout << "column " << j << std::endl; }
         
         if (which == "spin")  m(i-1, j-1) = calcSS(psi, i, j, p); // 0-based matrix indexing
         if (which == "density")   m(i-1, j-1) = calcCdagC(psi, i, j, p);
@@ -835,21 +836,21 @@ void calc_properties(const state_t st, H5Easy::File &file, store &s, params &p)
   std::cout << fmt::format("Energy = {}", E) << std::endl;
   H5Easy::dump(file, path + "/E", E);
   auto psi = s.eigen[st].psi();
-  MeasureOccupancy(psi, file, path, p);
-  MeasurePairing(psi, file, path, p);
-  MeasureAmplitudes(psi, file, path, p);
+  if (p.result_verbosity >= 0) MeasureOccupancy(psi, file, path, p);
+  if (p.result_verbosity >= 0) MeasurePairing(psi, file, path, p);
+  if (p.result_verbosity >= 0) MeasureAmplitudes(psi, file, path, p);
   MeasureImpDensityMatrix(psi, file, path, p);
-  MeasureOnSiteDensityMatrices(psi, file, path, p);
-  MeasureTotalSpin(psi, file, path, p);
+  if (p.result_verbosity >= 0) MeasureOnSiteDensityMatrices(psi, file, path, p);
+  if (p.result_verbosity >= 0) MeasureTotalSpin(psi, file, path, p);
   if (p.computeEntropy) MeasureEntropy(psi, file, path, p);
   if (p.computeEntropy_beforeAfter) MeasureEntropy_beforeAfter(psi, file, path, p);
   MeasureImpurityUpDn(psi, file, path, p);
-  if (p.chargeCorrelation) MeasureChargeCorrelation(psi, file, path, p);
-  if (p.spinCorrelation) MeasureSpinCorrelation(psi, file, path, p);
-  if (p.channelDensityMatrix) MeasureChannelDensityMatrix(psi, file, path, p);
-  if (p.spinCorrelationMatrix) MeasureSpinCorrelationMatrix(psi, file, path, p);
-  if (p.pairCorrelation) MeasurePairCorrelation(psi, file, path, p);
-  if (p.hoppingExpectation) MeasureHopping(psi, file, path, p);
+  if (p.chargeCorrelation       || p.result_verbosity >= 1) MeasureChargeCorrelation(psi, file, path, p);
+  if (p.spinCorrelation         || p.result_verbosity >= 1) MeasureSpinCorrelation(psi, file, path, p);
+  if (p.channelDensityMatrix    || p.result_verbosity >= 2) MeasureChannelDensityMatrix(psi, file, path, p);
+  if (p.spinCorrelationMatrix   || p.result_verbosity >= 2) MeasureSpinCorrelationMatrix(psi, file, path, p);
+  if (p.pairCorrelation         || p.result_verbosity >= 1) MeasurePairCorrelation(psi, file, path, p);
+  if (p.hoppingExpectation      || p.result_verbosity >= 1) MeasureHopping(psi, file, path, p);
   MeasureTotalSpinz(psi, file, path, p);
   if (p.measureChannelsEnergy) MeasureChannelsEnergy(psi, file, path, p);
   s.stats[st].dump();

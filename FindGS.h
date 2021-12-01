@@ -361,6 +361,7 @@ struct params {
 
   Hubbard sites;        // itensor object
 
+  int result_verbosity; // Quantifies what additional results are computed (quick way to enable various correlators). default=0
   // all bools have default value false
   bool computeEntropy;   // von Neumann entropy at the bond between impurity and next site. Works as intended if p.impindex=1.
   bool computeEntropy_beforeAfter;   // von Neumann entropy at the bond before the impurity and after it. Works as intended if p.impindex!=1.
