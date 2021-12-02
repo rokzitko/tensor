@@ -116,6 +116,7 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
 
   // parameters controlling the postprocessing and output
   p.result_verbosity = input.getInt("result_verbosity", 0);
+  p.stdout_verbosity = input.getInt("stdout_verbosity", 0);
   p.computeEntropy = input.getYesNo("computeEntropy", false);
   p.computeEntropy_beforeAfter = input.getYesNo("computeEntropy_beforeAfter", false);
   p.chargeCorrelation = input.getYesNo("chargeCorrelation", false);
@@ -269,8 +270,10 @@ auto calcChargeCorrelation(MPS& psi, const ndx_t bath_sites, const params &p) {
 
 void MeasureChargeCorrelation(MPS& psi, auto & file, std::string path, const params &p) {
   const auto [r, tot] = calcChargeCorrelation(psi, p.problem->bath_indexes(), p);
-  std::cout << "charge correlation = " << std::setprecision(full) << r << std::endl;
-  std::cout << "charge correlation tot = " << tot << std::endl;
+  if (p.stdout_verbosity){
+    std::cout << "charge correlation = " << std::setprecision(full) << r << std::endl;
+    std::cout << "charge correlation tot = " << tot << std::endl;}
+  else std::cout << "charge correlations computed" << std::endl; 
   H5Easy::dump(file, path + "/charge_correlation", r);
   H5Easy::dump(file, path + "/charge_correlation_total", tot);
 }
@@ -336,17 +339,20 @@ auto calcSpinCorrelation(MPS& psi, const ndx_t &bath_sites, const params &p) {
 
 void MeasureSpinCorrelation(MPS& psi, H5Easy::File & file, std::string path, const params &p) {
   const auto [onSiteSzSz, onSiteSpSm, onSiteSmSp, rzz, rpm, rmp, tot] = calcSpinCorrelation(psi, p.problem->bath_indexes(), p);
-  std::cout << "spin correlations:\n";
-  std::cout << "SzSz correlations: ";
-  std::cout << std::setprecision(full) << onSiteSzSz << " ";
-  std::cout << std::setprecision(full) << rzz << std::endl;
-  std::cout << "S+S- correlations: ";
-  std::cout << std::setprecision(full) << onSiteSpSm << " ";
-  std::cout << std::setprecision(full) << rpm << std::endl;
-  std::cout << "S-S+ correlations: ";
-  std::cout << std::setprecision(full) << onSiteSmSp << " ";
-  std::cout << std::setprecision(full) << rmp << std::endl;
-  std::cout << "spin correlation tot = " << tot << "\n";
+  if (p.stdout_verbosity >= 0){
+    std::cout << "spin correlations:\n";
+    std::cout << "SzSz correlations: ";
+    std::cout << std::setprecision(full) << onSiteSzSz << " ";
+    std::cout << std::setprecision(full) << rzz << std::endl;
+    std::cout << "S+S- correlations: ";
+    std::cout << std::setprecision(full) << onSiteSpSm << " ";
+    std::cout << std::setprecision(full) << rpm << std::endl;
+    std::cout << "S-S+ correlations: ";
+    std::cout << std::setprecision(full) << onSiteSmSp << " ";
+    std::cout << std::setprecision(full) << rmp << std::endl;
+    std::cout << "spin correlation tot = " << tot << "\n";
+  }
+  else std::cout << "spin correlations computed" << std::endl;
   H5Easy::dump(file, path + "/spin_correlation_imp/zz", onSiteSzSz);
   H5Easy::dump(file, path + "/spin_correlation_imp/pm", onSiteSpSm);
   H5Easy::dump(file, path + "/spin_correlation_imp/mp", onSiteSmSp);
@@ -442,8 +448,10 @@ auto calcPairCorrelation(MPS& psi, const ndx_t &bath_sites, const params &p) {
 
 void MeasurePairCorrelation(MPS& psi, H5Easy::File & file, std::string path, const params &p) {
   const auto [r, tot] = calcPairCorrelation(psi, p.problem->bath_indexes(), p);
-  std::cout << "pair correlation = " << std::setprecision(full) << r << std::endl;
-  std::cout << "pair correlation tot = " << tot << std::endl;
+  if (p.stdout_verbosity >= 0){  
+    std::cout << "pair correlation = " << std::setprecision(full) << r << std::endl;
+    std::cout << "pair correlation tot = " << tot << std::endl;}
+  else std::cout << "pair correlations computed" << std::endl;
   H5Easy::dump(file, path + "/pair_correlation", r);
   H5Easy::dump(file, path + "/pair_correlation_total", tot);
 }
@@ -483,10 +491,13 @@ auto calcHopping(MPS& psi, const ndx_t &bath_sites, const params &p) {
 
 void MeasureHopping(MPS& psi, H5Easy::File & file, std::string path, const params &p) {
   const auto [rup, rdn, totup, totdn] = calcHopping(psi, p.problem->bath_indexes(), p);
-  std::cout << "hopping spin up = " << std::setprecision(full) << rup << std::endl;
-  std::cout << "hopping correlation up tot = " << totup << std::endl;
-  std::cout << "hopping spin down = " << std::setprecision(full) << rdn << std::endl;
-  std::cout << "hopping correlation down tot = " << totdn << std::endl;
+  if (p.stdout_verbosity >= 0 ){
+    std::cout << "hopping spin up = " << std::setprecision(full) << rup << std::endl;
+    std::cout << "hopping correlation up tot = " << totup << std::endl;
+    std::cout << "hopping spin down = " << std::setprecision(full) << rdn << std::endl;
+    std::cout << "hopping correlation down tot = " << totdn << std::endl;
+  }
+  else std::cout << "hopping correlations computed" << std::endl;
   const auto tot = totup+totdn;
   std::cout << "total hopping correlation = " << tot << std::endl;
   H5Easy::dump(file, path + "/hopping/up", rup);
@@ -551,8 +562,12 @@ std::vector<double> calcOccupancy(MPS &psi, const ndx_t &all_sites, const params
 void MeasureOccupancy(MPS& psi, auto & file, std::string path, const params &p) {
   const auto r = calcOccupancy(psi, p.problem->all_indexes(), p);
   const auto tot = std::accumulate(r.cbegin(), r.cend(), 0.0);
-  std::cout << "site occupancies = " << std::setprecision(full) << r << std::endl;
-  std::cout << "tot = " << tot << std::endl;
+  
+  if (p.stdout_verbosity >= 0) {
+    std::cout << "site occupancies = " << std::setprecision(full) << r << std::endl;
+    std::cout << "tot = " << tot << std::endl;
+  }
+  else std::cout << "site occupancies computed" << std::endl;
   H5Easy::dump(file, path + "/site_occupancies", r);
   H5Easy::dump(file, path + "/total_occupancy", tot);
 }
@@ -579,8 +594,11 @@ auto calcPairing(MPS &psi, const ndx_t &all_sites, const params &p) {
 
 void MeasurePairing(MPS& psi, auto & file, std::string path, const params &p) {
   const auto [r, tot] = calcPairing(psi, p.problem->all_indexes(), p);
+  
+  if (p.stdout_verbosity >= 0){
   std::cout << "site pairing = " << std::setprecision(full) << r << std::endl;
-  std::cout << "tot = " << tot << std::endl;
+  std::cout << "tot = " << tot << std::endl;}
+  else std::cout << "pairing computed" << std::endl;
   dumpreal(file, path + "/pairing", r);
   dumpreal(file, path + "/pairing_total", tot);
 }
@@ -610,9 +628,13 @@ auto calcAmplitudes(MPS &psi, const ndx_t &all_sites, const params &p) {
 void MeasureAmplitudes(MPS& psi, auto & file, std::string path, const params &p) {
   const auto [rv, ru, rpdt, tot] = calcAmplitudes(psi, p.problem->all_indexes(), p);
   std::cout << "amplitudes vu = " << std::setprecision(full);
+ 
+  if (p.stdout_verbosity >= 0){
   for (size_t i = 0; i < rv.size(); i++)
     std::cout << "[v=" << rv[i] << " u=" << ru[i] << " pdt=" << rpdt[i] << "] ";
   std::cout << std::endl << "tot = " << tot << std::endl;
+  }
+  else std::cout << "amplitudes computed" << std::endl; 
   dumpreal(file, path + "/amplitudes/u", ru);
   dumpreal(file, path + "/amplitudes/v", rv);
   dumpreal(file, path + "/amplitudes/pdt", rpdt);
@@ -687,7 +709,11 @@ void MeasureOnSiteDensityMatrices(MPS &psi, auto &file, std::string path, const 
     const auto Pu = std::real(psipsi.cplx(2,2));
     const auto Pd = std::real(psipsi.cplx(3,3));
     const auto P2 = std::real(psipsi.cplx(4,4));
+    
+    if (p.stdout_verbosity >= 2){
     std::cout << "site " << i <<" P: " << P0 << " " << Pu << " " << Pd << " " << P2 << "\n";
+    }
+
     H5Easy::dump(file, path + "/" + std::to_string(i) + "/P/0",    P0);
     H5Easy::dump(file, path + "/" + std::to_string(i) + "/P/up",   Pu);
     H5Easy::dump(file, path + "/" + std::to_string(i) + "/P/down", Pd);
@@ -695,6 +721,7 @@ void MeasureOnSiteDensityMatrices(MPS &psi, auto &file, std::string path, const 
     const auto mat = to_real_matrix(psipsi, 4, 4); // WARNING: in general, rho is complex!
     H5Easy::dump(file, path + "/" + std::to_string(i) + "/density_matrix", mat);
   }
+  if (p.stdout_verbosity < 2) std::cout << "Ps computed" << std::endl;
 }
 
 void MeasureImpDensityMatrix(MPS &psi, auto &file, std::string path, const params &p) {
@@ -703,7 +730,10 @@ void MeasureImpDensityMatrix(MPS &psi, auto &file, std::string path, const param
     const auto Pu = std::real(psipsi.cplx(2,2));
     const auto Pd = std::real(psipsi.cplx(3,3));
     const auto P2 = std::real(psipsi.cplx(4,4));
-    std::cout << "P_imp: " << P0 << " " << Pu  << " " << Pd << " " << P2 << "\n";
+    
+    if (p.stdout_verbosity >= 0) std::cout << "P_imp: " << P0 << " " << Pu  << " " << Pd << " " << P2 << "\n";
+    else std::cout << "imp Ps computed" << std::endl;
+
     H5Easy::dump(file, path + "/P_imp/0",    P0);
     H5Easy::dump(file, path + "/P_imp/up",   Pu);
     H5Easy::dump(file, path + "/P_imp/down", Pd);
@@ -873,22 +903,22 @@ void calc_properties(const state_t st, H5Easy::File &file, store &s, params &p)
   std::cout << fmt::format("Energy = {}", E) << std::endl;
   H5Easy::dump(file, path + "/E", E);
   auto psi = s.eigen[st].psi();
+  MeasureImpurityUpDn(psi, file, path, p);
+  MeasureTotalSpinz(psi, file, path, p);
   if (p.result_verbosity >= 0) MeasureOccupancy(psi, file, path, p);
   if (p.result_verbosity >= 0) MeasurePairing(psi, file, path, p);
   if (p.result_verbosity >= 0) MeasureAmplitudes(psi, file, path, p);
-  MeasureImpDensityMatrix(psi, file, path, p);
+  if (p.result_verbosity >= 0) MeasureImpDensityMatrix(psi, file, path, p);
   if (p.result_verbosity >= 0) MeasureOnSiteDensityMatrices(psi, file, path, p);
   if (p.result_verbosity >= 0) MeasureTotalSpin(psi, file, path, p);
-  if (p.computeEntropy) MeasureEntropy(psi, file, path, p);
-  if (p.computeEntropy_beforeAfter) MeasureEntropy_beforeAfter(psi, file, path, p);
-  MeasureImpurityUpDn(psi, file, path, p);
   if (p.chargeCorrelation       || p.result_verbosity >= 1) MeasureChargeCorrelation(psi, file, path, p);
   if (p.spinCorrelation         || p.result_verbosity >= 1) MeasureSpinCorrelation(psi, file, path, p);
-  if (p.channelDensityMatrix    || p.result_verbosity >= 2) MeasureChannelDensityMatrix(psi, file, path, p);
-  if (p.spinCorrelationMatrix   || p.result_verbosity >= 2) MeasureSpinCorrelationMatrix(psi, file, path, p);
   if (p.pairCorrelation         || p.result_verbosity >= 1) MeasurePairCorrelation(psi, file, path, p);
   if (p.hoppingExpectation      || p.result_verbosity >= 1) MeasureHopping(psi, file, path, p);
-  MeasureTotalSpinz(psi, file, path, p);
+  if (p.channelDensityMatrix    || p.result_verbosity >= 2) MeasureChannelDensityMatrix(psi, file, path, p);
+  if (p.spinCorrelationMatrix   || p.result_verbosity >= 2) MeasureSpinCorrelationMatrix(psi, file, path, p);
+  if (p.computeEntropy) MeasureEntropy(psi, file, path, p);
+  if (p.computeEntropy_beforeAfter) MeasureEntropy_beforeAfter(psi, file, path, p);
   if (p.measureChannelsEnergy) MeasureChannelsEnergy(psi, file, path, p);
   s.stats[st].dump();
 }
