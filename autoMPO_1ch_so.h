@@ -22,7 +22,7 @@ inline void get_autoMPO_1ch_so(MPO& H, const double Eshift, const std::vector<do
     for(auto i : range1(2, p.N)){
         ampo += eps_[i-1],"Ntot",i;
         for(auto j: range1(2, p.N)){
-            ampo += p.sc->g(),"Cdagup",i,"Cdagdn",i,"Cdn",j,"Cup",j;
+            ampo += p.sc->g(-1),"Cdagup",i,"Cdagdn",i,"Cdn",j,"Cup",j;
         }
     }
 

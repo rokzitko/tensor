@@ -1,11 +1,11 @@
 
-void get_MPO_bath(auto& ampo, const std::vector<double>& eps_, const std::vector<double>& v_, int startind, int endind, const auto& ch){
+void get_MPO_bath(auto& ampo, const std::vector<double>& eps_, const std::vector<double>& v_, int startind, int endind, const auto& ch, const double shiftFactor){
    
     // bath terms     
     for(auto i: range1(startind, endind)){
         ampo += eps_[i-1],"Ntot",i;
         for(auto j: range1(startind, endind)){
-            ampo += ch->g(),"Cdagup",i,"Cdagdn",i,"Cdn",j,"Cup",j;
+            ampo += ch->g(i - shiftFactor -1),"Cdagup",i,"Cdagdn",i,"Cdn",j,"Cup",j;
         }
     }
     //hopping terms
@@ -68,8 +68,8 @@ inline void get_autoMPO_2ch(MPO& H, const double Eshift, const std::vector<doubl
     capcacitive_coupling(ampo, p.V1imp, sc1start, sc1end, p.sc1, p);
     capcacitive_coupling(ampo, p.V2imp, sc2start, sc2end, p.sc2, p);
 
-    get_MPO_bath(ampo, eps_, v_, sc1start, sc1end, p.sc1);
-    get_MPO_bath(ampo, eps_, v_, sc2start, sc2end, p.sc2);
+    get_MPO_bath(ampo, eps_, v_, sc1start, sc1end, p.sc1, 0);
+    get_MPO_bath(ampo, eps_, v_, sc2start, sc2end, p.sc2, sc2start-1);
     
 
     H = toMPO(ampo);

@@ -75,10 +75,10 @@ inline void Fill_SCBath_MPO_Ec_SO(MPO& H, const double Eshift, const std::vector
         W += p.sites.op("Ndn",i)            * setElt(left(1),right(2)) * (-1.) * p.sc->EZ()/2.0; // bulk Zeeman energy
         W += p.sites.op("S+", i)            * setElt(left(1),right(2)) * p.sc->EZx()/2.0;    // magnetic field in the x direction
         W += p.sites.op("S-", i)            * setElt(left(1),right(2)) * p.sc->EZx()/2.0;    // magnetic field in the x direction
-        W += p.sites.op("Nupdn",i)          * setElt(left(1),right(2)) * (p.sc->g() + 2.0*p.sc->Ec()); // !
+        W += p.sites.op("Nupdn",i)          * setElt(left(1),right(2)) * (p.sc->g(i-1) + 2.0*p.sc->Ec()); // !
 
-        W += p.sites.op("Cdn*Cup",i)        * setElt(left(1),right(7)) * p.sc->g();
-        W += p.sites.op("Cdagup*Cdagdn",i)  * setElt(left(1),right(8)) * p.sc->g();
+        W += p.sites.op("Cdn*Cup",i)        * setElt(left(1),right(7)) * p.sc->g(i-1);
+        W += p.sites.op("Cdagup*Cdagdn",i)  * setElt(left(1),right(8)) * p.sc->g(i-1);
         W += p.sites.op("Ntot", i)          * setElt(left(1),right(9)) * 2.0*p.sc->Ec(); // !
 
         W += p.sites.op("Id",i) * setElt(left(2),right(2));
@@ -130,7 +130,7 @@ inline void Fill_SCBath_MPO_Ec_SO(MPO& H, const double Eshift, const std::vector
         W += p.sites.op("Ndn",  i)  * setElt(left(1)) * (-1) * p.sc->EZ()/2.0; // bulk Zeeman energy
         W += p.sites.op("S+", i)    * setElt(left(1)) * p.sc->EZx()/2.0;    // magnetic field in the x direction
         W += p.sites.op("S-", i)    * setElt(left(1)) * p.sc->EZx()/2.0;    // magnetic field in the x direction
-        W += p.sites.op("Nupdn",i)  * setElt(left(1)) * (p.sc->g() + 2.0*p.sc->Ec()); // !
+        W += p.sites.op("Nupdn",i)  * setElt(left(1)) * (p.sc->g(i-1) + 2.0*p.sc->Ec()); // !
 
         W += p.sites.op("Id",    i) * setElt(left(2)) ;
         W += p.sites.op("Cdagup",i) * setElt(left(3)) * v_[i-1];

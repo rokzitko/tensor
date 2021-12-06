@@ -54,6 +54,19 @@ void report_Sz_conserved(T *prob) {
   }
 }
 
+// parse pairing strength alpha into a vector. If only alpha is given 
+std::vector<double> parse_alphas(auto& input, int Nlevels, std::string channel = ""){
+
+  std::vector<double> alphas;
+  std::string alpha_ch = "alpha" + channel; // for the two channel problem this is "alpha1" and "alpha2", and "alpha" for single channel.
+
+  for (int i = 0; i <= Nlevels; i++) {
+    double alpha_i = input.getReal(alpha_ch + "_" + std::to_string(i), input.getReal(alpha_ch, 0.) );  // parse alpha_NN from the input, if not found fall back to alpha.
+    alphas.push_back(alpha_i);
+  }
+  return shift1(alphas); // converted to 1-based vector
+}
+
 void parse_cmd_line(int argc, char *argv[], params &p) {
   if (!(argc == 2 || argc == 3 || argc == 4))
     throw std::runtime_error("Please provide input file. Usage: executable <input file> [solve_ndx] [stop_n]");
@@ -80,20 +93,22 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   // parameters entering the problem definition
   const double U = input.getReal("U", 0); // need to parse it first because it enters the default value for epsimp just below
   p.qd = std::make_unique<imp>(U, input.getReal("epsimp", -U/2.), input.getReal("EZ_imp", 0.), input.getReal("EZx_imp", 0.));
-  p.sc = std::make_unique<SCbath>(p.NBath, p.D, input.getReal("alpha", 0), input.getReal("Ec", 0), input.getReal("n0", p.N-1), input.getReal("EZ_bulk", 0.), input.getReal("EZx_bulk", 0.), input.getReal("t", 0.), input.getReal("lambda", 0.));
   p.Gamma = std::make_unique<hyb>(input.getReal("gamma", 0));
   
+
+  p.sc = std::make_unique<SCbath>(p.NBath, p.D, parse_alphas(input, p.NBath), input.getReal("Ec", 0), input.getReal("n0", p.N-1), input.getReal("EZ_bulk", 0.), input.getReal("EZx_bulk", 0.), input.getReal("t", 0.), input.getReal("lambda", 0.));
+
+  p.eta = input.getReal("eta", 1.0);
+  p.etasite = input.getInt("etasite", p.NBath/2); // Fermi-level !
+  p.band_level_shift = input.getYesNo("band_level_shift", false);  
+
   p.V12 = input.getReal("V", 0); // handled in a special way
   p.V1imp = input.getReal("V1imp", 0); // capacitive coupling between sc1 and imp
   p.V2imp = input.getReal("V2imp", 0); // capacitive coupling between sc2 and imp
 
-  p.eta = input.getReal("eta", 1.0);
-  p.etasite = input.getInt("etasite", p.NBath/2); // Fermi-level !
-  p.band_level_shift = input.getYesNo("band_level_shift", false);
-
   // parameters for the 2-channel problem
-  p.sc1 = std::make_unique<SCbath>(p.NBath/2, p.D, input.getReal("alpha1", 0), input.getReal("Ec1", 0), input.getReal("n01", (p.N-1)/2), input.getReal("EZ_bulk1", 0), input.getReal("EZx_bulk1", 0.), input.getReal("t1", 0), input.getReal("lambda1", 0.));
-  p.sc2 = std::make_unique<SCbath>(p.NBath/2, p.D, input.getReal("alpha2", 0), input.getReal("Ec2", 0), input.getReal("n02", (p.N-1)/2), input.getReal("EZ_bulk2", 0), input.getReal("EZx_bulk2", 0.), input.getReal("t2", 0), input.getReal("lambda2", 0.));
+  p.sc1 = std::make_unique<SCbath>(p.NBath/2, p.D, parse_alphas(input, p.NBath/2, "1"), input.getReal("Ec1", 0), input.getReal("n01", (p.N-1)/2), input.getReal("EZ_bulk1", 0), input.getReal("EZx_bulk1", 0.), input.getReal("t1", 0), input.getReal("lambda1", 0.));
+  p.sc2 = std::make_unique<SCbath>(p.NBath/2, p.D, parse_alphas(input, p.NBath/2, "2"), input.getReal("Ec2", 0), input.getReal("n02", (p.N-1)/2), input.getReal("EZ_bulk2", 0), input.getReal("EZx_bulk2", 0.), input.getReal("t2", 0), input.getReal("lambda2", 0.));
   p.Gamma1 = std::make_unique<hyb>(input.getReal("gamma1", 0));
   p.Gamma2 = std::make_unique<hyb>(input.getReal("gamma2", 0));
 
@@ -585,7 +600,7 @@ auto calcPairing(MPS &psi, const ndx_t &all_sites, const params &p) {
     auto val1d = psi.A(i) * p.sites.op("Cdagdn*Cdn", i) * dag(prime(psi.A(i),"Site"));
     // For Gamma>0, <C+CC+C>-<C+C><C+C> may be negative.
     auto diff = val2.cplx() - val1u.cplx() * val1d.cplx();
-    auto sq = p.sc->g() * sqrt(diff); // XXX: only meaningful for single channel!
+    auto sq = p.sc->g(i) * sqrt(diff); // XXX: only meaningful for single channel!
     r.push_back(sq);
     if (i != p.impindex) tot += sq; // exclude the impurity site in the sum
   }
@@ -616,7 +631,7 @@ auto calcAmplitudes(MPS &psi, const ndx_t &all_sites, const params &p) {
     auto v = sqrt( std::real(valv.cplx()) ); // XXX
     auto u = sqrt( std::real(valu.cplx()) );
     auto pdt = v*u;
-    auto element = p.sc->g() * pdt;
+    auto element = p.sc->g(i) * pdt;
     ru.push_back(u);
     rv.push_back(v);
     rpdt.push_back(pdt);

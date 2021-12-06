@@ -265,7 +265,7 @@ class bath { // normal-state bath
 // Class containing SC bath parameters. The code makes use only of class SCbath, not of class bath directly.
 class SCbath : public bath { // superconducting island bath
  private:
-   double _alpha; // pairing strength
+   std::vector<double> _alphas; // pairing strength
    double _Ec;    // charging energy
    double _n0;    // offset 
    double _EZ;    // Zeeman energy (z-axis)
@@ -273,10 +273,10 @@ class SCbath : public bath { // superconducting island bath
    double _t;     // nearest neighbour hopping in SC
    double _lambda;// spin orbit coupling
  public:
-   SCbath(int NBath, double D, double alpha, double Ec, double n0, double EZ, double EZx, double t, double lambda) :
-     bath(NBath, D), _alpha(alpha), _Ec(Ec), _n0(n0), _EZ(EZ), _EZx(EZx), _t(t), _lambda(lambda) {};
-   auto alpha() const { return _alpha; }
-   auto g() const { return _alpha*d(); } // NOTE: bandwidth incorporated by using d()
+   SCbath(int NBath, double D, std::vector<double> alphas, double Ec, double n0, double EZ, double EZx, double t, double lambda) :
+     bath(NBath, D), _alphas(alphas), _Ec(Ec), _n0(n0), _EZ(EZ), _EZx(EZx), _t(t), _lambda(lambda) {};
+   auto alphas() const { return _alphas; }
+   auto g(int i) const { return _alphas[i] * d(); } // NOTE: bandwidth incorporated by using d()
    auto Ec() const { return _Ec; }
    auto n0() const { return _n0; }
    auto EZ() const { return _EZ; }
@@ -287,8 +287,10 @@ class SCbath : public bath { // superconducting island bath
    auto eps(bool band_level_shift = true, bool flat_band = false, double flat_band_factor = 0, double band_rescale = 1.0) const {
      auto eps = bath::eps(flat_band, flat_band_factor);
      if (band_level_shift)
-       for (auto &x: eps)
-         x += -g()/2.0;
+      for (int i = 1; i <= NBath(); i++){
+        eps[i-1] += -g(i)/2.0; // eps is not 1-based here yet, but g() is!
+        std::cout << "AAA " << g(i) << "\n"; 
+      }  
      // Apply rescaling here. Since the code only uses SCbath (not bath directly), it's appropriate to do this at this point.
      for (auto &x: eps)
        x *= band_rescale;
@@ -618,7 +620,7 @@ class single_channel_eta : public single_channel
      if (p.band_level_shift) { // we do it here, in a site-dependent way
        const auto L = p.NBath;
        for (unsigned int i = 0; i < eps0.size(); i++) 
-         eps0[i] += -sc->g()/2.0 * pow(y(i+1, p), 2);
+         eps0[i] += -sc->g(i)/2.0 * pow(y(i+1, p), 2);
      }
      // rescale the band energy levels here, because we did not do it in sc->eps() call
      for (auto &x: eps0) 

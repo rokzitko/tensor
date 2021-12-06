@@ -30,10 +30,16 @@ inline void Fill_SCBath_MPO_Ec(MPO& H, const double Eshift, const std::vector<do
     //all matrices togehter one obtains the hamiltonian. 
     //therefore the tensor on the first and last site must be column/ row vectors
     //and all sites between matrices
-
+        
     //first site is a vector:
     {
+
+
         int i = 1;
+        
+        std::cout << "HERE: " << i << " " << p.sc->g(i-1) << " " << eps_[i-1] << " \n";
+
+
         ITensor& W = H.ref(i);
         Index right = links.at(i);
 
@@ -58,6 +64,8 @@ inline void Fill_SCBath_MPO_Ec(MPO& H, const double Eshift, const std::vector<do
         Index left = dag( links.at(i-1) );
         Index right = links.at(i);
 
+        std::cout << "HERE: " << i << " " << p.sc->g(i-1) << " " <<  eps_[i-1] << " \n";
+
         W = ITensor(left, right, p.sites.si(i), p.sites.siP(i) );
 
         W += p.sites.op("Id",i) * setElt(left(1), right(1));
@@ -65,10 +73,10 @@ inline void Fill_SCBath_MPO_Ec(MPO& H, const double Eshift, const std::vector<do
         W += p.sites.op("Ntot",i)           * setElt(left(1),right(2)) * (eps_[i-1] + p.sc->Ec()*(1.0-2.0*p.sc->n0())); // !
         W += p.sites.op("Nup",i)            * setElt(left(1),right(2)) * p.sc->EZ()/2.0; // bulk Zeeman energy
         W += p.sites.op("Ndn",i)            * setElt(left(1),right(2)) * (-1.) * p.sc->EZ()/2.0; // bulk Zeeman energy
-        W += p.sites.op("Nupdn",i)          * setElt(left(1),right(2)) * (p.sc->g() + 2.0*p.sc->Ec()); // !
+        W += p.sites.op("Nupdn",i)          * setElt(left(1),right(2)) * (p.sc->g(i-1) + 2.0*p.sc->Ec()); // !
 
-        W += p.sites.op("Cdn*Cup",i)        * setElt(left(1),right(7)) * p.sc->g();
-        W += p.sites.op("Cdagup*Cdagdn",i)  * setElt(left(1),right(8)) * p.sc->g();
+        W += p.sites.op("Cdn*Cup",i)        * setElt(left(1),right(7)) * p.sc->g(i-1);
+        W += p.sites.op("Cdagup*Cdagdn",i)  * setElt(left(1),right(8)) * p.sc->g(i-1);
         W += p.sites.op("Ntot", i)          * setElt(left(1),right(9)) * 2.0*p.sc->Ec(); // !
 
         W += p.sites.op("Id",i)*setElt(left(2),right(2));
@@ -96,12 +104,14 @@ inline void Fill_SCBath_MPO_Ec(MPO& H, const double Eshift, const std::vector<do
         ITensor& W = H.ref(i);
         Index left = dag( links.at(i-1) );
 
+        std::cout << "HERE: " << i << " " << p.sc->g(i-1) << " " <<  eps_[i-1] << " \n";
+
         W = ITensor(left, p.sites.si(i), p.sites.siP(i) );
 
         W += p.sites.op("Ntot",  i) * setElt(left(1)) * (eps_[i-1] + p.sc->Ec()*(1.0-2.0*p.sc->n0())); // !
         W += p.sites.op("Nup",  i)  * setElt(left(1)) * p.sc->EZ()/2.0; // bulk Zeeman energy
         W += p.sites.op("Ndn",  i)  * setElt(left(1)) * (-1) * p.sc->EZ()/2.0; // bulk Zeeman energy
-        W += p.sites.op("Nupdn",i)  * setElt(left(1)) * (p.sc->g() + 2.0*p.sc->Ec()); // !
+        W += p.sites.op("Nupdn",i)  * setElt(left(1)) * (p.sc->g(i-1) + 2.0*p.sc->Ec()); // !
 
         W += p.sites.op("Id",    i) * setElt(left(2)) ;
         W += p.sites.op("Cdagup",i) * setElt(left(3)) * v_[i-1];
