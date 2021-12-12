@@ -6,13 +6,15 @@ params{
      gamma = 1
      N = 3
      nrange = 0
-     excited_states = 8
+     excited_states = 2
      Weight = 1000
      verbose = true
 
 #    calc_weights = true
      charge_susceptibility = true
      overlaps = true
+
+     nrsweeps = 20
 }
 
 
