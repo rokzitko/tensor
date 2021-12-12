@@ -13,7 +13,6 @@ cd $dir
 # Note: h5diff silently returns 1 if difference in structure is found
 STATUS=$?
 
-echo $STATUS
 if [ $STATUS -eq 0 ]
 then
   echo $dir $test >>${HERE}/succeeded.log
