@@ -782,6 +782,7 @@ void solve_gs(const state_t &st, store &s, params &p) {
                              "Quiet", p.Quiet,
                              "EnergyErrgoal", p.EnergyErrgoal});
   s.eigen[st] = eigenpair(GSenergy, psi);
+  s.stats[st] = psi_stats(psi, H);
 }
 
 
@@ -800,16 +801,7 @@ void solve_es(const state_t &st, store &s, params &p) {
                              "EnergyErrgoal", p.EnergyErrgoal,
                              "Weight", p.Weight});
   s.eigen[st] = eigenpair(ESenergy, psi);
-}
-
-void get_stats(store &s, params &p)
-{
-  for (const auto &[state, ep] : s.eigen) {
-    std::cout << "get_stats" << state << std::endl;
-    const auto &[n, sz, i] = state;
-    auto H = p.problem->initH(state, p);
-    s.stats[state] = psi_stats(ep.psi(), H);
-  }
+  s.stats[st] = psi_stats(psi, H);
 }
 
 void save(const state_t &st, const eigenpair &ep, params &p)
@@ -873,12 +865,9 @@ void solve_state(const state_t &st, store &s, params &p)
 
 void obtain_result(const subspace_t &sub, store &s, params &p)
 {
-
   std::cout << "obtain result\n";
   for (int n = 0; n <= std::min(p.excited_states, p.stop_n); n++) {
-    
     auto st = es(sub, n);
-
     try {
       const auto res = load(st, p, sub);
       if (res) {
@@ -887,7 +876,6 @@ void obtain_result(const subspace_t &sub, store &s, params &p)
       }
     }
     catch (...) {}
-
     if (s.eigen.count(st) == 0) {
       std::cout << "solve=" << sub << std::endl;
       solve_state(st, s, p);   // fallback: compute
@@ -897,7 +885,6 @@ void obtain_result(const subspace_t &sub, store &s, params &p)
 
 void solve(const std::vector<subspace_t> &l, store &s, params &p) {
   Expects(p.solve_ndx == -1 || (0 <= p.solve_ndx && p.solve_ndx < int(l.size())));
-
   auto obtain_result_l = [&s,&p](const auto &sub) { obtain_result(sub, s, p); };
   std::cout << "ndx=" << p.solve_ndx << std::endl;
   if (p.solve_ndx == -1) { // solve all
@@ -908,8 +895,6 @@ void solve(const std::vector<subspace_t> &l, store &s, params &p) {
   } else { // solve one (ndx)
     obtain_result_l(l[p.solve_ndx]);
   }
-  get_stats(s, p);
-
 }
 
 void calc_properties(const state_t st, H5Easy::File &file, store &s, params &p)
