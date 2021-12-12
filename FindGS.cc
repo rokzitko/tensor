@@ -13,6 +13,7 @@ std::vector<subspace_t> init_subspace_lists(params &p)
     else if (p.problem->numChannels() == 2) nref = round(p.sc1->n0() + p.sc2->n0() + 0.5 - (p.qd->eps()/p.qd->U()));
   }
   std::vector<subspace_t> l;
+  std::cout << "Constructing the list of subspace: " << std::endl;
   for (const auto &ntot : n_list(nref, p.nrange)) {
     spin szmin, szmax;
     // set up the defaults...
@@ -31,9 +32,11 @@ std::vector<subspace_t> init_subspace_lists(params &p)
     // half-integers are exactly representable as floating points, thus the following loop will work correctly
     for (spin sz = szmin; sz <= szmax; sz += 1.0) {
       assert(abs(abs(2.0*sz)-int(abs(2.0*sz))) < 1e-10);
+      std::cout << " " << ntot << " " << sz << std::endl;
       l.push_back({ntot, sz});      
     }
   }
+  std::cout << std::endl;
   return l;
 }
 
@@ -45,6 +48,7 @@ template<typename T> void my_assert(const bool condition, T message) {
 }
 
 // Example of conditional compilation
+// TO DO: to be fixed!
 template<typename T>
 void report_Sz_conserved(T *prob) {
   if constexpr (std::is_base_of_v<Sz_conserved, T>) {
@@ -187,9 +191,9 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   // If spin orbit coupling is turned on in any sc, turn of the spin conservation. 
     
 
-  std::cout << "\nspin conservation: " << p.problem->spin_conservation() << "\n";
+  std::cout << "\nspin conservation: " << (p.problem->spin_conservation() ? "yes" : "no") << "\n";
   p.sites = Hubbard(p.N, {"ConserveSz", p.problem->spin_conservation()});
-  report_Sz_conserved(p.problem.get());
+  // report_Sz_conserved(p.problem.get()); // TO DO: to be fixed
 }
 
 void MeasureChannelsEnergy(MPS& psi, H5Easy::File & file, std::string path, params &p) {  
