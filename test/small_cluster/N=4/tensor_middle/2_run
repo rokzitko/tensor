@@ -1,4 +1,5 @@
 #!/bin/bash
+PATH=../../../..:../..:$PATH
 rm -f solution.h5
 calcGS inputFile_0.1.txt >result_0.1.dat
 mv solution.h5 solution1.h5

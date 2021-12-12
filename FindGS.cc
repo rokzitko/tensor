@@ -102,6 +102,7 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
 
   p.eta = input.getReal("eta", 1.0);
   p.etasite = input.getInt("etasite", p.NBath/2); // Fermi-level !
+  p.etarescale = input.getYesNo("etarescale", true);
   p.band_level_shift = input.getYesNo("band_level_shift", false);  
 
   p.V12 = input.getReal("V", 0); // handled in a special way

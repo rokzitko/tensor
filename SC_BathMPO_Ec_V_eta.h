@@ -1,8 +1,12 @@
-// Function y() is part of SC_BathMPO_Ec_eta.h, which thus needs to be included before this header file!
-
-inline void Fill_SCBath_MPO_Ec_V_eta(MPO& H, const double Eshift, const std::vector<double>& eps_,
-                const std::vector<double>& v_, double epseff, double epsishift, const params &p)
+MPO initH(state_t st, params &p) override
 {
+  if (p.verbose) std::cout << "Building Hamiltonian, MPO=Ec_V_eta" << std::endl;
+  auto [eps_, v_] = get_eps_V(p.sc, p.Gamma, p);
+  double Eshift = p.sc->Ec()*pow(p.sc->n0(), 2) + p.V12 * p.sc->n0() * p.qd->nu() + p.qd->U()/2;
+  double epseff = p.qd->eps() - p.V12 * p.sc->n0();
+  double epsishift = -p.V12 * p.qd->nu();
+  MPO H(p.sites);
+
       //QN objects are necessary to have abelian symmetries in MPS
       QN    qn0  ( {"Sz",  0},{"Nf", 0} ),
             cupC ( {"Sz", +1},{"Nf",+1} ),
@@ -29,7 +33,7 @@ inline void Fill_SCBath_MPO_Ec_V_eta(MPO& H, const double Eshift, const std::vec
 
     //then we just fill the MPO tensors which can be viewed
     //as matrices (vectors) of operators. if one multiplies
-    //all matrices togehter one obtains the hamiltonian. 
+    //all matrices togehter one obtains the hamiltonian.
     //therefore the tensor on the first and last site must be column/ row vectors
     //and all sites between matrices
 
@@ -121,4 +125,6 @@ inline void Fill_SCBath_MPO_Ec_V_eta(MPO& H, const double Eshift, const std::vec
         W += p.sites.op("Ntot",         i) * setElt(left(9)); // !
     }
 
-  }
+  return H;
+}
+

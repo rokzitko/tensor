@@ -446,6 +446,7 @@ struct params {
   double V2imp;          // QD-SC capacitive coupling, for MPO_2h_.*_V
   double eta;            // coupling reduction factor, 0<=eta<=1, for MPO_Ec_eta
   int etasite;           // site with reduced pairing
+  bool etarescale;       // if true, rescale other couplings to produce the same overall SC pairing strength (default is true)
 
   bool magnetic_field() { return qd->EZ() != 0 || qd->EZx() != 0 || sc->EZ() != 0 || sc->EZx() != 0 || sc1->EZ() != 0 || sc1->EZx() != 0 || sc2->EZ() != 0 || sc2->EZx() != 0; } // true if there is magnetic field
 
@@ -563,8 +564,6 @@ inline void add_bath_electrons(const int nsc, const spin & Szadd, const ndx_t &b
 #include "SC_BathMPO_MiddleImp_Ec.h"
 #include "SC_BathMPO_t_SConly.h"
 #include "SC_BathMPO_Ec_t.h"
-#include "SC_BathMPO_Ec_eta.h"
-#include "SC_BathMPO_Ec_V_eta.h" // included after SC_BathMPO_Ec_eta.h
 #include "SC_BathMPO_MiddleImp_TwoChannel.h"
 #include "SC_BathMPO_ImpFirst_TwoChannel.h"
 #include "SC_BathMPO_ImpFirst_TwoChannel_V.h"
@@ -622,9 +621,11 @@ class single_channel_eta : public single_channel
  public:
    double y(const int i, const params &p) const {
      const auto L = p.NBath;
-     assert(0.0 <= p.eta && p.eta <= 1.0);
-     assert(i >= 1 && i <= L); // 1 is special site, 2,3,...,L are regular sites
-     return i == p.etasite ? p.eta : sqrt( (L-p.eta*p.eta)/(L-1.) );
+     Expects(0.0 <= p.eta && p.eta <= 1.0); // should we relax this constraint?
+     Expects(1 <= i && i <= L);
+     Expects(1 <= p.etasite && p.etasite <= L);
+     const double x = p.etarescale ? sqrt( (L-p.eta*p.eta)/(L-1.) ) : 1;
+     return i == p.etasite ? p.eta : x;
    }
 
    auto get_eps_V(auto & sc, auto & Gamma, params &p) const {
@@ -638,7 +639,7 @@ class single_channel_eta : public single_channel
        x *= p.band_rescale;
      auto V = Gamma->V(sc->NBath());
      if (p.verbose) {
-       std::cout << "eta=" << p.eta << " on site " << p.etasite << std::endl;
+       std::cout << "eta=" << p.eta << " on site " << p.etasite << " rescale=" << p.etarescale << std::endl;
        std::cout << "eps=" << eps << std::endl;
        std::cout << "V=" << V << std::endl;
      }
@@ -848,34 +849,19 @@ namespace prob {
         return H;
       }
    };
+   
    class Ec_eta : public imp_first, public single_channel_eta, public Sz_conserved  {
     public:
       Ec_eta(const params &p) : imp_first(p.NBath) {}
-      MPO initH(state_t st, params &p) override {
-        if (p.verbose) std::cout << "Building Hamiltonian, MPO=Ec_eta" << std::endl;
-        auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
-        MPO H(p.sites);
-        double Eshift = p.sc->Ec()*pow(p.sc->n0(), 2) + p.qd->U()/2;
-        Fill_SCBath_MPO_Ec_eta(H, Eshift, eps, V, p);
-        return H;
-      }
+      #include "SC_BathMPO_Ec_eta.h"
    };
 
    class Ec_V_eta : public imp_first, public single_channel_eta, public Sz_conserved  {
     public:
       Ec_V_eta(const params &p) : imp_first(p.NBath) {}
-      MPO initH(state_t st, params &p) override {
-        if (p.verbose) std::cout << "Building Hamiltonian, MPO=Ec_V_eta" << std::endl;
-        auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
-        MPO H(p.sites);
-        double Eshift = p.sc->Ec()*pow(p.sc->n0(), 2) + p.V12 * p.sc->n0() * p.qd->nu() + p.qd->U()/2;
-        double epseff = p.qd->eps() - p.V12 * p.sc->n0();
-        double epsishift = -p.V12 * p.qd->nu();
-        Fill_SCBath_MPO_Ec_V_eta(H, Eshift, eps, V, epseff, epsishift, p);
-        return H;
-      }
+      #include "SC_BathMPO_Ec_V_eta.h"
    };
-   
+
    // For testing only!! This is the same as 'middle_Ec', but using the MPO for the
    // 2-ch problem. It uses Gamma for hybridisation, but alpha1,alpha2, etc. for
    // channel parameters. Use with care!

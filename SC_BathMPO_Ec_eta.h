@@ -1,18 +1,10 @@
-// Level-dependent coupling strength
-// RZ March 2021
-
-inline double y(const int i, const params &p)
+MPO initH(state_t st, params &p) override
 {
-  const auto L = p.NBath;
-  assert(0.0 <= p.eta && p.eta <= 1.0);
-  assert(i >= 2 && i <= L+1); // 1 is impurity site
-  assert(1 <= p.etasite && p.etasite <= L); // L/2 and L/2+1 are at Fermi level!
-  return i == p.etasite ? p.eta : sqrt( (L-p.eta*p.eta)/(L-1) );
-}
+  if (p.verbose) std::cout << "Building Hamiltonian, MPO=Ec_eta" << std::endl;
+  auto [eps_, v_] = get_eps_V(p.sc, p.Gamma, p);
+  double Eshift = p.sc->Ec()*pow(p.sc->n0(), 2) + p.qd->U()/2;
+  MPO H(p.sites);
 
-inline void Fill_SCBath_MPO_Ec_eta(MPO& H, const double Eshift, const std::vector<double>& eps_,
-                                   const std::vector<double>& v_, const params &p)
-{
       //QN objects are necessary to have abelian symmetries in MPS
       QN    qn0  ( {"Sz",  0},{"Nf", 0} ),
             cupC ( {"Sz", +1},{"Nf",+1} ),
@@ -39,7 +31,7 @@ inline void Fill_SCBath_MPO_Ec_eta(MPO& H, const double Eshift, const std::vecto
 
     //then we just fill the MPO tensors which can be viewed
     //as matrices (vectors) of operators. if one multiplies
-    //all matrices togehter one obtains the hamiltonian. 
+    //all matrices togehter one obtains the hamiltonian.
     //therefore the tensor on the first and last site must be column/ row vectors
     //and all sites between matrices
 
@@ -126,4 +118,5 @@ inline void Fill_SCBath_MPO_Ec_eta(MPO& H, const double Eshift, const std::vecto
         W += p.sites.op("Ntot",         i) * setElt(left(9)); // !
     }
 
-  }
+  return H;
+}
