@@ -21,7 +21,7 @@ params{
      calcweights = true
      impNupNdn = true
      MPO = Ec_eta
-     EnergyErrgoal = 1e-5
+     EnergyErrgoal = 1e-8
      nrsweeps = 30
      excited_states = 0
      overlaps = true
