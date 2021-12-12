@@ -59,13 +59,12 @@ void report_Sz_conserved(T *prob) {
 }
 
 // parse pairing strength alpha into a vector. If only alpha is given 
-std::vector<double> parse_alphas(auto& input, int Nlevels, std::string channel = ""){
-
+std::vector<double> parse_alphas(auto& input, const int Nlevels, const std::string channel = "") {
   std::vector<double> alphas;
-  std::string alpha_ch = "alpha" + channel; // for the two channel problem this is "alpha1" and "alpha2", and "alpha" for single channel.
-
+  const std::string alpha_ch = "alpha" + channel; // for the two channel problem this is "alpha1" and "alpha2", and "alpha" for single channel.
+  const auto default_value = input.getReal(alpha_ch, 0.);
   for (int i = 0; i <= Nlevels; i++) {
-    double alpha_i = input.getReal(alpha_ch + "_" + std::to_string(i), input.getReal(alpha_ch, 0.) );  // parse alpha_NN from the input, if not found fall back to alpha.
+    const double alpha_i = input.getReal(alpha_ch + "_" + std::to_string(i), default_value);  // parse alpha_NN from the input, if not found fall back to alpha.
     alphas.push_back(alpha_i);
   }
   return shift1(alphas); // converted to 1-based vector
