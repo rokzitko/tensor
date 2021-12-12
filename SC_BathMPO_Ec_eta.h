@@ -4,7 +4,11 @@ MPO initH(state_t st, params &p) override
   auto [eps_, v_] = get_eps_V(p.sc, p.Gamma, p);
   double Eshift = p.sc->Ec()*pow(p.sc->n0(), 2) + p.qd->U()/2;
   MPO H(p.sites);
-
+  std::cout << "y=";
+  for (int i = 1; i <= p.NBath; i++)
+    std::cout << y(i, p) << " ";
+  std::cout << std::endl;
+          
       //QN objects are necessary to have abelian symmetries in MPS
       QN    qn0  ( {"Sz",  0},{"Nf", 0} ),
             cupC ( {"Sz", +1},{"Nf",+1} ),
