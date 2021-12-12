@@ -70,6 +70,15 @@ std::vector<double> parse_alphas(auto& input, const int Nlevels, const std::stri
   return shift1(alphas); // converted to 1-based vector
 }
 
+auto parse_ys(auto& input, const int Nlevels, const std::string channel = "") {
+  std::vector<double> yvec;
+  const std::string y_ch = "y" + channel; // for the two channel problem this is "y1" and "y2", and "y" for single channel.
+  const auto default_value = input.getReal(y_ch, 1.0); // NOTE: default is 1
+  for (int i = 1; i <= Nlevels; i++)
+    yvec.push_back(input.getReal(y_ch + "_" + std::to_string(i), default_value)); // parse y_NN from the input, if not found fall back to y.
+  return shift1(yvec); // convert to 1-based vector
+}
+
 void parse_cmd_line(int argc, char *argv[], params &p) {
   if (!(argc == 2 || argc == 3 || argc == 4))
     throw std::runtime_error("Please provide input file. Usage: executable <input file> [solve_ndx] [stop_n]");
