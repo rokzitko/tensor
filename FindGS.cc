@@ -94,7 +94,6 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   const double U = input.getReal("U", 0); // need to parse it first because it enters the default value for epsimp just below
   p.qd = std::make_unique<imp>(U, input.getReal("epsimp", -U/2.), input.getReal("EZ_imp", 0.), input.getReal("EZx_imp", 0.));
   p.Gamma = std::make_unique<hyb>(input.getReal("gamma", 0));
-  
 
   p.sc = std::make_unique<SCbath>(p.NBath, p.D, parse_alphas(input, p.NBath), input.getReal("Ec", 0), input.getReal("n0", p.N-1), input.getReal("EZ_bulk", 0.), input.getReal("EZx_bulk", 0.), input.getReal("t", 0.), input.getReal("lambda", 0.));
 
@@ -769,7 +768,6 @@ void solve_gs(const state_t &st, store &s, params &p) {
 
   auto H = p.problem->initH(st, p);
   auto state = p.problem->initState(st, p);
-
   MPS psi_init(state);
   for(auto i : range1(p.nrH)){
     psi_init = applyMPO(H,psi_init);
@@ -871,6 +869,8 @@ void solve_state(const state_t &st, store &s, params &p)
 
 void obtain_result(const subspace_t &sub, store &s, params &p)
 {
+
+  std::cout << "obtain result\n";
   for (int n = 0; n <= std::min(p.excited_states, p.stop_n); n++) {
     
     auto st = es(sub, n);
@@ -895,7 +895,6 @@ void solve(const std::vector<subspace_t> &l, store &s, params &p) {
   Expects(p.solve_ndx == -1 || (0 <= p.solve_ndx && p.solve_ndx < int(l.size())));
 
   auto obtain_result_l = [&s,&p](const auto &sub) { obtain_result(sub, s, p); };
-
   std::cout << "ndx=" << p.solve_ndx << std::endl;
   if (p.solve_ndx == -1) { // solve all
     if (p.parallel)

@@ -209,12 +209,15 @@ inline ndx_t range(int a, int b) // non-const because of swap!
 
 // Concatenate two vectors
 template<typename T>
-auto concat(const std::vector<T> &t1, const std::vector<T> &t2)
+auto concat(const std::vector<T> &t1, const std::vector<T> &t2, const bool one_based = false)
 {
+  
+  int t2_shift = one_based ? 1 : 0; //if this is 1, the first elemenet of the second vector is skipped
+
    std::vector<T> t;
    t.reserve(t1.size() + t2.size());
    t.insert(t.end(), t1.cbegin(), t1.cend());
-   t.insert(t.end(), t2.cbegin(), t2.cend());
+   t.insert(t.end(), t2.cbegin() + t2_shift, t2.cend());
    return t;
 }
 
@@ -257,7 +260,7 @@ class bath { // normal-state bath
          else if (k > NBath()/2) eps.push_back(_D*flat_band_factor); 
        }
        else eps.push_back( -_D + (k-0.5)*d() );
-     return eps;
+     return shift1(eps);
    }
    void set_NBath(const int NBath) { _NBath = NBath; }
 };
@@ -288,8 +291,7 @@ class SCbath : public bath { // superconducting island bath
      auto eps = bath::eps(flat_band, flat_band_factor);
      if (band_level_shift)
       for (int i = 1; i <= NBath(); i++){
-        eps[i-1] += -g(i)/2.0; // eps is not 1-based here yet, but g() is!
-        std::cout << "AAA " << g(i) << "\n"; 
+        eps[i] += -g(i)/2.0;
       }  
      // Apply rescaling here. Since the code only uses SCbath (not bath directly), it's appropriate to do this at this point.
      for (auto &x: eps)
@@ -305,7 +307,8 @@ class hyb {
    hyb(double Gamma) : _Gamma(Gamma) {};
    auto Gamma() const { return _Gamma; }
    auto V(int NBath) const {
-     return std::vector<double>(NBath, std::sqrt( 2.0*_Gamma/(M_PI*NBath) ));
+    //already 1-based here!
+    return shift1(std::vector<double>(NBath, std::sqrt( 2.0*_Gamma/(M_PI*NBath) )));
    }
 };
 
@@ -568,14 +571,12 @@ class single_channel : virtual public problem_type
 {
  public:
    auto get_eps_V(auto & sc, auto & Gamma, params &p) const {
-     auto eps0 = sc->eps(p.band_level_shift, p.flat_band, p.flat_band_factor, p.band_rescale);
-     auto V0 = Gamma->V(sc->NBath());
+     auto eps = sc->eps(p.band_level_shift, p.flat_band, p.flat_band_factor, p.band_rescale);
+     auto V = Gamma->V(sc->NBath());
      if (p.verbose) {
-       std::cout << "eps=" << eps0 << std::endl;
-       std::cout << "V=" << V0 << std::endl;
+       std::cout << "eps=" << eps << std::endl;
+       std::cout << "V=" << V << std::endl;
      }
-     auto eps = shift1(eps0);
-     auto V = shift1(V0);
      return std::make_pair(eps, V);
    }
    InitState initState(state_t st, params &p) override {
@@ -612,27 +613,24 @@ class single_channel_eta : public single_channel
      const auto L = p.NBath;
      assert(0.0 <= p.eta && p.eta <= 1.0);
      assert(i >= 1 && i <= L); // 1 is special site, 2,3,...,L are regular sites
-     return i == 1 ? p.eta : sqrt( (L-p.eta*p.eta)/(L-1.) );
+     return i == p.etasite ? p.eta : sqrt( (L-p.eta*p.eta)/(L-1.) );
    }
 
    auto get_eps_V(auto & sc, auto & Gamma, params &p) const {
-     auto eps0 = sc->eps(false, p.flat_band, p.flat_band_factor, 1.0); // no band_level_shift here, no band_rescale either
+     auto eps = sc->eps(false, p.flat_band, p.flat_band_factor, 1.0); // no band_level_shift here, no band_rescale either
      if (p.band_level_shift) { // we do it here, in a site-dependent way
-       const auto L = p.NBath;
-       for (unsigned int i = 0; i < eps0.size(); i++) 
-         eps0[i] += -sc->g(i)/2.0 * pow(y(i+1, p), 2);
+       for (int i = 1; i <= p.NBath; i++) 
+         eps[i] += -(sc->g(i)/2.0 ) * pow(y(i, p), 2);
      }
      // rescale the band energy levels here, because we did not do it in sc->eps() call
-     for (auto &x: eps0) 
+     for (auto &x: eps) 
        x *= p.band_rescale;
-     auto V0 = Gamma->V(sc->NBath());
+     auto V = Gamma->V(sc->NBath());
      if (p.verbose) {
        std::cout << "eta=" << p.eta << " on site " << p.etasite << std::endl;
-       std::cout << "eps=" << eps0 << std::endl;
-       std::cout << "V=" << V0 << std::endl;
+       std::cout << "eps=" << eps << std::endl;
+       std::cout << "V=" << V << std::endl;
      }
-     auto eps = shift1(eps0);
-     auto V = shift1(V0);
      return std::make_pair(eps, V);
    }
 };
@@ -649,8 +647,8 @@ class two_channel : virtual public problem_type
        std::cout << "eps1=" << eps1 << std::endl << "eps2=" << eps2 << std::endl;
        std::cout << "V1=" << V1 << std::endl << "V2=" << V2 << std::endl;
      }
-     auto eps = shift1(concat(eps1, eps2));
-     auto V = shift1(concat(V1, V2));
+     auto eps = concat(eps1, eps2, true); //because eps1 and eps2 are both 1 based. Removes the first element of eps2 and concats.
+     auto V = concat(V1, V2, true);
      return std::make_pair(eps, V);
     }
   InitState initState(state_t st, params &p) override {

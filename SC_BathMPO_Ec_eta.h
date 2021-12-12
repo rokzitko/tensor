@@ -7,8 +7,7 @@ inline double y(const int i, const params &p)
   assert(0.0 <= p.eta && p.eta <= 1.0);
   assert(i >= 2 && i <= L+1); // 1 is impurity site
   assert(1 <= p.etasite && p.etasite <= L); // L/2 and L/2+1 are at Fermi level!
-  const auto etasite = 1+p.etasite; // 1-based
-  return i == etasite ? p.eta : sqrt( (L-p.eta*p.eta)/(L-1) );
+  return i == p.etasite ? p.eta : sqrt( (L-p.eta*p.eta)/(L-1) );
 }
 
 inline void Fill_SCBath_MPO_Ec_eta(MPO& H, const double Eshift, const std::vector<double>& eps_,
@@ -78,10 +77,10 @@ inline void Fill_SCBath_MPO_Ec_eta(MPO& H, const double Eshift, const std::vecto
         W += p.sites.op("Ntot",i)           * setElt(left(1),right(2)) * (eps_[i-1] + p.sc->Ec()*(1.0-2.0*p.sc->n0())); // !
         W += p.sites.op("Nup",i)            * setElt(left(1),right(2)) * p.sc->EZ()/2.0; // bulk Zeeman energy
         W += p.sites.op("Ndn",i)            * setElt(left(1),right(2)) * (-1.) * p.sc->EZ()/2.0; // bulk Zeeman energy
-        W += p.sites.op("Nupdn",i)          * setElt(left(1),right(2)) * (p.sc->g(i-1)*pow(y(i,p),2) + 2.0*p.sc->Ec()); // !
+        W += p.sites.op("Nupdn",i)          * setElt(left(1),right(2)) * (p.sc->g(i-1)*pow(y(i-1,p),2) + 2.0*p.sc->Ec()); // !
 
-        W += p.sites.op("Cdn*Cup",i)        * setElt(left(1),right(7)) * p.sc->g(i-1) * y(i,p);
-        W += p.sites.op("Cdagup*Cdagdn",i)  * setElt(left(1),right(8)) * p.sc->g(i-1) * y(i,p);
+        W += p.sites.op("Cdn*Cup",i)        * setElt(left(1),right(7)) * p.sc->g(i-1) * y(i-1,p);
+        W += p.sites.op("Cdagup*Cdagdn",i)  * setElt(left(1),right(8)) * p.sc->g(i-1) * y(i-1,p);
         W += p.sites.op("Ntot", i)          * setElt(left(1),right(9)) * 2.0*p.sc->Ec(); // !
 
         W += p.sites.op("Id",i)*setElt(left(2),right(2));
@@ -98,8 +97,8 @@ inline void Fill_SCBath_MPO_Ec_eta(MPO& H, const double Eshift, const std::vecto
         W += p.sites.op("Cup",   i)*setElt(left(5),right(2))* v_[i-1];
         W += p.sites.op("Cdn",   i)*setElt(left(6),right(2))* v_[i-1];
 
-        W += p.sites.op("Cdagup*Cdagdn",i)*setElt(left(7),right(2)) * y(i,p);
-        W += p.sites.op("Cdn*Cup",i)      *setElt(left(8),right(2)) * y(i,p);
+        W += p.sites.op("Cdagup*Cdagdn",i)*setElt(left(7),right(2)) * y(i-1,p);
+        W += p.sites.op("Cdn*Cup",i)      *setElt(left(8),right(2)) * y(i-1,p);
         W += p.sites.op("Ntot",i)         *setElt(left(9),right(2)); // !
     }
 
@@ -114,7 +113,7 @@ inline void Fill_SCBath_MPO_Ec_eta(MPO& H, const double Eshift, const std::vecto
         W += p.sites.op("Ntot",  i) * setElt(left(1)) * (eps_[i-1] + p.sc->Ec()*(1.0-2.0*p.sc->n0())); // !
         W += p.sites.op("Nup",  i)  * setElt(left(1)) * p.sc->EZ()/2.0; // bulk Zeeman energy
         W += p.sites.op("Ndn",  i)  * setElt(left(1)) * (-1) * p.sc->EZ()/2.0; // bulk Zeeman energy
-        W += p.sites.op("Nupdn",i)  * setElt(left(1)) * (p.sc->g(i-1)*pow(y(i,p),2) + 2.0*p.sc->Ec()); // !
+        W += p.sites.op("Nupdn",i)  * setElt(left(1)) * (p.sc->g(i-1)*pow(y(i-1,p),2) + 2.0*p.sc->Ec()); // !
 
         W += p.sites.op("Id",    i) * setElt(left(2)) ;
         W += p.sites.op("Cdagup",i) * setElt(left(3)) * v_[i-1];
@@ -122,8 +121,8 @@ inline void Fill_SCBath_MPO_Ec_eta(MPO& H, const double Eshift, const std::vecto
         W += p.sites.op("Cup",   i) * setElt(left(5)) * v_[i-1];
         W += p.sites.op("Cdn",   i) * setElt(left(6)) * v_[i-1];
 
-        W += p.sites.op("Cdagup*Cdagdn",i) * setElt(left(7)) * y(i,p);
-        W += p.sites.op("Cdn*Cup",      i) * setElt(left(8)) * y(i,p);
+        W += p.sites.op("Cdagup*Cdagdn",i) * setElt(left(7)) * y(i-1,p);
+        W += p.sites.op("Cdn*Cup",      i) * setElt(left(8)) * y(i-1,p);
         W += p.sites.op("Ntot",         i) * setElt(left(9)); // !
     }
 

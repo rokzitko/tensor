@@ -120,6 +120,7 @@ inline void Fill_SCBath_MPO_Ec_SO(MPO& H, const double Eshift, const std::vector
     //site N is a vector again
     {
         int i = length(H);
+
         ITensor& W = H.ref(i);
         Index left = dag( links.at(i-1) );
 
@@ -147,8 +148,6 @@ inline void Fill_SCBath_MPO_Ec_SO(MPO& H, const double Eshift, const std::vector
         W += p.sites.op("Cdagdn", i) * setElt(left(11)) * Complex_i * p.sc->l();
         W += p.sites.op("Cup", i)    * setElt(left(12)) * Complex_i * p.sc->l();
         W += p.sites.op("Cdn", i)    * setElt(left(13)) * Complex_i * p.sc->l();
-
-
     }
 
   }

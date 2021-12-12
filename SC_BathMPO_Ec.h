@@ -37,9 +37,6 @@ inline void Fill_SCBath_MPO_Ec(MPO& H, const double Eshift, const std::vector<do
 
         int i = 1;
         
-        std::cout << "HERE: " << i << " " << p.sc->g(i-1) << " " << eps_[i-1] << " \n";
-
-
         ITensor& W = H.ref(i);
         Index right = links.at(i);
 
@@ -63,8 +60,6 @@ inline void Fill_SCBath_MPO_Ec(MPO& H, const double Eshift, const std::vector<do
         ITensor& W = H.ref(i);
         Index left = dag( links.at(i-1) );
         Index right = links.at(i);
-
-        std::cout << "HERE: " << i << " " << p.sc->g(i-1) << " " <<  eps_[i-1] << " \n";
 
         W = ITensor(left, right, p.sites.si(i), p.sites.siP(i) );
 
@@ -103,8 +98,6 @@ inline void Fill_SCBath_MPO_Ec(MPO& H, const double Eshift, const std::vector<do
         int i = length(H);
         ITensor& W = H.ref(i);
         Index left = dag( links.at(i-1) );
-
-        std::cout << "HERE: " << i << " " << p.sc->g(i-1) << " " <<  eps_[i-1] << " \n";
 
         W = ITensor(left, p.sites.si(i), p.sites.siP(i) );
 
