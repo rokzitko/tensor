@@ -6,8 +6,10 @@ params{
      verbose = true
      band_level_shift = true
      lambda = 0.3
+     nref = 6
+     nrange = 0
 	
-     MPO = autoH_so
+     MPO = Ec_SO
 }
 
 

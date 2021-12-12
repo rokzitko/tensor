@@ -1,0 +1,8 @@
+#!/bin/bash
+PATH=../../..:../..:$PATH
+rm -f solution.h5
+calcGS inputFile_Ec_SO >result_Ec.dat
+mv solution.h5 solution2.h5
+rm -f solution.h5
+calcGS inputFile_auto > result_auto.dat
+h5diff -n 1  -d 1e-2 solution.h5 solution2.h5
