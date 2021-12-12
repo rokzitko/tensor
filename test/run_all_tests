@@ -1,2 +1,6 @@
 #!/bin/bash
+rm -f failed.log
+rm -f succeeded.log
 find . -regex ".*[1-9]_run" -exec ./run_test {} \;
+wc succeeded.log
+wc failed.log

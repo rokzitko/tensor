@@ -7,8 +7,18 @@ export PATH=$HERE:$HERE/..:$PATH
 dir=$(dirname "$1")
 test=$(basename "$1")
 echo $dir $test
+
 cd $dir
 ./$test
+# Note: h5diff silently returns 1 if difference in structure is found
+STATUS=$?
 
+echo $STATUS
+if [ $STATUS -eq 0 ]
+then
+  echo $dir $test >>${HERE}/succeeded.log
+else
+  echo $dir $test >>${HERE}/failed.log
+fi
 # empty line
 echo

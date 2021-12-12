@@ -1,2 +1,4 @@
 *.dat
 tools/
+failed.log
+succeeded.log
