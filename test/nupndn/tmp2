@@ -1,0 +1,509 @@
+HDF5 "solution.h5.ref" {
+GROUP "/" {
+   GROUP "4" {
+      GROUP "0" {
+         GROUP "0" {
+            DATASET "E" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): -1.21956
+               }
+            }
+            GROUP "amplitudes" {
+               DATASET "pdt" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 6 ) / ( 6 ) }
+                  DATA {
+                  (0): 0.023731, 0.0387393, 0.0512995, 0.0342162, 0.0200711,
+                  (5): 0.0144237
+                  }
+               }
+               DATASET "u" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 6 ) / ( 6 ) }
+                  DATA {
+                  (0): 0.204817, 0.039691, 0.221985, 0.977758, 0.991329,
+                  (5): 0.99486
+                  }
+               }
+               DATASET "v" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 6 ) / ( 6 ) }
+                  DATA {
+                  (0): 0.115865, 0.976022, 0.231094, 0.0349946, 0.0202467,
+                  (5): 0.0144983
+                  }
+               }
+            }
+            DATASET "amplitudes_total" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): -0.00635
+               }
+            }
+            DATASET "impurity_Ndn" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 0.485737
+               }
+            }
+            DATASET "impurity_Nup" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 0.485737
+               }
+            }
+            DATASET "impurity_Sz" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 1.23224e-10
+               }
+            }
+            DATASET "pairing" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SIMPLE { ( 6 ) / ( 6 ) }
+               DATA {
+               (0): -0, -0.00124976, -0, -0.00106849, -0.00072863,
+               (5): -0.000540847
+               }
+            }
+            DATASET "pairing_total" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): -0.00358773
+               }
+            }
+            DATASET "site_occupancies" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SIMPLE { ( 6 ) / ( 6 ) }
+               DATA {
+               (0): 0.971475, 1.95104, 1.00413, 0.0452139, 0.0176765,
+               (5): 0.0104647
+               }
+            }
+            DATASET "total_occupancy" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 4
+               }
+            }
+         }
+      }
+   }
+   GROUP "5" {
+      GROUP "0.5" {
+         GROUP "0" {
+            DATASET "E" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): -1.3808
+               }
+            }
+            GROUP "amplitudes" {
+               DATASET "pdt" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 6 ) / ( 6 ) }
+                  DATA {
+                  (0): 0.0146615, 0.0312714, 0.048586, 0.0459252, 0.0288693,
+                  (5): 0.0208184
+                  }
+               }
+               DATASET "u" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 6 ) / ( 6 ) }
+                  DATA {
+                  (0): 0.150625, 0.0315236, 0.0497907, 0.974563, 0.991498,
+                  (5): 0.995108
+                  }
+               }
+               DATASET "v" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 6 ) / ( 6 ) }
+                  DATA {
+                  (0): 0.0973381, 0.992001, 0.975805, 0.0471239, 0.0291169,
+                  (5): 0.0209208
+                  }
+               }
+            }
+            DATASET "amplitudes_total" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): -0.00701882
+               }
+            }
+            DATASET "impurity_Ndn" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 0.0424141
+               }
+            }
+            DATASET "impurity_Nup" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 0.944373
+               }
+            }
+            DATASET "impurity_Sz" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 0.450979
+               }
+            }
+            DATASET "pairing" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SIMPLE { ( 6 ) / ( 6 ) }
+               DATA {
+               (0): -0, -0.00122911, -0.00182549, -0.00174275, -0.00113635,
+               (5): -0.00082474
+               }
+            }
+            DATASET "pairing_total" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): -0.00675844
+               }
+            }
+            DATASET "site_occupancies" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SIMPLE { ( 6 ) / ( 6 ) }
+               DATA {
+               (0): 0.986787, 1.98307, 1.94972, 0.052447, 0.0177787,
+               (5): 0.0101984
+               }
+            }
+            DATASET "total_occupancy" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 5
+               }
+            }
+         }
+      }
+   }
+   GROUP "6" {
+      GROUP "0" {
+         GROUP "0" {
+            DATASET "E" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): -1.08768
+               }
+            }
+            GROUP "amplitudes" {
+               DATASET "pdt" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 6 ) / ( 6 ) }
+                  DATA {
+                  (0): 0.0241014, 0.0231452, 0.0365981, 0.0517107, 0.0377523,
+                  (5): 0.0235027
+                  }
+               }
+               DATASET "u" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 6 ) / ( 6 ) }
+                  DATA {
+                  (0): 0.17158, 0.0233439, 0.0374529, 0.215194, 0.978053,
+                  (5): 0.991545
+                  }
+               }
+               DATASET "v" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 6 ) / ( 6 ) }
+                  DATA {
+                  (0): 0.140467, 0.991487, 0.977176, 0.240298, 0.0385995,
+                  (5): 0.0237031
+                  }
+               }
+            }
+            DATASET "amplitudes_total" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): -0.00690836
+               }
+            }
+            DATASET "impurity_Ndn" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 0.495146
+               }
+            }
+            DATASET "impurity_Nup" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 0.495146
+               }
+            }
+            DATASET "impurity_Sz" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 1.7607e-10
+               }
+            }
+            DATASET "pairing" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SIMPLE { ( 6 ) / ( 6 ) }
+               DATA {
+               (0): -0, -0.000865686, -0.00117403, -0, -0.00125593,
+               (5): -0.000881954
+               }
+            }
+            DATASET "pairing_total" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): -0.0041776
+               }
+            }
+            DATASET "site_occupancies" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SIMPLE { ( 6 ) / ( 6 ) }
+               DATA {
+               (0): 0.990291, 1.9825, 1.95347, 1.01143, 0.0449029, 0.0173997
+               }
+            }
+            DATASET "total_occupancy" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 6
+               }
+            }
+         }
+      }
+   }
+   GROUP "7" {
+      GROUP "0.5" {
+         GROUP "0" {
+            DATASET "E" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): -0.453281
+               }
+            }
+            GROUP "amplitudes" {
+               DATASET "pdt" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 6 ) / ( 6 ) }
+                  DATA {
+                  (0): 0.0143773, 0.0207858, 0.0288262, 0.0460965, 0.0491033,
+                  (5): 0.0314864
+                  }
+               }
+               DATASET "u" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 6 ) / ( 6 ) }
+                  DATA {
+                  (0): 0.11762, 0.0208733, 0.0290419, 0.047149, 0.974921,
+                  (5): 0.99165
+                  }
+               }
+               DATASET "v" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 6 ) / ( 6 ) }
+                  DATA {
+                  (0): 0.122235, 0.99581, 0.992573, 0.977677, 0.0503664,
+                  (5): 0.0317515
+                  }
+               }
+            }
+            DATASET "amplitudes_total" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): -0.00705193
+               }
+            }
+            DATASET "impurity_Ndn" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 0.0467
+               }
+            }
+            DATASET "impurity_Nup" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 0.954407
+               }
+            }
+            DATASET "impurity_Sz" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 0.453854
+               }
+            }
+            DATASET "pairing" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SIMPLE { ( 6 ) / ( 6 ) }
+               DATA {
+               (0): -0, -0.000823603, -0.00113434, -0.0017435, -0.00187332,
+               (5): -0.00124178
+               }
+            }
+            DATASET "pairing_total" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): -0.00681654
+               }
+            }
+            DATASET "site_occupancies" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SIMPLE { ( 6 ) / ( 6 ) }
+               DATA {
+               (0): 1.00111, 1.9912, 1.98436, 1.95363, 0.052066, 0.017639
+               }
+            }
+            DATASET "total_occupancy" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 7
+               }
+            }
+         }
+      }
+   }
+   GROUP "8" {
+      GROUP "0" {
+         GROUP "0" {
+            DATASET "E" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 0.639443
+               }
+            }
+            GROUP "amplitudes" {
+               DATASET "pdt" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 6 ) / ( 6 ) }
+                  DATA {
+                  (0): 0.0229758, 0.0140708, 0.0193483, 0.0320518, 0.0477406,
+                  (5): 0.0391661
+                  }
+               }
+               DATASET "u" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 6 ) / ( 6 ) }
+                  DATA {
+                  (0): 0.13947, 0.0141362, 0.0195056, 0.0327592, 0.199319,
+                  (5): 0.978394
+                  }
+               }
+               DATASET "v" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 6 ) / ( 6 ) }
+                  DATA {
+                  (0): 0.164736, 0.995371, 0.991937, 0.978405, 0.239519,
+                  (5): 0.0400309
+                  }
+               }
+            }
+            DATASET "amplitudes_total" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): -0.0060951
+               }
+            }
+            DATASET "impurity_Ndn" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 0.503843
+               }
+            }
+            DATASET "impurity_Nup" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 0.503843
+               }
+            }
+            DATASET "impurity_Sz" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 2.65888e-11
+               }
+            }
+            DATASET "pairing" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SIMPLE { ( 6 ) / ( 6 ) }
+               DATA {
+               (0): -0, -0.000533024, -0.000707544, -0.000974581, -0,
+               (5): -0.00133316
+               }
+            }
+            DATASET "pairing_total" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): -0.00354831
+               }
+            }
+            DATASET "site_occupancies" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SIMPLE { ( 6 ) / ( 6 ) }
+               DATA {
+               (0): 1.00769, 1.99056, 1.98356, 1.9562, 1.01764, 0.0443468
+               }
+            }
+            DATASET "total_occupancy" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 8
+               }
+            }
+         }
+      }
+   }
+   GROUP "GS" {
+      DATASET "E" {
+         DATATYPE  H5T_IEEE_F64LE
+         DATASPACE  SCALAR
+         DATA {
+         (0): -1.3808
+         }
+      }
+      DATASET "N" {
+         DATATYPE  H5T_STD_I32LE
+         DATASPACE  SCALAR
+         DATA {
+         (0): 5
+         }
+      }
+      DATASET "Sz" {
+         DATATYPE  H5T_IEEE_F64LE
+         DATASPACE  SCALAR
+         DATA {
+         (0): 0.5
+         }
+      }
+   }
+}
+}

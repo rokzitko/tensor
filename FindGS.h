@@ -268,7 +268,8 @@ class bath { // normal-state bath
 // Class containing SC bath parameters. The code makes use only of class SCbath, not of class bath directly.
 class SCbath : public bath { // superconducting island bath
  private:
-   std::vector<double> _alphas; // pairing strength
+   double _alpha; //pairing strenght
+   std::vector<double> _ys; // pairing strength renormalization vector
    double _Ec;    // charging energy
    double _n0;    // offset 
    double _EZ;    // Zeeman energy (z-axis)
@@ -276,20 +277,11 @@ class SCbath : public bath { // superconducting island bath
    double _t;     // nearest neighbour hopping in SC
    double _lambda;// spin orbit coupling
  public:
-   SCbath(int NBath, double D, std::vector<double> alphas, double Ec, double n0, double EZ, double EZx, double t, double lambda) :
-     bath(NBath, D), _alphas(alphas), _Ec(Ec), _n0(n0), _EZ(EZ), _EZx(EZx), _t(t), _lambda(lambda) {};
-   auto alphas() const { return _alphas; }
-   auto g(int i) const {
-//     Expects(1 <= i && i <= NBath());
-     return _alphas[i] * d();  // NOTE: bandwidth incorporated by using d()
-   }
-   auto gs() const {
-     std::vector<double> gs(1+NBath());
-     gs[0] = std::numeric_limits<double>::quiet_NaN();
-     for (int i = 1; i <= NBath(); i++)
-       gs[i] = g(i);
-     return gs;
-   }
+   SCbath(int NBath, double D, double alpha, std::vector<double> ys, double Ec, double n0, double EZ, double EZx, double t, double lambda) :
+     bath(NBath, D), _alpha(alpha), _ys(ys), _Ec(Ec), _n0(n0), _EZ(EZ), _EZx(EZx), _t(t), _lambda(lambda) {};
+   auto alpha() const { return _alpha; }
+   auto g() const { return  _alpha * d();}
+   auto y(int i) const { return _ys[i]; }
    auto Ec() const { return _Ec; }
    auto n0() const { return _n0; }
    auto EZ() const { return _EZ; }
@@ -301,7 +293,7 @@ class SCbath : public bath { // superconducting island bath
      auto eps = bath::eps(flat_band, flat_band_factor);
      if (band_level_shift)
        for (int i = 1; i <= NBath(); i++)
-         eps[i] += -g(i)/2.0;
+         eps[i] += -g() * pow(y(i), 2) / 2.0;
      // Apply rescaling here. Since the code only uses SCbath (not bath directly), it's appropriate to do this at this point.
      for (auto &x: eps)
        x *= band_rescale;
@@ -584,8 +576,9 @@ class single_channel : virtual public problem_type
      if (p.verbose) {
        std::cout << "eps=" << eps << std::endl;
        std::cout << "V=" << V << std::endl;
-       std::cout << "alpha=" << sc->alphas() << std::endl;
-       std::cout << "g=" << sc->gs() << std::endl;
+       std::cout << "alpha=" << sc->alpha() << std::endl;
+       std::cout << "g=" << sc->g() << std::endl;
+       //std::cout << "ys=" << sc->_ys() << std::endl;
      }
      return std::make_pair(eps, V);
    }
@@ -632,7 +625,7 @@ class single_channel_eta : public single_channel
      auto eps = sc->eps(false, p.flat_band, p.flat_band_factor, 1.0); // no band_level_shift here, no band_rescale either
      if (p.band_level_shift) { // we do it here, in a site-dependent way
        for (int i = 1; i <= p.NBath; i++) 
-         eps[i] += -(sc->g(i)/2.0 ) * pow(y(i, p), 2);
+         eps[i] += -(sc->g()/2.0 ) * pow(y(i, p), 2);
      }
      // rescale the band energy levels here, because we did not do it in sc->eps() call
      for (auto &x: eps) 
@@ -658,8 +651,9 @@ class two_channel : virtual public problem_type
      if (p.verbose) {
        std::cout << "eps1=" << eps1 << std::endl << "eps2=" << eps2 << std::endl;
        std::cout << "V1=" << V1 << std::endl << "V2=" << V2 << std::endl;
-       std::cout << "alpha1=" << sc1->alphas() << std::endl << "alpha2=" << sc2->alphas() << std::endl;
-       std::cout << "g1=" << sc1->gs() << std::endl << "g2=" << sc2->gs() << std::endl;
+       std::cout << "alpha1=" << sc1->alpha() << std::endl << "alpha2=" << sc2->alpha() << std::endl;
+       std::cout << "g1=" << sc1->g() << std::endl << "g2=" << sc2->g() << std::endl;
+       //std::cout << "ys1=" << sc1->_ys() << std::endl << "ys2=" << sc2->_ys() << std::endl;
      }
      auto eps = concat(eps1, eps2, true); //because eps1 and eps2 are both 1 based. Removes the first element of eps2 and concats.
      auto V = concat(V1, V2, true);

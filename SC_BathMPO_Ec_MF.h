@@ -71,10 +71,10 @@ inline void Fill_SCBath_MPO_Ec_MF(MPO& H, double nSC_MF, const double Eshift, co
         W += p.sites.op("Ntot",i)           * setElt(left(1),right(2)) * eps_[i-1]; // ! no Ec term here
         W += p.sites.op("Nup",i)            * setElt(left(1),right(2)) * p.sc->EZ()/2.0; // bulk Zeeman energy
         W += p.sites.op("Ndn",i)            * setElt(left(1),right(2)) * (-1.) * p.sc->EZ()/2.0; // bulk Zeeman energy
-        W += p.sites.op("Nupdn",i)          * setElt(left(1),right(2)) * p.sc->g(i-1); // ! no Ec here
+        W += p.sites.op("Nupdn",i)          * setElt(left(1),right(2)) * p.sc->g() * pow(p.sc->y(i-1), 2); // ! no Ec here
 
-        W += p.sites.op("Cdn*Cup",i)        * setElt(left(1),right(7)) * p.sc->g(i-1);
-        W += p.sites.op("Cdagup*Cdagdn",i)  * setElt(left(1),right(8)) * p.sc->g(i-1);
+        W += p.sites.op("Cdn*Cup",i)        * setElt(left(1),right(7)) * p.sc->g() * p.sc->y(i-1);
+        W += p.sites.op("Cdagup*Cdagdn",i)  * setElt(left(1),right(8)) * p.sc->g() * p.sc->y(i-1);
         // no (1)(9) term with Ec - this would create the all-to-all product
 
         W += p.sites.op("Id",i)*setElt(left(2),right(2));
@@ -91,8 +91,8 @@ inline void Fill_SCBath_MPO_Ec_MF(MPO& H, double nSC_MF, const double Eshift, co
         W += p.sites.op("Cup",   i)*setElt(left(5),right(2))* v_[i-1];
         W += p.sites.op("Cdn",   i)*setElt(left(6),right(2))* v_[i-1];
 
-        W += p.sites.op("Cdagup*Cdagdn",i)*setElt(left(7),right(2));
-        W += p.sites.op("Cdn*Cup",i)      *setElt(left(8),right(2));
+        W += p.sites.op("Cdagup*Cdagdn",i)*setElt(left(7),right(2)) * p.sc->y(i-1);
+        W += p.sites.op("Cdn*Cup",i)      *setElt(left(8),right(2)) * p.sc->y(i-1);
         W += p.sites.op("Ntot",i)         *setElt(left(9),right(2)); // ! this stays
     }
 
@@ -107,7 +107,7 @@ inline void Fill_SCBath_MPO_Ec_MF(MPO& H, double nSC_MF, const double Eshift, co
         W += p.sites.op("Ntot",  i) * setElt(left(1)) * (eps_[i-1]); // !no Ec here either!
         W += p.sites.op("Nup",  i)  * setElt(left(1)) * p.sc->EZ()/2.0; // bulk Zeeman energy
         W += p.sites.op("Ndn",  i)  * setElt(left(1)) * (-1) * p.sc->EZ()/2.0; // bulk Zeeman energy
-        W += p.sites.op("Nupdn",i)  * setElt(left(1)) * p.sc->g(i-1); // ! no Ec here!
+        W += p.sites.op("Nupdn",i)  * setElt(left(1)) * p.sc->g() * pow(p.sc->y(i-1), 2); // ! no Ec here!
 
         W += p.sites.op("Id",    i) * setElt(left(2)) ;
         W += p.sites.op("Cdagup",i) * setElt(left(3)) * v_[i-1];
@@ -115,8 +115,8 @@ inline void Fill_SCBath_MPO_Ec_MF(MPO& H, double nSC_MF, const double Eshift, co
         W += p.sites.op("Cup",   i) * setElt(left(5)) * v_[i-1];
         W += p.sites.op("Cdn",   i) * setElt(left(6)) * v_[i-1];
 
-        W += p.sites.op("Cdagup*Cdagdn",i) * setElt(left(7));
-        W += p.sites.op("Cdn*Cup",      i) * setElt(left(8));
+        W += p.sites.op("Cdagup*Cdagdn",i) * setElt(left(7)) * p.sc->y(i-1);
+        W += p.sites.op("Cdn*Cup",      i) * setElt(left(8)) * p.sc->y(i-1);
         W += p.sites.op("Ntot",         i) * setElt(left(9)); // ! this stays
     }
 

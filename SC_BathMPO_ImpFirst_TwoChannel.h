@@ -66,10 +66,10 @@ inline void Fill_SCBath_MPO_ImpFirst_TwoChannel(MPO& H, const double Eshift, con
         W += p.sites.op("Ntot",i)           * setElt(left(1),right(2)) * (eps_[i-1] + p.sc1->Ec()*(1.0-2.0*p.sc1->n0())); // !
         W += p.sites.op("Nup",i)            * setElt(left(1),right(2)) * p.sc1->EZ()/2.0; // bulk Zeeman energy
         W += p.sites.op("Ndn",i)            * setElt(left(1),right(2)) * (-1.) * p.sc1->EZ()/2.0; // bulk Zeeman energy
-        W += p.sites.op("Nupdn",i)          * setElt(left(1),right(2)) * (p.sc1->g(i-1) + 2.0*p.sc1->Ec()); // !
+        W += p.sites.op("Nupdn",i)          * setElt(left(1),right(2)) * (p.sc1->g() * pow(p.sc1->y(i-1), 2) + 2.0*p.sc1->Ec()); // !
 
-        W += p.sites.op("Cdn*Cup",i)        * setElt(left(1),right(7)) * p.sc1->g(i-1);
-        W += p.sites.op("Cdagup*Cdagdn",i)  * setElt(left(1),right(8)) * p.sc1->g(i-1);
+        W += p.sites.op("Cdn*Cup",i)        * setElt(left(1),right(7)) * p.sc1->g() * p.sc1->y(i-1);
+        W += p.sites.op("Cdagup*Cdagdn",i)  * setElt(left(1),right(8)) * p.sc1->g() * p.sc1->y(i-1);
         W += p.sites.op("Ntot", i)          * setElt(left(1),right(9)) * 2.0*p.sc1->Ec(); // !
 
         W += p.sites.op("Id",i)*setElt(left(2),right(2));
@@ -86,8 +86,8 @@ inline void Fill_SCBath_MPO_ImpFirst_TwoChannel(MPO& H, const double Eshift, con
         W += p.sites.op("Cup",   i)*setElt(left(5),right(2))* v_[i-1];
         W += p.sites.op("Cdn",   i)*setElt(left(6),right(2))* v_[i-1];
 
-        W += p.sites.op("Cdagup*Cdagdn",i)*setElt(left(7),right(2));
-        W += p.sites.op("Cdn*Cup",i)      *setElt(left(8),right(2));
+        W += p.sites.op("Cdagup*Cdagdn",i)*setElt(left(7),right(2)) * p.sc1->y(i-1);
+        W += p.sites.op("Cdn*Cup",i)      *setElt(left(8),right(2)) * p.sc1->y(i-1);
         W += p.sites.op("Ntot",i)         *setElt(left(9),right(2)); // !
     }
 
@@ -106,7 +106,7 @@ inline void Fill_SCBath_MPO_ImpFirst_TwoChannel(MPO& H, const double Eshift, con
         W += p.sites.op("Ntot",i)           * setElt(left(1),right(2)) * (eps_[i-1] + p.sc1->Ec()*(1.0-2.0*p.sc1->n0())); // !
         W += p.sites.op("Nup",i)            * setElt(left(1),right(2)) * p.sc1->EZ()/2.0; // bulk Zeeman energy
         W += p.sites.op("Ndn",i)            * setElt(left(1),right(2)) * (-1.) * p.sc1->EZ()/2.0; // bulk Zeeman energy
-        W += p.sites.op("Nupdn",i)          * setElt(left(1),right(2)) * (p.sc1->g(i-1) + 2.0*p.sc1->Ec()); // !
+        W += p.sites.op("Nupdn",i)          * setElt(left(1),right(2)) * (p.sc1->g() * pow(p.sc1->y(i-1), 2) + 2.0*p.sc1->Ec()); // !
 
         W += p.sites.op("Id",i)*setElt(left(2),right(2));
         W += p.sites.op("F" ,i)*setElt(left(3),right(3));
@@ -122,17 +122,19 @@ inline void Fill_SCBath_MPO_ImpFirst_TwoChannel(MPO& H, const double Eshift, con
         W += p.sites.op("Cup",   i)*setElt(left(5),right(2))* v_[i-1];
         W += p.sites.op("Cdn",   i)*setElt(left(6),right(2))* v_[i-1];
 
-        W += p.sites.op("Cdagup*Cdagdn",i)*setElt(left(7),right(2));
-        W += p.sites.op("Cdn*Cup",i)      *setElt(left(8),right(2));
+        W += p.sites.op("Cdagup*Cdagdn",i)*setElt(left(7),right(2)) * p.sc1->y(i-1);
+        W += p.sites.op("Cdn*Cup",i)      *setElt(left(8),right(2)) * p.sc1->y(i-1);
         W += p.sites.op("Ntot",i)         *setElt(left(9),right(2)); // !
     }
 
     // onwards the same, just for sc2
+    int shift = (length(H)-1)/2; // number of matrices for one channel. i-shift is the index of the i-th level in the second channel.
     for(auto i : range1( ((length(H)+1)/2)+1, length(H)-1 )){
 
         ITensor& W = H.ref(i);
         Index left = dag( links.at(i-1) );
         Index right = links.at(i);
+
 
         W = ITensor(left, right, p.sites.si(i), p.sites.siP(i) );
 
@@ -141,10 +143,10 @@ inline void Fill_SCBath_MPO_ImpFirst_TwoChannel(MPO& H, const double Eshift, con
         W += p.sites.op("Ntot",i)           * setElt(left(1),right(2)) * (eps_[i-1] + p.sc2->Ec()*(1.0-2.0*p.sc2->n0())); // !
         W += p.sites.op("Nup",i)            * setElt(left(1),right(2)) * p.sc2->EZ()/2.0; // bulk Zeeman energy
         W += p.sites.op("Ndn",i)            * setElt(left(1),right(2)) * (-1.) * p.sc2->EZ()/2.0; // bulk Zeeman energy
-        W += p.sites.op("Nupdn",i)          * setElt(left(1),right(2)) * (p.sc2->g(i - ((length(H)-1)/2) - 1) + 2.0*p.sc2->Ec()); // ! (len(H)-1)/2 is the number of matrices for one channel.
+        W += p.sites.op("Nupdn",i)          * setElt(left(1),right(2)) * (p.sc2->g() * pow(p.sc2->y(i-1-shift), 2) + 2.0*p.sc2->Ec()); // ! (len(H)-1)/2 is the number of matrices for one channel.
                                                                                                                     
-        W += p.sites.op("Cdn*Cup",i)        * setElt(left(1),right(7)) * p.sc2->g(i - ((length(H)-1)/2) - 1);
-        W += p.sites.op("Cdagup*Cdagdn",i)  * setElt(left(1),right(8)) * p.sc2->g(i - ((length(H)-1)/2) - 1);
+        W += p.sites.op("Cdn*Cup",i)        * setElt(left(1),right(7)) * p.sc2->g() * p.sc2->y(i-1-shift);
+        W += p.sites.op("Cdagup*Cdagdn",i)  * setElt(left(1),right(8)) * p.sc2->g() * p.sc2->y(i-1-shift);
         W += p.sites.op("Ntot", i)          * setElt(left(1),right(9)) * 2.0*p.sc2->Ec(); // !
 
         W += p.sites.op("Id",i)*setElt(left(2),right(2));
@@ -161,8 +163,8 @@ inline void Fill_SCBath_MPO_ImpFirst_TwoChannel(MPO& H, const double Eshift, con
         W += p.sites.op("Cup",   i)*setElt(left(5),right(2))* v_[i-1];
         W += p.sites.op("Cdn",   i)*setElt(left(6),right(2))* v_[i-1];
 
-        W += p.sites.op("Cdagup*Cdagdn",i)*setElt(left(7),right(2));
-        W += p.sites.op("Cdn*Cup",i)      *setElt(left(8),right(2));
+        W += p.sites.op("Cdagup*Cdagdn",i)*setElt(left(7),right(2)) * p.sc2->y(i-1-shift);
+        W += p.sites.op("Cdn*Cup",i)      *setElt(left(8),right(2)) * p.sc2->y(i-1-shift);
         W += p.sites.op("Ntot",i)         *setElt(left(9),right(2)); // !
     }
 
@@ -179,7 +181,7 @@ inline void Fill_SCBath_MPO_ImpFirst_TwoChannel(MPO& H, const double Eshift, con
         W += p.sites.op("Ntot",  i) * setElt(left(1)) * (eps_[i-1] + p.sc2->Ec()*(1.0-2.0*p.sc2->n0())); // !
         W += p.sites.op("Nup",  i)  * setElt(left(1)) * p.sc2->EZ()/2.0; // bulk Zeeman energy
         W += p.sites.op("Ndn",  i)  * setElt(left(1)) * (-1) * p.sc2->EZ()/2.0; // bulk Zeeman energy
-        W += p.sites.op("Nupdn",i)  * setElt(left(1)) * (p.sc2->g(i - ((length(H)-1)/2) - 1) + 2.0*p.sc2->Ec()); // !
+        W += p.sites.op("Nupdn",i)  * setElt(left(1)) * (p.sc2->g() * pow(p.sc2->y(i-1-shift), 2) + 2.0*p.sc2->Ec()); // !
 
         W += p.sites.op("Id",    i) * setElt(left(2)) ;
         W += p.sites.op("Cdagup",i) * setElt(left(3)) * v_[i-1];
@@ -187,8 +189,8 @@ inline void Fill_SCBath_MPO_ImpFirst_TwoChannel(MPO& H, const double Eshift, con
         W += p.sites.op("Cup",   i) * setElt(left(5)) * v_[i-1];
         W += p.sites.op("Cdn",   i) * setElt(left(6)) * v_[i-1];
 
-        W += p.sites.op("Cdagup*Cdagdn",i) * setElt(left(7));
-        W += p.sites.op("Cdn*Cup",      i) * setElt(left(8));
+        W += p.sites.op("Cdagup*Cdagdn",i) * setElt(left(7)) * p.sc2->y(i-1-shift);
+        W += p.sites.op("Cdn*Cup",      i) * setElt(left(8)) * p.sc2->y(i-1-shift);
         W += p.sites.op("Ntot",         i) * setElt(left(9)); // !
     }
 

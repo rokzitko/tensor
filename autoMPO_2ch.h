@@ -5,7 +5,7 @@ void get_MPO_bath(auto& ampo, const std::vector<double>& eps_, const std::vector
     for(auto i: range1(startind, endind)){
         ampo += eps_[i-1],"Ntot",i;
         for(auto j: range1(startind, endind)){
-            ampo += ch->g(i - shiftFactor -1),"Cdagup",i,"Cdagdn",i,"Cdn",j,"Cup",j;
+            ampo += ch->g() * ch->y(i-1-shiftFactor) * ch->y(j-1-shiftFactor),"Cdagup",i,"Cdagdn",i,"Cdn",j,"Cup",j;
         }
     }
     //hopping terms

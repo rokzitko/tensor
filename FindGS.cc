@@ -58,24 +58,17 @@ void report_Sz_conserved(T *prob) {
   }
 }
 
-// parse pairing strength alpha into a vector. If only alpha is given 
-std::vector<double> parse_alphas(auto& input, const int Nlevels, const std::string channel = "") {
-  std::vector<double> alphas;
-  const std::string alpha_ch = "alpha" + channel; // for the two channel problem this is "alpha1" and "alpha2", and "alpha" for single channel.
-  const auto default_value = input.getReal(alpha_ch, 0.);
-  for (int i = 0; i <= Nlevels; i++) {
-    const double alpha_i = input.getReal(alpha_ch + "_" + std::to_string(i), default_value);  // parse alpha_NN from the input, if not found fall back to alpha.
-    alphas.push_back(alpha_i);
-  }
-  return shift1(alphas); // converted to 1-based vector
-}
-
+// parse pairing strength into a vector of ys. The pairing alpha_ij = alpha * y[i] * y[j]
 auto parse_ys(auto& input, const int Nlevels, const std::string channel = "") {
   std::vector<double> yvec;
   const std::string y_ch = "y" + channel; // for the two channel problem this is "y1" and "y2", and "y" for single channel.
   const auto default_value = input.getReal(y_ch, 1.0); // NOTE: default is 1
   for (int i = 1; i <= Nlevels; i++)
     yvec.push_back(input.getReal(y_ch + "_" + std::to_string(i), default_value)); // parse y_NN from the input, if not found fall back to y.
+
+  std::cout << "ys:\n";
+  for (auto &x : shift1(yvec)) std::cout << x << "\n";
+
   return shift1(yvec); // convert to 1-based vector
 }
 
@@ -107,7 +100,7 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.qd = std::make_unique<imp>(U, input.getReal("epsimp", -U/2.), input.getReal("EZ_imp", 0.), input.getReal("EZx_imp", 0.));
   p.Gamma = std::make_unique<hyb>(input.getReal("gamma", 0));
 
-  p.sc = std::make_unique<SCbath>(p.NBath, p.D, parse_alphas(input, p.NBath), input.getReal("Ec", 0), input.getReal("n0", p.N-1), input.getReal("EZ_bulk", 0.), input.getReal("EZx_bulk", 0.), input.getReal("t", 0.), input.getReal("lambda", 0.));
+  p.sc = std::make_unique<SCbath>(p.NBath, p.D, input.getReal("alpha", 0.), parse_ys(input, p.NBath, ""), input.getReal("Ec", 0), input.getReal("n0", p.N-1), input.getReal("EZ_bulk", 0.), input.getReal("EZx_bulk", 0.), input.getReal("t", 0.), input.getReal("lambda", 0.));
 
   p.eta = input.getReal("eta", 1.0);
   p.etasite = input.getInt("etasite", p.NBath/2); // Fermi-level !
@@ -119,8 +112,8 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.V2imp = input.getReal("V2imp", 0); // capacitive coupling between sc2 and imp
 
   // parameters for the 2-channel problem
-  p.sc1 = std::make_unique<SCbath>(p.NBath/2, p.D, parse_alphas(input, p.NBath/2, "1"), input.getReal("Ec1", 0), input.getReal("n01", (p.N-1)/2), input.getReal("EZ_bulk1", 0), input.getReal("EZx_bulk1", 0.), input.getReal("t1", 0), input.getReal("lambda1", 0.));
-  p.sc2 = std::make_unique<SCbath>(p.NBath/2, p.D, parse_alphas(input, p.NBath/2, "2"), input.getReal("Ec2", 0), input.getReal("n02", (p.N-1)/2), input.getReal("EZ_bulk2", 0), input.getReal("EZx_bulk2", 0.), input.getReal("t2", 0), input.getReal("lambda2", 0.));
+  p.sc1 = std::make_unique<SCbath>(p.NBath/2, p.D, input.getReal("alpha1", 0.), parse_ys(input, p.NBath/2, "1"), input.getReal("Ec1", 0), input.getReal("n01", (p.N-1)/2), input.getReal("EZ_bulk1", 0), input.getReal("EZx_bulk1", 0.), input.getReal("t1", 0), input.getReal("lambda1", 0.));
+  p.sc2 = std::make_unique<SCbath>(p.NBath/2, p.D, input.getReal("alpha2", 0.), parse_ys(input, p.NBath/2, "2"), input.getReal("Ec2", 0), input.getReal("n02", (p.N-1)/2), input.getReal("EZ_bulk2", 0), input.getReal("EZx_bulk2", 0.), input.getReal("t2", 0), input.getReal("lambda2", 0.));
   p.Gamma1 = std::make_unique<hyb>(input.getReal("gamma1", 0));
   p.Gamma2 = std::make_unique<hyb>(input.getReal("gamma2", 0));
 
@@ -612,9 +605,19 @@ auto calcPairing(MPS &psi, const ndx_t &all_sites, const params &p) {
     auto val1d = psi.A(i) * p.sites.op("Cdagdn*Cdn", i) * dag(prime(psi.A(i),"Site"));
     // For Gamma>0, <C+CC+C>-<C+C><C+C> may be negative.
     auto diff = val2.cplx() - val1u.cplx() * val1d.cplx();
-    auto sq = p.sc->g(i) * sqrt(diff); // XXX: only meaningful for single channel!
+
+    auto sq = sqrt(diff) * p.sc->g();
+    if (i != p.impindex){
+      int bathndx = i < p.impindex ? i : i-1;
+      sq *= pow(p.sc->y(bathndx), 2);
+      
+      if (bathndx == p.etasite){ //if the eta model is used!
+        const double x = p.etarescale ? sqrt( (p.NBath-p.eta*p.eta)/(p.NBath-1.) ) : 1;
+        sq *= pow(p.eta * x, 2);
+      }
+      tot += sq;
+    }
     r.push_back(sq);
-    if (i != p.impindex) tot += sq; // exclude the impurity site in the sum
   }
   return std::make_pair(r, tot);
 }
@@ -643,11 +646,18 @@ auto calcAmplitudes(MPS &psi, const ndx_t &all_sites, const params &p) {
     auto v = sqrt( std::real(valv.cplx()) ); // XXX
     auto u = sqrt( std::real(valu.cplx()) );
     auto pdt = v*u;
-    auto element = p.sc->g(i) * pdt;
     ru.push_back(u);
     rv.push_back(v);
     rpdt.push_back(pdt);
-    if (i != p.impindex) tot += element; // exclude the impurity site in the sum
+    if (i!=p.impindex){
+      int bathndx = i < p.impindex ? i : i-1;
+      auto element = p.sc->g() * pow(p.sc->y(bathndx), 2) * pdt;
+      if (bathndx == p.etasite){ //if the eta model is used!
+        const double x = p.etarescale ? sqrt( (p.NBath-p.eta*p.eta)/(p.NBath-1.) ) : 1;
+        element *= pow(p.eta * x, 2);
+      }
+      tot += element; // exclude the impurity site in the sum
+    }
   }
   return std::make_tuple(rv, ru, rpdt, tot);
 }

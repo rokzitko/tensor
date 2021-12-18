@@ -1,0 +1,9 @@
+#!/bin/bash
+PATH=../../..:../..:$PATH
+rm -f solution.h5
+calcGS inputFile-eta.txt > result-eta.dat
+mv solution.h5 solution-eta.h5
+calcGS inputFile-yNN.txt > result-yNN.dat
+mv solution.h5 solution-yNN.h5
+h5diff -d 1e-6 solution-eta.h5 solution-yNN.h5
+

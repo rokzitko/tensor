@@ -1,13 +1,13 @@
 params{
      alpha=-0.5
      U=1
-     gamma = 6
+     gamma = 0.5
      N = 5
      verbose = true
      band_level_shift = true
      lambda = 0.3
      nref = 5
-     nrange = 0
+     nrange = 1
 	
      MPO = autoH_so
 }
@@ -39,6 +39,15 @@ sweeps
      240     1      1E-12   5      0
      400     1      1E-12   5      0
      400     1      1E-12   5      0
+     1000    1      1E-12   5	   0
+     1000    1      1E-12   5 	   0
+     1000    1      1E-12   5 	   0
+     1000    1      1E-12   5 	   0
+     1000    1      1E-12   5 	   0
+     1000    1      1E-12   5 	   0
+     2000    1      1E-12   5 	   0
+     2000    1      1E-12   5 	   0
+     2000    1      1E-12   5 	   0
      }
 
 sweeps2

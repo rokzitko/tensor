@@ -22,7 +22,7 @@ double get_channel_occupancy(MPS &psi, params &p){
 // fill up the map of nSCs with initial guesses - these are n-nu, as nu is the approximate occupation of imp
 void initial_guess_nSCs(const std::vector<subspace_t> &l, params &p){
   // for all subspaces, for all excited states (that will be computed), insert the initial guess
-  for (const auto [n,  Sz] : l){
+  for (const auto & [n,  Sz] : l){
     for (int i = 0; i <= std::min(p.excited_states, p.stop_n); i++) {
       
       double guess = n - (0.5 - (p.qd->eps()/p.qd->U()));

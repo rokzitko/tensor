@@ -75,10 +75,10 @@ MPO initH(state_t st, params &p) override
         W += p.sites.op("Ntot",i)           * setElt(left(1),right(2)) * (eps_[i-1] + epsishift + p.sc->Ec()*(1.0-2.0*p.sc->n0())); // !!
         W += p.sites.op("Nup",i)            * setElt(left(1),right(2)) * p.sc->EZ()/2.0; // bulk Zeeman energy
         W += p.sites.op("Ndn",i)            * setElt(left(1),right(2)) * (-1.) * p.sc->EZ()/2.0; // bulk Zeeman energy
-        W += p.sites.op("Nupdn",i)          * setElt(left(1),right(2)) * (p.sc->g(i-1)*pow(y(i-1,p),2) + 2.0*p.sc->Ec()); // !
+        W += p.sites.op("Nupdn",i)          * setElt(left(1),right(2)) * (p.sc->g()*pow(y(i-1,p),2) + 2.0*p.sc->Ec()); // !
 
-        W += p.sites.op("Cdn*Cup",i)        * setElt(left(1),right(7)) * p.sc->g(i-1) * y(i-1,p);
-        W += p.sites.op("Cdagup*Cdagdn",i)  * setElt(left(1),right(8)) * p.sc->g(i-1) * y(i-1,p);
+        W += p.sites.op("Cdn*Cup",i)        * setElt(left(1),right(7)) * p.sc->g() * y(i-1,p);
+        W += p.sites.op("Cdagup*Cdagdn",i)  * setElt(left(1),right(8)) * p.sc->g() * y(i-1,p);
         W += p.sites.op("Ntot", i)          * setElt(left(1),right(9)) * 2.0*p.sc->Ec(); // !
 
         W += p.sites.op("Id",i)*setElt(left(2),right(2));
@@ -112,7 +112,7 @@ MPO initH(state_t st, params &p) override
         W += p.sites.op("Ntot",  i) * setElt(left(1)) * (eps_[i-1] + epsishift + p.sc->Ec()*(1.0-2.0*p.sc->n0())); // !!
         W += p.sites.op("Nup",  i)  * setElt(left(1)) * p.sc->EZ()/2.0; // bulk Zeeman energy
         W += p.sites.op("Ndn",  i)  * setElt(left(1)) * (-1) * p.sc->EZ()/2.0; // bulk Zeeman energy
-        W += p.sites.op("Nupdn",i)  * setElt(left(1)) * (p.sc->g(i-1)*pow(y(i-1,p),2) + 2.0*p.sc->Ec()); // !
+        W += p.sites.op("Nupdn",i)  * setElt(left(1)) * (p.sc->g()*pow(y(i-1,p),2) + 2.0*p.sc->Ec()); // !
 
         W += p.sites.op("Id",    i) * setElt(left(2)) ;
         W += p.sites.op("Cdagup",i) * setElt(left(3)) * v_[i-1];

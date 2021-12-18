@@ -1,0 +1,2109 @@
+HDF5 "solution.h5" {
+GROUP "/" {
+   GROUP "4" {
+      GROUP "0" {
+         GROUP "0" {
+            GROUP "1" {
+               GROUP "P" {
+                  DATASET "0" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.0417342
+                     }
+                  }
+                  DATASET "2" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.0133506
+                     }
+                  }
+                  DATASET "down" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.472458
+                     }
+                  }
+                  DATASET "up" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.472458
+                     }
+                  }
+               }
+               DATASET "density_matrix" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 4, 4 ) / ( 4, 4 ) }
+                  DATA {
+                  (0,0): 0.0417342, 0, 0, 0,
+                  (1,0): 0, 0.472458, 0, 0,
+                  (2,0): 0, 0, 0.472458, 0,
+                  (3,0): 0, 0, 0, 0.0133506
+                  }
+               }
+            }
+            GROUP "2" {
+               GROUP "P" {
+                  DATASET "0" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.00147503
+                     }
+                  }
+                  DATASET "2" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.955929
+                     }
+                  }
+                  DATASET "down" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.021298
+                     }
+                  }
+                  DATASET "up" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.021298
+                     }
+                  }
+               }
+               DATASET "density_matrix" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 4, 4 ) / ( 4, 4 ) }
+                  DATA {
+                  (0,0): 0.00147503, 0, 0, 0,
+                  (1,0): 0, 0.021298, 0, 0,
+                  (2,0): 0, 0, 0.021298, 0,
+                  (3,0): 0, 0, 0, 0.955929
+                  }
+               }
+            }
+            GROUP "3" {
+               GROUP "P" {
+                  DATASET "0" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.0494905
+                     }
+                  }
+                  DATASET "2" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.0503673
+                     }
+                  }
+                  DATASET "down" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.450071
+                     }
+                  }
+                  DATASET "up" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.450071
+                     }
+                  }
+               }
+               DATASET "density_matrix" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 4, 4 ) / ( 4, 4 ) }
+                  DATA {
+                  (0,0): 0.0494905, 0, 0, 0,
+                  (1,0): 0, 0.450071, 0, 0,
+                  (2,0): 0, 0, 0.450071, 0,
+                  (3,0): 0, 0, 0, 0.0503673
+                  }
+               }
+            }
+            GROUP "4" {
+               GROUP "P" {
+                  DATASET "0" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.956169
+                     }
+                  }
+                  DATASET "2" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.00118533
+                     }
+                  }
+                  DATASET "down" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.0213229
+                     }
+                  }
+                  DATASET "up" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.0213229
+                     }
+                  }
+               }
+               DATASET "density_matrix" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 4, 4 ) / ( 4, 4 ) }
+                  DATA {
+                  (0,0): 0.956169, 0, 0, 0,
+                  (1,0): 0, 0.0213229, 0, 0,
+                  (2,0): 0, 0, 0.0213229, 0,
+                  (3,0): 0, 0, 0, 0.00118533
+                  }
+               }
+            }
+            GROUP "5" {
+               GROUP "P" {
+                  DATASET "0" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.982793
+                     }
+                  }
+                  DATASET "2" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.000398678
+                     }
+                  }
+                  DATASET "down" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.00840393
+                     }
+                  }
+                  DATASET "up" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.00840393
+                     }
+                  }
+               }
+               DATASET "density_matrix" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 4, 4 ) / ( 4, 4 ) }
+                  DATA {
+                  (0,0): 0.982793, 0, 0, 0,
+                  (1,0): 0, 0.00840393, 0, 0,
+                  (2,0): 0, 0, 0.00840393, 0,
+                  (3,0): 0, 0, 0, 0.000398678
+                  }
+               }
+            }
+            GROUP "6" {
+               GROUP "P" {
+                  DATASET "0" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.989774
+                     }
+                  }
+                  DATASET "2" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.000205301
+                     }
+                  }
+                  DATASET "down" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.00501032
+                     }
+                  }
+                  DATASET "up" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.00501032
+                     }
+                  }
+               }
+               DATASET "density_matrix" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 4, 4 ) / ( 4, 4 ) }
+                  DATA {
+                  (0,0): 0.989774, 0, 0, 0,
+                  (1,0): 0, 0.00501032, 0, 0,
+                  (2,0): 0, 0, 0.00501032, 0,
+                  (3,0): 0, 0, 0, 0.000205301
+                  }
+               }
+            }
+            DATASET "E" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): -1.25861
+               }
+            }
+            GROUP "P_imp" {
+               DATASET "0" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SCALAR
+                  DATA {
+                  (0): 0.0417342
+                  }
+               }
+               DATASET "2" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SCALAR
+                  DATA {
+                  (0): 0.0133506
+                  }
+               }
+               DATASET "down" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SCALAR
+                  DATA {
+                  (0): 0.472458
+                  }
+               }
+               DATASET "up" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SCALAR
+                  DATA {
+                  (0): 0.472458
+                  }
+               }
+            }
+            DATASET "S2" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 0
+               }
+            }
+            GROUP "amplitudes" {
+               DATASET "pdt" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 6 ) / ( 6 ) }
+                  DATA {
+                  (0): 0.0236046, 0.0375503, 0.049927, 0.0336656, 0.0197944,
+                  (5): 0.0142549
+                  }
+               }
+               DATASET "u" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 6 ) / ( 6 ) }
+                  DATA {
+                  (0): 0.20429, 0.0384061, 0.222465, 0.977839, 0.991359,
+                  (5): 0.994874
+                  }
+               }
+               DATASET "v" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 6 ) / ( 6 ) }
+                  DATA {
+                  (0): 0.115545, 0.977716, 0.224427, 0.0344286, 0.0199669,
+                  (5): 0.0143283
+                  }
+               }
+            }
+            DATASET "amplitudes_total" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): -0.00620769
+               }
+            }
+            DATASET "density_matrix_imp" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SIMPLE { ( 4, 4 ) / ( 4, 4 ) }
+               DATA {
+               (0,0): 0.0417342, 0, 0, 0,
+               (1,0): 0, 0.472458, 0, 0,
+               (2,0): 0, 0, 0.472458, 0,
+               (3,0): 0, 0, 0, 0.0133506
+               }
+            }
+            DATASET "impurity_Ndn" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 0.485808
+               }
+            }
+            DATASET "impurity_Nup" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 0.485808
+               }
+            }
+            DATASET "impurity_Sz" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 1.87375e-10
+               }
+            }
+            DATASET "pairing" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SIMPLE { ( 6 ) / ( 6 ) }
+               DATA {
+               (0): -0, -0.00123704, -0, -0.00104208, -0.000716873,
+               (5): -0.000533814
+               }
+            }
+            DATASET "pairing_total" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): -0.00352981
+               }
+            }
+            DATASET "site_occupancies" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SIMPLE { ( 6 ) / ( 6 ) }
+               DATA {
+               (0): 0.971616, 1.95445, 1.00088, 0.0450164, 0.0176052,
+               (5): 0.0104312
+               }
+            }
+            DATASET "total_Ndn" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 2
+               }
+            }
+            DATASET "total_Nup" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 2
+               }
+            }
+            DATASET "total_Sz" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 0
+               }
+            }
+            DATASET "total_occupancy" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 4
+               }
+            }
+         }
+      }
+   }
+   GROUP "5" {
+      GROUP "0.5" {
+         GROUP "0" {
+            GROUP "1" {
+               GROUP "P" {
+                  DATASET "0" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.0226254
+                     }
+                  }
+                  DATASET "2" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.0094242
+                     }
+                  }
+                  DATASET "down" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.0325701
+                     }
+                  }
+                  DATASET "up" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.93538
+                     }
+                  }
+               }
+               DATASET "density_matrix" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 4, 4 ) / ( 4, 4 ) }
+                  DATA {
+                  (0,0): 0.0226254, 0, 0, 0,
+                  (1,0): 0, 0.93538, 0, 0,
+                  (2,0): 0, 0, 0.0325701, 0,
+                  (3,0): 0, 0, 0, 0.0094242
+                  }
+               }
+            }
+            GROUP "2" {
+               GROUP "P" {
+                  DATASET "0" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.000957766
+                     }
+                  }
+                  DATASET "2" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.984668
+                     }
+                  }
+                  DATASET "down" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.00265573
+                     }
+                  }
+                  DATASET "up" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.0117189
+                     }
+                  }
+               }
+               DATASET "density_matrix" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 4, 4 ) / ( 4, 4 ) }
+                  DATA {
+                  (0,0): 0.000957766, 0, 0, 0,
+                  (1,0): 0, 0.0117189, 0, 0,
+                  (2,0): 0, 0, 0.00265573, 0,
+                  (3,0): 0, 0, 0, 0.984668
+                  }
+               }
+            }
+            GROUP "3" {
+               GROUP "P" {
+                  DATASET "0" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.00247859
+                     }
+                  }
+                  DATASET "2" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.952265
+                     }
+                  }
+                  DATASET "down" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.00726976
+                     }
+                  }
+                  DATASET "up" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.0379871
+                     }
+                  }
+               }
+               DATASET "density_matrix" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 4, 4 ) / ( 4, 4 ) }
+                  DATA {
+                  (0,0): 0.00247859, 0, 0, 0,
+                  (1,0): 0, 0.0379871, 0, 0,
+                  (2,0): 0, 0, 0.00726976, 0,
+                  (3,0): 0, 0, 0, 0.952265
+                  }
+               }
+            }
+            GROUP "4" {
+               GROUP "P" {
+                  DATASET "0" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.950293
+                     }
+                  }
+                  DATASET "2" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.00219456
+                     }
+                  }
+                  DATASET "down" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.00485956
+                     }
+                  }
+                  DATASET "up" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.0426525
+                     }
+                  }
+               }
+               DATASET "density_matrix" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 4, 4 ) / ( 4, 4 ) }
+                  DATA {
+                  (0,0): 0.950293, 0, 0, 0,
+                  (1,0): 0, 0.0426525, 0, 0,
+                  (2,0): 0, 0, 0.00485956, 0,
+                  (3,0): 0, 0, 0, 0.00219456
+                  }
+               }
+            }
+            GROUP "5" {
+               GROUP "P" {
+                  DATASET "0" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.983184
+                     }
+                  }
+                  DATASET "2" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.000838918
+                     }
+                  }
+                  DATASET "down" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.0018367
+                     }
+                  }
+                  DATASET "up" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.0141405
+                     }
+                  }
+               }
+               DATASET "density_matrix" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 4, 4 ) / ( 4, 4 ) }
+                  DATA {
+                  (0,0): 0.983184, 0, 0, 0,
+                  (1,0): 0, 0.0141405, 0, 0,
+                  (2,0): 0, 0, 0.0018367, 0,
+                  (3,0): 0, 0, 0, 0.000838918
+                  }
+               }
+            }
+            GROUP "6" {
+               GROUP "P" {
+                  DATASET "0" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.990285
+                     }
+                  }
+                  DATASET "2" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.000433693
+                     }
+                  }
+                  DATASET "down" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.000984667
+                     }
+                  }
+                  DATASET "up" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.00829711
+                     }
+                  }
+               }
+               DATASET "density_matrix" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 4, 4 ) / ( 4, 4 ) }
+                  DATA {
+                  (0,0): 0.990285, 0, 0, 0,
+                  (1,0): 0, 0.00829711, 0, 0,
+                  (2,0): 0, 0, 0.000984667, 0,
+                  (3,0): 0, 0, 0, 0.000433693
+                  }
+               }
+            }
+            DATASET "E" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): -1.42047
+               }
+            }
+            GROUP "P_imp" {
+               DATASET "0" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SCALAR
+                  DATA {
+                  (0): 0.0226254
+                  }
+               }
+               DATASET "2" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SCALAR
+                  DATA {
+                  (0): 0.0094242
+                  }
+               }
+               DATASET "down" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SCALAR
+                  DATA {
+                  (0): 0.0325701
+                  }
+               }
+               DATASET "up" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SCALAR
+                  DATA {
+                  (0): 0.93538
+                  }
+               }
+            }
+            DATASET "S2" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 0.5
+               }
+            }
+            GROUP "amplitudes" {
+               DATASET "pdt" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 6 ) / ( 6 ) }
+                  DATA {
+                  (0): 0.0146023, 0.0307096, 0.0485826, 0.045667, 0.0287195,
+                  (5): 0.0207239
+                  }
+               }
+               DATASET "u" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 6 ) / ( 6 ) }
+                  DATA {
+                  (0): 0.150417, 0.0309478, 0.0497854, 0.97483, 0.991556,
+                  (5): 0.99513
+                  }
+               }
+               DATASET "v" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 6 ) / ( 6 ) }
+                  DATA {
+                  (0): 0.0970783, 0.992304, 0.97584, 0.0468461, 0.0289641,
+                  (5): 0.0208253
+                  }
+               }
+            }
+            DATASET "amplitudes_total" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): -0.00697611
+               }
+            }
+            DATASET "density_matrix_imp" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SIMPLE { ( 4, 4 ) / ( 4, 4 ) }
+               DATA {
+               (0,0): 0.0226254, 0, 0, 0,
+               (1,0): 0, 0.93538, 0, 0,
+               (2,0): 0, 0, 0.0325701, 0,
+               (3,0): 0, 0, 0, 0.0094242
+               }
+            }
+            DATASET "impurity_Ndn" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 0.0419943
+               }
+            }
+            DATASET "impurity_Nup" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 0.944805
+               }
+            }
+            DATASET "impurity_Sz" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 0.451405
+               }
+            }
+            DATASET "pairing" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SIMPLE { ( 6 ) / ( 6 ) }
+               DATA {
+               (0): -0, -0.00120795, -0.00182608, -0.00173353, -0.00113055,
+               (5): -0.000821033
+               }
+            }
+            DATASET "pairing_total" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): -0.00671914
+               }
+            }
+            DATASET "site_occupancies" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SIMPLE { ( 6 ) / ( 6 ) }
+               DATA {
+               (0): 0.986799, 1.98371, 1.94979, 0.0519012, 0.017655,
+               (5): 0.0101492
+               }
+            }
+            DATASET "total_Ndn" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 2
+               }
+            }
+            DATASET "total_Nup" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 3
+               }
+            }
+            DATASET "total_Sz" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 0.5
+               }
+            }
+            DATASET "total_occupancy" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 5
+               }
+            }
+         }
+      }
+   }
+   GROUP "6" {
+      GROUP "0" {
+         GROUP "0" {
+            GROUP "1" {
+               GROUP "P" {
+                  DATASET "0" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.0293746
+                     }
+                  }
+                  DATASET "2" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.0196898
+                     }
+                  }
+                  DATASET "down" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.475468
+                     }
+                  }
+                  DATASET "up" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.475468
+                     }
+                  }
+               }
+               DATASET "density_matrix" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 4, 4 ) / ( 4, 4 ) }
+                  DATA {
+                  (0,0): 0.0293746, 0, 0, 0,
+                  (1,0): 0, 0.475468, 0, 0,
+                  (2,0): 0, 0, 0.475468, 0,
+                  (3,0): 0, 0, 0, 0.0196898
+                  }
+               }
+            }
+            GROUP "2" {
+               GROUP "P" {
+                  DATASET "0" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.000525859
+                     }
+                  }
+                  DATASET "2" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.983654
+                     }
+                  }
+                  DATASET "down" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.00791032
+                     }
+                  }
+                  DATASET "up" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.00791032
+                     }
+                  }
+               }
+               DATASET "density_matrix" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 4, 4 ) / ( 4, 4 ) }
+                  DATA {
+                  (0,0): 0.000525859, 0, 0, 0,
+                  (1,0): 0, 0.00791032, 0, 0,
+                  (2,0): 0, 0, 0.00791032, 0,
+                  (3,0): 0, 0, 0, 0.983654
+                  }
+               }
+            }
+            GROUP "3" {
+               GROUP "P" {
+                  DATASET "0" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.00140109
+                     }
+                  }
+                  DATASET "2" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.954952
+                     }
+                  }
+                  DATASET "down" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.0218233
+                     }
+                  }
+                  DATASET "up" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.0218233
+                     }
+                  }
+               }
+               DATASET "density_matrix" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 4, 4 ) / ( 4, 4 ) }
+                  DATA {
+                  (0,0): 0.00140109, 0, 0, 0,
+                  (1,0): 0, 0.0218233, 0, 0,
+                  (2,0): 0, 0, 0.0218233, 0,
+                  (3,0): 0, 0, 0, 0.954952
+                  }
+               }
+            }
+            GROUP "4" {
+               GROUP "P" {
+                  DATASET "0" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.0463445
+                     }
+                  }
+                  DATASET "2" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.0571588
+                     }
+                  }
+                  DATASET "down" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.448248
+                     }
+                  }
+                  DATASET "up" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.448248
+                     }
+                  }
+               }
+               DATASET "density_matrix" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 4, 4 ) / ( 4, 4 ) }
+                  DATA {
+                  (0,0): 0.0463445, 0, 0, 0,
+                  (1,0): 0, 0.448248, 0, 0,
+                  (2,0): 0, 0, 0.448248, 0,
+                  (3,0): 0, 0, 0, 0.0571588
+                  }
+               }
+            }
+            GROUP "5" {
+               GROUP "P" {
+                  DATASET "0" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.956653
+                     }
+                  }
+                  DATASET "2" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.00147704
+                     }
+                  }
+                  DATASET "down" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.0209349
+                     }
+                  }
+                  DATASET "up" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.0209349
+                     }
+                  }
+               }
+               DATASET "density_matrix" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 4, 4 ) / ( 4, 4 ) }
+                  DATA {
+                  (0,0): 0.956653, 0, 0, 0,
+                  (1,0): 0, 0.0209349, 0, 0,
+                  (2,0): 0, 0, 0.0209349, 0,
+                  (3,0): 0, 0, 0, 0.00147704
+                  }
+               }
+            }
+            GROUP "6" {
+               GROUP "P" {
+                  DATASET "0" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.98319
+                     }
+                  }
+                  DATASET "2" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.000557233
+                     }
+                  }
+                  DATASET "down" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.00812662
+                     }
+                  }
+                  DATASET "up" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.00812662
+                     }
+                  }
+               }
+               DATASET "density_matrix" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 4, 4 ) / ( 4, 4 ) }
+                  DATA {
+                  (0,0): 0.98319, 0, 0, 0,
+                  (1,0): 0, 0.00812662, 0, 0,
+                  (2,0): 0, 0, 0.00812662, 0,
+                  (3,0): 0, 0, 0, 0.000557233
+                  }
+               }
+            }
+            DATASET "E" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): -1.12733
+               }
+            }
+            GROUP "P_imp" {
+               DATASET "0" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SCALAR
+                  DATA {
+                  (0): 0.0293746
+                  }
+               }
+               DATASET "2" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SCALAR
+                  DATA {
+                  (0): 0.0196898
+                  }
+               }
+               DATASET "down" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SCALAR
+                  DATA {
+                  (0): 0.475468
+                  }
+               }
+               DATASET "up" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SCALAR
+                  DATA {
+                  (0): 0.475468
+                  }
+               }
+            }
+            DATASET "S2" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): -1.11022e-16
+               }
+            }
+            GROUP "amplitudes" {
+               DATASET "pdt" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 6 ) / ( 6 ) }
+                  DATA {
+                  (0): 0.0240495, 0.0227434, 0.0365784, 0.0514684, 0.0375901,
+                  (5): 0.0234065
+                  }
+               }
+               DATASET "u" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 6 ) / ( 6 ) }
+                  DATA {
+                  (0): 0.17139, 0.0229316, 0.0374312, 0.215278, 0.978086,
+                  (5): 0.991559
+                  }
+               }
+               DATASET "v" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 6 ) / ( 6 ) }
+                  DATA {
+                  (0): 0.14032, 0.991793, 0.977217, 0.239079, 0.0384323,
+                  (5): 0.0236058
+                  }
+               }
+            }
+            DATASET "amplitudes_total" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): -0.00687147
+               }
+            }
+            DATASET "density_matrix_imp" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SIMPLE { ( 4, 4 ) / ( 4, 4 ) }
+               DATA {
+               (0,0): 0.0293746, 0, 0, 0,
+               (1,0): 0, 0.475468, 0, 0,
+               (2,0): 0, 0, 0.475468, 0,
+               (3,0): 0, 0, 0, 0.0196898
+               }
+            }
+            DATASET "impurity_Ndn" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 0.495158
+               }
+            }
+            DATASET "impurity_Nup" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 0.495158
+               }
+            }
+            DATASET "impurity_Sz" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 2.5459e-10
+               }
+            }
+            DATASET "pairing" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SIMPLE { ( 6 ) / ( 6 ) }
+               DATA {
+               (0): -0, -0.000852939, -0.0011742, -0, -0.00124884,
+               (5): -0.000878019
+               }
+            }
+            DATASET "pairing_total" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): -0.004154
+               }
+            }
+            DATASET "site_occupancies" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SIMPLE { ( 6 ) / ( 6 ) }
+               DATA {
+               (0): 0.990315, 1.98313, 1.95355, 1.01081, 0.0448239, 0.0173677
+               }
+            }
+            DATASET "total_Ndn" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 3
+               }
+            }
+            DATASET "total_Nup" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 3
+               }
+            }
+            DATASET "total_Sz" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 2.22045e-16
+               }
+            }
+            DATASET "total_occupancy" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 6
+               }
+            }
+         }
+      }
+   }
+   GROUP "7" {
+      GROUP "0.5" {
+         GROUP "0" {
+            GROUP "1" {
+               GROUP "P" {
+                  DATASET "0" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.0138126
+                     }
+                  }
+                  DATASET "2" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.0149073
+                     }
+                  }
+                  DATASET "down" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.0316428
+                     }
+                  }
+                  DATASET "up" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.939637
+                     }
+                  }
+               }
+               DATASET "density_matrix" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 4, 4 ) / ( 4, 4 ) }
+                  DATA {
+                  (0,0): 0.0138126, 0, 0, 0,
+                  (1,0): 0, 0.939637, 0, 0,
+                  (2,0): 0, 0, 0.0316428, 0,
+                  (3,0): 0, 0, 0, 0.0149073
+                  }
+               }
+            }
+            GROUP "2" {
+               GROUP "P" {
+                  DATASET "0" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.000423571
+                     }
+                  }
+                  DATASET "2" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.991825
+                     }
+                  }
+                  DATASET "down" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.00117008
+                     }
+                  }
+                  DATASET "up" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.00658161
+                     }
+                  }
+               }
+               DATASET "density_matrix" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 4, 4 ) / ( 4, 4 ) }
+                  DATA {
+                  (0,0): 0.000423571, 0, 0, 0,
+                  (1,0): 0, 0.00658161, 0, 0,
+                  (2,0): 0, 0, 0.00117008, 0,
+                  (3,0): 0, 0, 0, 0.991825
+                  }
+               }
+            }
+            GROUP "3" {
+               GROUP "P" {
+                  DATASET "0" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.00084322
+                     }
+                  }
+                  DATASET "2" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.985211
+                     }
+                  }
+                  DATASET "down" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.00228848
+                     }
+                  }
+                  DATASET "up" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.0116572
+                     }
+                  }
+               }
+               DATASET "density_matrix" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 4, 4 ) / ( 4, 4 ) }
+                  DATA {
+                  (0,0): 0.00084322, 0, 0, 0,
+                  (1,0): 0, 0.0116572, 0, 0,
+                  (2,0): 0, 0, 0.00228848, 0,
+                  (3,0): 0, 0, 0, 0.985211
+                  }
+               }
+            }
+            GROUP "4" {
+               GROUP "P" {
+                  DATASET "0" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.00222274
+                     }
+                  }
+                  DATASET "2" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.955886
+                     }
+                  }
+                  DATASET "down" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.00630402
+                     }
+                  }
+                  DATASET "up" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.0355876
+                     }
+                  }
+               }
+               DATASET "density_matrix" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 4, 4 ) / ( 4, 4 ) }
+                  DATA {
+                  (0,0): 0.00222274, 0, 0, 0,
+                  (1,0): 0, 0.0355876, 0, 0,
+                  (2,0): 0, 0, 0.00630402, 0,
+                  (3,0): 0, 0, 0, 0.955886
+                  }
+               }
+            }
+            GROUP "5" {
+               GROUP "P" {
+                  DATASET "0" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.950642
+                     }
+                  }
+                  DATASET "2" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.00252729
+                     }
+                  }
+                  DATASET "down" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.00520681
+                     }
+                  }
+                  DATASET "up" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.0416238
+                     }
+                  }
+               }
+               DATASET "density_matrix" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 4, 4 ) / ( 4, 4 ) }
+                  DATA {
+                  (0,0): 0.950642, 0, 0, 0,
+                  (1,0): 0, 0.0416238, 0, 0,
+                  (2,0): 0, 0, 0.00520681, 0,
+                  (3,0): 0, 0, 0, 0.00252729
+                  }
+               }
+            }
+            GROUP "6" {
+               GROUP "P" {
+                  DATASET "0" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.983416
+                     }
+                  }
+                  DATASET "2" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.0010041
+                     }
+                  }
+                  DATASET "down" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.00202756
+                     }
+                  }
+                  DATASET "up" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.0135524
+                     }
+                  }
+               }
+               DATASET "density_matrix" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 4, 4 ) / ( 4, 4 ) }
+                  DATA {
+                  (0,0): 0.983416, 0, 0, 0,
+                  (1,0): 0, 0.0135524, 0, 0,
+                  (2,0): 0, 0, 0.00202756, 0,
+                  (3,0): 0, 0, 0, 0.0010041
+                  }
+               }
+            }
+            DATASET "E" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): -0.493107
+               }
+            }
+            GROUP "P_imp" {
+               DATASET "0" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SCALAR
+                  DATA {
+                  (0): 0.0138126
+                  }
+               }
+               DATASET "2" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SCALAR
+                  DATA {
+                  (0): 0.0149073
+                  }
+               }
+               DATASET "down" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SCALAR
+                  DATA {
+                  (0): 0.0316428
+                  }
+               }
+               DATASET "up" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SCALAR
+                  DATA {
+                  (0): 0.939637
+                  }
+               }
+            }
+            DATASET "S2" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 0.5
+               }
+            }
+            GROUP "amplitudes" {
+               DATASET "pdt" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 6 ) / ( 6 ) }
+                  DATA {
+                  (0): 0.0143495, 0.0204965, 0.0288227, 0.0460943, 0.0490157,
+                  (5): 0.0314236
+                  }
+               }
+               DATASET "u" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 6 ) / ( 6 ) }
+                  DATA {
+                  (0): 0.117527, 0.0205808, 0.0290383, 0.0471459, 0.975009,
+                  (5): 0.991673
+                  }
+               }
+               DATASET "v" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 6 ) / ( 6 ) }
+                  DATA {
+                  (0): 0.122095, 0.995904, 0.992578, 0.977694, 0.0502721,
+                  (5): 0.0316875
+                  }
+               }
+            }
+            DATASET "amplitudes_total" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): -0.00703412
+               }
+            }
+            DATASET "density_matrix_imp" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SIMPLE { ( 4, 4 ) / ( 4, 4 ) }
+               DATA {
+               (0,0): 0.0138126, 0, 0, 0,
+               (1,0): 0, 0.939637, 0, 0,
+               (2,0): 0, 0, 0.0316428, 0,
+               (3,0): 0, 0, 0, 0.0149073
+               }
+            }
+            DATASET "impurity_Ndn" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 0.0465501
+               }
+            }
+            DATASET "impurity_Nup" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 0.954545
+               }
+            }
+            DATASET "impurity_Sz" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 0.453997
+               }
+            }
+            DATASET "pairing" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SIMPLE { ( 6 ) / ( 6 ) }
+               DATA {
+               (0): -0, -0.000812313, -0.00113425, -0.00174372, -0.00187011,
+               (5): -0.00123933
+               }
+            }
+            DATASET "pairing_total" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): -0.00679972
+               }
+            }
+            DATASET "site_occupancies" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SIMPLE { ( 6 ) / ( 6 ) }
+               DATA {
+               (0): 1.00109, 1.9914, 1.98437, 1.95366, 0.0518852, 0.0175881
+               }
+            }
+            DATASET "total_Ndn" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 3
+               }
+            }
+            DATASET "total_Nup" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 4
+               }
+            }
+            DATASET "total_Sz" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 0.5
+               }
+            }
+            DATASET "total_occupancy" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 7
+               }
+            }
+         }
+      }
+   }
+   GROUP "8" {
+      GROUP "0" {
+         GROUP "0" {
+            GROUP "1" {
+               GROUP "P" {
+                  DATASET "0" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.019426
+                     }
+                  }
+                  DATASET "2" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.0271058
+                     }
+                  }
+                  DATASET "down" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.476734
+                     }
+                  }
+                  DATASET "up" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.476734
+                     }
+                  }
+               }
+               DATASET "density_matrix" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 4, 4 ) / ( 4, 4 ) }
+                  DATA {
+                  (0,0): 0.019426, 0, 0, 0,
+                  (1,0): 0, 0.476734, 0, 0,
+                  (2,0): 0, 0, 0.476734, 0,
+                  (3,0): 0, 0, 0, 0.0271058
+                  }
+               }
+            }
+            GROUP "2" {
+               GROUP "P" {
+                  DATASET "0" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.000194412
+                     }
+                  }
+                  DATASET "2" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.990971
+                     }
+                  }
+                  DATASET "down" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.00441748
+                     }
+                  }
+                  DATASET "up" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.00441748
+                     }
+                  }
+               }
+               DATASET "density_matrix" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 4, 4 ) / ( 4, 4 ) }
+                  DATA {
+                  (0,0): 0.000194412, 0, 0, 0,
+                  (1,0): 0, 0.00441748, 0, 0,
+                  (2,0): 0, 0, 0.00441748, 0,
+                  (3,0): 0, 0, 0, 0.990971
+                  }
+               }
+            }
+            GROUP "3" {
+               GROUP "P" {
+                  DATASET "0" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.000380255
+                     }
+                  }
+                  DATASET "2" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.983952
+                     }
+                  }
+                  DATASET "down" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.00783363
+                     }
+                  }
+                  DATASET "up" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.00783363
+                     }
+                  }
+               }
+               DATASET "density_matrix" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 4, 4 ) / ( 4, 4 ) }
+                  DATA {
+                  (0,0): 0.000380255, 0, 0, 0,
+                  (1,0): 0, 0.00783363, 0, 0,
+                  (2,0): 0, 0, 0.00783363, 0,
+                  (3,0): 0, 0, 0, 0.983952
+                  }
+               }
+            }
+            GROUP "4" {
+               GROUP "P" {
+                  DATASET "0" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.00107246
+                     }
+                  }
+                  DATASET "2" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.957316
+                     }
+                  }
+                  DATASET "down" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.0208059
+                     }
+                  }
+                  DATASET "up" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.0208059
+                     }
+                  }
+               }
+               DATASET "density_matrix" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 4, 4 ) / ( 4, 4 ) }
+                  DATA {
+                  (0,0): 0.00107246, 0, 0, 0,
+                  (1,0): 0, 0.0208059, 0, 0,
+                  (2,0): 0, 0, 0.0208059, 0,
+                  (3,0): 0, 0, 0, 0.957316
+                  }
+               }
+            }
+            GROUP "5" {
+               GROUP "P" {
+                  DATASET "0" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.0397375
+                     }
+                  }
+                  DATASET "2" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.0571587
+                     }
+                  }
+                  DATASET "down" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.451552
+                     }
+                  }
+                  DATASET "up" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.451552
+                     }
+                  }
+               }
+               DATASET "density_matrix" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 4, 4 ) / ( 4, 4 ) }
+                  DATA {
+                  (0,0): 0.0397375, 0, 0, 0,
+                  (1,0): 0, 0.451552, 0, 0,
+                  (2,0): 0, 0, 0.451552, 0,
+                  (3,0): 0, 0, 0, 0.0571587
+                  }
+               }
+            }
+            GROUP "6" {
+               GROUP "P" {
+                  DATASET "0" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.95729
+                     }
+                  }
+                  DATASET "2" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.00159673
+                     }
+                  }
+                  DATASET "down" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.0205569
+                     }
+                  }
+                  DATASET "up" {
+                     DATATYPE  H5T_IEEE_F64LE
+                     DATASPACE  SCALAR
+                     DATA {
+                     (0): 0.0205569
+                     }
+                  }
+               }
+               DATASET "density_matrix" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 4, 4 ) / ( 4, 4 ) }
+                  DATA {
+                  (0,0): 0.95729, 0, 0, 0,
+                  (1,0): 0, 0.0205569, 0, 0,
+                  (2,0): 0, 0, 0.0205569, 0,
+                  (3,0): 0, 0, 0, 0.00159673
+                  }
+               }
+            }
+            DATASET "E" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 0.599629
+               }
+            }
+            GROUP "P_imp" {
+               DATASET "0" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SCALAR
+                  DATA {
+                  (0): 0.019426
+                  }
+               }
+               DATASET "2" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SCALAR
+                  DATA {
+                  (0): 0.0271058
+                  }
+               }
+               DATASET "down" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SCALAR
+                  DATA {
+                  (0): 0.476734
+                  }
+               }
+               DATASET "up" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SCALAR
+                  DATA {
+                  (0): 0.476734
+                  }
+               }
+            }
+            DATASET "S2" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 0
+               }
+            }
+            GROUP "amplitudes" {
+               DATASET "pdt" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 6 ) / ( 6 ) }
+                  DATA {
+                  (0): 0.0229468, 0.0138801, 0.019343, 0.0320419, 0.0476586,
+                  (5): 0.0390965
+                  }
+               }
+               DATASET "u" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 6 ) / ( 6 ) }
+                  DATA {
+                  (0): 0.139377, 0.0139432, 0.0195001, 0.0327484, 0.199343,
+                  (5): 0.978412
+                  }
+               }
+               DATASET "v" {
+                  DATATYPE  H5T_IEEE_F64LE
+                  DATASPACE  SIMPLE { ( 6 ) / ( 6 ) }
+                  DATA {
+                  (0): 0.164638, 0.995475, 0.991944, 0.978425, 0.239079,
+                  (5): 0.0399591
+                  }
+               }
+            }
+            DATASET "amplitudes_total" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): -0.0060808
+               }
+            }
+            DATASET "density_matrix_imp" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SIMPLE { ( 4, 4 ) / ( 4, 4 ) }
+               DATA {
+               (0,0): 0.019426, 0, 0, 0,
+               (1,0): 0, 0.476734, 0, 0,
+               (2,0): 0, 0, 0.476734, 0,
+               (3,0): 0, 0, 0, 0.0271058
+               }
+            }
+            DATASET "impurity_Ndn" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 0.50384
+               }
+            }
+            DATASET "impurity_Nup" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 0.50384
+               }
+            }
+            DATASET "impurity_Sz" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 4.36473e-12
+               }
+            }
+            DATASET "pairing" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SIMPLE { ( 6 ) / ( 6 ) }
+               DATA {
+               (0): -0, -0.000526334, -0.000707431, -0.000974717, -0,
+               (5): -0.00133023
+               }
+            }
+            DATASET "pairing_total" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): -0.00353872
+               }
+            }
+            DATASET "site_occupancies" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SIMPLE { ( 6 ) / ( 6 ) }
+               DATA {
+               (0): 1.00768, 1.99078, 1.98357, 1.95624, 1.01742, 0.0443072
+               }
+            }
+            DATASET "total_Ndn" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 4
+               }
+            }
+            DATASET "total_Nup" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 4
+               }
+            }
+            DATASET "total_Sz" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): -4.44089e-16
+               }
+            }
+            DATASET "total_occupancy" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+               DATA {
+               (0): 8
+               }
+            }
+         }
+      }
+   }
+   GROUP "GS" {
+      DATASET "E" {
+         DATATYPE  H5T_IEEE_F64LE
+         DATASPACE  SCALAR
+         DATA {
+         (0): -1.42047
+         }
+      }
+      DATASET "N" {
+         DATATYPE  H5T_STD_I32LE
+         DATASPACE  SCALAR
+         DATA {
+         (0): 5
+         }
+      }
+      DATASET "Sz" {
+         DATATYPE  H5T_IEEE_F64LE
+         DATASPACE  SCALAR
+         DATA {
+         (0): 0.5
+         }
+      }
+   }
+}
+}
