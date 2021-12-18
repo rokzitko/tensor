@@ -62,12 +62,16 @@ void report_Sz_conserved(T *prob) {
 auto parse_ys(auto& input, const int Nlevels, const std::string channel = "") {
   std::vector<double> yvec;
   const std::string y_ch = "y" + channel; // for the two channel problem this is "y1" and "y2", and "y" for single channel.
+  
+  std::cout.setstate(std::ios_base::failbit); // stops the output to stdout, from https://stackoverflow.com/questions/30184998/how-to-disable-cout-output-in-the-runtime
   const auto default_value = input.getReal(y_ch, 1.0); // NOTE: default is 1
   for (int i = 1; i <= Nlevels; i++)
     yvec.push_back(input.getReal(y_ch + "_" + std::to_string(i), default_value)); // parse y_NN from the input, if not found fall back to y.
-
-  std::cout << "ys:\n";
-  for (auto &x : shift1(yvec)) std::cout << x << "\n";
+  std::cout.clear();
+  // print out all y in the same line: 
+  std::cout << "Got y" << channel << ": ";
+  for (auto &x : shift1(yvec)) std::cout << x << " ";
+  std::cout << "\n";
 
   return shift1(yvec); // convert to 1-based vector
 }
