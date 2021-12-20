@@ -1,3 +1,7 @@
+class Ec_eta : public imp_first, public single_channel_eta, public Sz_conserved  {
+public:
+Ec_eta(const params &p) : imp_first(p.NBath) {}
+   
 MPO initH(state_t st, params &p) override
 {
   if (p.verbose) std::cout << "Building Hamiltonian, MPO=Ec_eta" << std::endl;
@@ -124,3 +128,5 @@ MPO initH(state_t st, params &p) override
 
   return H;
 }
+
+};

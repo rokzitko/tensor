@@ -844,17 +844,8 @@ namespace prob {
       }
    };
    
-   class Ec_eta : public imp_first, public single_channel_eta, public Sz_conserved  {
-    public:
-      Ec_eta(const params &p) : imp_first(p.NBath) {}
-      #include "SC_BathMPO_Ec_eta.h"
-   };
-
-   class Ec_V_eta : public imp_first, public single_channel_eta, public Sz_conserved  {
-    public:
-      Ec_V_eta(const params &p) : imp_first(p.NBath) {}
-      #include "SC_BathMPO_Ec_V_eta.h"
-   };
+#include "SC_BathMPO_Ec_eta.h"
+#include "SC_BathMPO_Ec_V_eta.h"
 
    // For testing only!! This is the same as 'middle_Ec', but using the MPO for the
    // 2-ch problem. It uses Gamma for hybridisation, but alpha1,alpha2, etc. for
