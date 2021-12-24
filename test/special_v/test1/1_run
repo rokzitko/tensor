@@ -1,0 +1,9 @@
+#!/bin/bash
+PATH=../../..:../..:$PATH
+rm -f solution.h5
+calcGS inputFile-std.txt > result-std.dat
+mv solution.h5 solution-std.h5
+calcGS inputFile-vNN.txt > result-vNN.dat
+mv solution.h5 solution-vNN.h5
+h5diff -d 1e-6 solution-std.h5 solution-vNN.h5
+

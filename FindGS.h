@@ -304,12 +304,25 @@ class SCbath : public bath { // superconducting island bath
 class hyb {
  private:
    double _Gamma; // hybridisation strength
+   std::map<int, double> _special_vs; // overwrites the hopping in given levels 
  public:
-   hyb(double Gamma) : _Gamma(Gamma) {};
+   hyb(double Gamma, std::map<int, double> special_vs) : _Gamma(Gamma), _special_vs(special_vs) {};
    auto Gamma() const { return _Gamma; }
+   auto special_vs() const { return _special_vs; }
+   auto overwrite_special_vs(auto & vec) const {
+    for (auto const & x : _special_vs){
+      int i = x.first;
+      double v_i = x.second;
+      vec[i] = v_i;
+    }
+    return vec;
+   }
    auto V(int NBath) const {
     //already 1-based here!
-    return shift1(std::vector<double>(NBath, std::sqrt( 2.0*_Gamma/(M_PI*NBath) )));
+    std::vector<double> Vvec(NBath, std::sqrt( 2.0*_Gamma/(M_PI*NBath)));
+    Vvec = shift1(Vvec);
+    Vvec = overwrite_special_vs(Vvec);
+    return Vvec;
    }
 };
 
@@ -692,6 +705,7 @@ class two_channel : virtual public problem_type
      Ensures(Sztot == Sz);
      return state;
   }
+  //used to measure the energy of each channel!
   auto get_one_channel_MPOs_and_impOp(MPO& Hch1, MPO& Hch2, params &p){
     auto [eps, V] = get_eps_V(p.sc1, p.Gamma1, p.sc2, p.Gamma2, p);
     double Eshift = p.sc1->Ec()*pow(p.sc1->n0(), 2) + p.sc2->Ec()*pow(p.sc2->n0(), 2) + p.qd->U()/2 + p.V1imp * p.sc1->n0() * p.qd->nu() + p.V2imp * p.sc2->n0() * p.qd->nu();
