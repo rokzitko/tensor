@@ -77,22 +77,22 @@ auto parse_ys(auto& input, const int Nlevels, const std::string channel = "") {
 }
 
 // v_NN is the transition rate from the impurity to the NNth level in the bath. Parsed into a map here and merged with V in class hyb.
-std::map<int, double> parse_special_vs(auto& input, const int Nlevels, const std::string channel = ""){
-  std::map<int, double> special_vs; 
-  const std::string v_ch = "v" + channel; // for the two channel problem this is "v1" and "v2", and "v" for single channel.
+std::map<int, double> parse_special_levels(auto& input, const int Nlevels, const std::string which, const std::string channel = ""){
+  std::map<int, double> special_map; 
+  const std::string v_ch = which + channel; // which is the name of parameter, as of Jan 2021 "v" or "eps". For the two channel problem this is "v1" and "v2", and "v" for single channel.
 
   std::cout.setstate(std::ios_base::failbit);
   for (int i = 1; i <= Nlevels; i++){
     double v = input.getReal(v_ch + "_" + std::to_string(i), std::numeric_limits<double>::quiet_NaN()); // have NaN as the default value
-    if (!std::isnan(v)) special_vs.insert(std::pair<int, double>(i, v)); // check if this v_i value was given (ie. is not Nan by default), and add it to the map 
+    if (!std::isnan(v)) special_map.insert(std::pair<int, double>(i, v)); // check if this v_i value was given (ie. is not Nan by default), and add it to the map 
   }
   std::cout.clear();
 
   std::cout << "Got " << v_ch << ": \n";
-  for (auto const & x : special_vs){
+  for (auto const & x : special_map){
     std::cout << v_ch << "_" << x.first << " = " << x.second << "\n";
   }
-  return special_vs;
+  return special_map;
 }
 
 void parse_cmd_line(int argc, char *argv[], params &p) {
@@ -121,9 +121,9 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   // parameters entering the problem definition
   const double U = input.getReal("U", 0); // need to parse it first because it enters the default value for epsimp just below
   p.qd = std::make_unique<imp>(U, input.getReal("epsimp", -U/2.), input.getReal("EZ_imp", 0.), input.getReal("EZx_imp", 0.));
-  p.Gamma = std::make_unique<hyb>(input.getReal("gamma", 0), parse_special_vs(input, p.NBath, ""));
+  p.Gamma = std::make_unique<hyb>(input.getReal("gamma", 0), parse_special_levels(input, p.NBath, "v", ""));
 
-  p.sc = std::make_unique<SCbath>(p.NBath, p.D, input.getReal("alpha", 0.), parse_ys(input, p.NBath, ""), input.getReal("Ec", 0), input.getReal("n0", p.N-1), input.getReal("EZ_bulk", 0.), input.getReal("EZx_bulk", 0.), input.getReal("t", 0.), input.getReal("lambda", 0.));
+  p.sc = std::make_unique<SCbath>(p.NBath, p.D, input.getReal("alpha", 0.), parse_ys(input, p.NBath, ""), parse_special_levels(input, p.NBath, "eps"), input.getReal("Ec", 0), input.getReal("n0", p.N-1), input.getReal("EZ_bulk", 0.), input.getReal("EZx_bulk", 0.), input.getReal("t", 0.), input.getReal("lambda", 0.));
 
   p.eta = input.getReal("eta", 1.0);
   p.etasite = input.getInt("etasite", p.NBath/2); // Fermi-level !
@@ -135,10 +135,10 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.V2imp = input.getReal("V2imp", 0); // capacitive coupling between sc2 and imp
 
   // parameters for the 2-channel problem
-  p.sc1 = std::make_unique<SCbath>(p.NBath/2, p.D, input.getReal("alpha1", 0.), parse_ys(input, p.NBath/2, "1"), input.getReal("Ec1", 0), input.getReal("n01", (p.N-1)/2), input.getReal("EZ_bulk1", 0), input.getReal("EZx_bulk1", 0.), input.getReal("t1", 0), input.getReal("lambda1", 0.));
-  p.sc2 = std::make_unique<SCbath>(p.NBath/2, p.D, input.getReal("alpha2", 0.), parse_ys(input, p.NBath/2, "2"), input.getReal("Ec2", 0), input.getReal("n02", (p.N-1)/2), input.getReal("EZ_bulk2", 0), input.getReal("EZx_bulk2", 0.), input.getReal("t2", 0), input.getReal("lambda2", 0.));
-  p.Gamma1 = std::make_unique<hyb>(input.getReal("gamma1", 0), parse_special_vs(input, p.NBath/2, "1"));
-  p.Gamma2 = std::make_unique<hyb>(input.getReal("gamma2", 0), parse_special_vs(input, p.NBath/2, "2"));
+  p.sc1 = std::make_unique<SCbath>(p.NBath/2, p.D, input.getReal("alpha1", 0.), parse_ys(input, p.NBath/2, "1"), parse_special_levels(input, p.NBath/2, "eps", "1"), input.getReal("Ec1", 0), input.getReal("n01", (p.N-1)/2), input.getReal("EZ_bulk1", 0), input.getReal("EZx_bulk1", 0.), input.getReal("t1", 0), input.getReal("lambda1", 0.));
+  p.sc2 = std::make_unique<SCbath>(p.NBath/2, p.D, input.getReal("alpha2", 0.), parse_ys(input, p.NBath/2, "2"), parse_special_levels(input, p.NBath/2, "eps", "2"), input.getReal("Ec2", 0), input.getReal("n02", (p.N-1)/2), input.getReal("EZ_bulk2", 0), input.getReal("EZx_bulk2", 0.), input.getReal("t2", 0), input.getReal("lambda2", 0.));
+  p.Gamma1 = std::make_unique<hyb>(input.getReal("gamma1", 0), parse_special_levels(input, p.NBath/2, "v", "1"));
+  p.Gamma2 = std::make_unique<hyb>(input.getReal("gamma2", 0), parse_special_levels(input, p.NBath/2, "v", "2"));
 
   // parameters controlling the calculation targets
   p.nref = input.getInt("nref", -1);
@@ -231,13 +231,9 @@ void MeasureChannelsEnergy(MPS& psi, H5Easy::File & file, std::string path, para
   double ch1EnergyGain = std::real(innerC(psi, Hch1, psi));
   double ch2EnergyGain = std::real(innerC(psi, Hch2, psi));
 
-  print("HERE THE PROBLEM STARTS\n");
   psi.position(p.impindex);
-  print("A\n");
   auto res = psi(p.impindex) * impOp * dag(prime(psi(p.impindex),"Site"));
-  print("B\n");
   double impEnergy = std::real(res.cplx());
-  print("HERE THE PROBLEM ENDS\n");
 
   std::cout << std::setprecision(full) << "Energy gain: " << std::endl;
   std::cout << std::setprecision(full) << "channel1 : " <<  ch1EnergyGain << std::endl;
@@ -1072,7 +1068,7 @@ void calculate_cdag_overlaps(store &s, auto &file, const params &p) {
     const auto [ntot1, Sz1, i] = st1.first;
     const auto [ntot2, Sz2, j] = st2.first;
     
-    if ( ntot1 == ntot2 + 1. ){
+    if ( ntot1 == ntot2 + 1 ){
       auto sz_change = Sz1 == Sz2 + 0.5 ? "up" : "dn";
 
       auto res = calculate_cdag_overlap(st1.second.psi(), st2.second.psi(), sz_change, p);

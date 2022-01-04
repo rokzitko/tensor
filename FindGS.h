@@ -221,6 +221,16 @@ auto concat(const std::vector<T> &t1, const std::vector<T> &t2, const bool one_b
    return t;
 }
 
+// overwrite vec[i] with a value given in special_map[i]
+auto overwrite_special(auto & vec, const auto & special_map) {
+  for (auto const & x : special_map){
+    int i = x.first;
+    double v_i = x.second;
+    vec[i] = v_i;
+  }
+  return vec;
+}
+
 // Class containing impurity parameters
 class imp {
  private:
@@ -270,6 +280,7 @@ class SCbath : public bath { // superconducting island bath
  private:
    double _alpha; //pairing strenght
    std::vector<double> _ys; // pairing strength renormalization vector
+   std::map<int, double> _special_eps; // overwrites the eps in given levels 
    double _Ec;    // charging energy
    double _n0;    // offset 
    double _EZ;    // Zeeman energy (z-axis)
@@ -277,8 +288,8 @@ class SCbath : public bath { // superconducting island bath
    double _t;     // nearest neighbour hopping in SC
    double _lambda;// spin orbit coupling
  public:
-   SCbath(int NBath, double D, double alpha, std::vector<double> ys, double Ec, double n0, double EZ, double EZx, double t, double lambda) :
-     bath(NBath, D), _alpha(alpha), _ys(ys), _Ec(Ec), _n0(n0), _EZ(EZ), _EZx(EZx), _t(t), _lambda(lambda) {};
+   SCbath(int NBath, double D, double alpha, std::vector<double> ys, std::map<int, double> special_eps, double Ec, double n0, double EZ, double EZx, double t, double lambda) :
+     bath(NBath, D), _alpha(alpha), _ys(ys), _special_eps(special_eps), _Ec(Ec), _n0(n0), _EZ(EZ), _EZx(EZx), _t(t), _lambda(lambda) {};
    auto alpha() const { return _alpha; }
    auto g() const { return  _alpha * d();}
    auto y(int i) const { return _ys[i]; }
@@ -291,13 +302,14 @@ class SCbath : public bath { // superconducting island bath
    auto l() const { return _lambda*d(); } // NOTE: bandwidth incorporated by using d()
    auto eps(bool band_level_shift = true, bool flat_band = false, double flat_band_factor = 0, double band_rescale = 1.0) const {
      auto eps = bath::eps(flat_band, flat_band_factor);
+     eps = overwrite_special(eps, _special_eps);
      if (band_level_shift)
        for (int i = 1; i <= NBath(); i++)
          eps[i] += -g() * pow(y(i), 2) / 2.0;
      // Apply rescaling here. Since the code only uses SCbath (not bath directly), it's appropriate to do this at this point.
      for (auto &x: eps)
        x *= band_rescale;
-     return eps;
+    return eps;
    };
 };
 
@@ -308,20 +320,12 @@ class hyb {
  public:
    hyb(double Gamma, std::map<int, double> special_vs) : _Gamma(Gamma), _special_vs(special_vs) {};
    auto Gamma() const { return _Gamma; }
-   auto special_vs() const { return _special_vs; }
-   auto overwrite_special_vs(auto & vec) const {
-    for (auto const & x : _special_vs){
-      int i = x.first;
-      double v_i = x.second;
-      vec[i] = v_i;
-    }
-    return vec;
-   }
+   auto special_vs() const { return _special_vs; } 
    auto V(int NBath) const {
     //already 1-based here!
     std::vector<double> Vvec(NBath, std::sqrt( 2.0*_Gamma/(M_PI*NBath)));
     Vvec = shift1(Vvec);
-    Vvec = overwrite_special_vs(Vvec);
+    Vvec = overwrite_special(Vvec, _special_vs);
     return Vvec;
    }
 };
