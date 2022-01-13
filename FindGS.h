@@ -569,6 +569,7 @@ inline void add_bath_electrons(const int nsc, const spin & Szadd, const ndx_t &b
 #include "SC_BathMPO_Ec_MF.h"
 #include "SC_BathMPO_Ec_V.h"
 #include "SC_BathMPO_Ec_SO.h"
+#include "SC_BathMPO_Ec_V_SO.h"
 #include "SC_BathMPO_MiddleImp.h"
 #include "SC_BathMPO_MiddleImp_Ec.h"
 #include "SC_BathMPO_t_SConly.h"
@@ -806,6 +807,21 @@ namespace prob {
       }
    };
 
+  class Ec_V_SO : public imp_first, public single_channel, public Sz_non_conserved  {
+    public:
+      Ec_V_SO(const params &p) : imp_first(p.NBath) {}
+      MPO initH(state_t st, params &p) override {
+        if (p.verbose) std::cout << "Building Hamiltonian, MPO=Ec_V_SO" << std::endl;
+        auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
+        MPO H(p.sites);
+        double Eshift = p.sc->Ec()*pow(p.sc->n0(), 2) + p.V12 * p.sc->n0() * p.qd->nu() + p.qd->U()/2;
+        double epseff = p.qd->eps() - p.V12 * p.sc->n0();
+        double epsishift = -p.V12 * p.qd->nu();
+        Fill_SCBath_MPO_Ec_V_SO(H, Eshift, eps, V, epseff, epsishift, p);
+        return H;
+      }
+   };
+
    class middle : public imp_middle, public single_channel, public Sz_conserved  {
     public:
       middle(const params &p) : imp_middle(p.NBath) {}
@@ -999,6 +1015,7 @@ inline type_ptr set_problem(const std::string str, const params &p)
   if (str == "Ec_MF") return std::make_unique<prob::Ec_MF>(p);
   if (str == "Ec_V") return std::make_unique<prob::Ec_V>(p);
   if (str == "Ec_SO") return std::make_unique<prob::Ec_SO>(p);
+  if (str == "Ec_V_SO") return std::make_unique<prob::Ec_V_SO>(p);
   if (str == "middle") return std::make_unique<prob::middle>(p);
   if (str == "middle_Ec") return std::make_unique<prob::middle_Ec>(p);
   if (str == "t_SConly") return std::make_unique<prob::t_SConly>(p);
