@@ -1,0 +1,6 @@
+v_std=Sqrt[Gamma/(Pi*0.5)]/Sqrt[Nbath]
+
+For Gamma=0.5, Nbath=4, v_std=0.282095
+
+For Gamma=0.4, Nbath=100, v_std=0.05046
+For Gamma=0.01, Nbath=100, v_std=0.00797
