@@ -545,24 +545,22 @@ inline void add_imp_electron(const double Sz, const int impindex, auto & state, 
 // nsc = number of electrons to add, Szadd = spin of the unpaired electron in the case of odd nsc
 inline void add_bath_electrons(const int nsc, const spin & Szadd, const ndx_t &bath, auto & state, charge & tot, spin & Sztot)
 {
-  // TODO: Generalize to arbitrary Szadd
-  Expects(Szadd == -0.5 || Szadd == 0.0 || Szadd == +0.5);
-  const size_t npair = nsc/2;            // number of pairs to add
+  const size_t npair = (nsc - (2.0 * abs(Szadd)))/2;
   Expects(bath.size() >= npair);
-  for (size_t j = 0; j < npair; j++)
-    state.set(bath[j], "UpDn");
-  tot += npair*2;                        // Sztot does not change!
-  if (odd(nsc)) {                        // if ncs is odd, add one electron
-    Expects(bath.size() >= npair+1);
-    const auto i = bath[npair];          // note: vector bath is 0-based
-    if (Szadd == 0.5)
-      state.set(i, "Up");
-    else if (Szadd == -0.5)
-      state.set(i, "Dn");
-    else throw std::runtime_error("oops! should not happen!");
-    tot++;
-    Sztot += Szadd;
+  
+  // add pairs
+  for (size_t j = 0; j < npair; j++){
+    state.set(bath[j], "UpDn");    
   }
+  tot += npair*2;
+
+  // add unpaired electrons
+  std::string add_Sz = Szadd > 0 ? "Up" : "Dn"; // if Szadd == 0, the loop below does not start, npair = npair + 2 * 0
+  for (size_t j = npair; j < npair + 2.0 * abs(Szadd); j++){
+    state.set(bath[j], add_Sz);
+    tot++;
+  }
+  Sztot += Szadd;
 }
 
 // The functions in these headers take a class params argument
@@ -604,7 +602,6 @@ class single_channel : virtual public problem_type
    InitState initState(state_t st, params &p) override {
      const auto [ntot, Sz, ii] = st; // Sz is the z-component of the total spin.
      Expects(0 <= ntot && ntot <= 2*p.N);
-     Expects(Sz == -1 || Sz == -0.5 || Sz == 0 || Sz == +0.5 || Sz == +1);
      int tot = 0;      // electron counter, for assertion test
      double Sztot = 0; // SZ counter, for assertion test
      auto state = InitState(p.sites);
@@ -680,7 +677,6 @@ class two_channel : virtual public problem_type
   InitState initState(state_t st, params &p) override {
      const auto [ntot, Sz, ii] = st; // Sz is the z-component of the total spin.
      Expects(0 <= ntot && ntot <= 2*p.N);
-     Expects(Sz == -1 || Sz == -0.5 || Sz == 0 || Sz == +0.5 || Sz == +1);
      int tot = 0;      // electron counter, for assertion test
      double Sztot = 0; // SZ counter, for assertion test
      auto state = InitState(p.sites);
