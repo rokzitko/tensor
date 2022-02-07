@@ -81,12 +81,14 @@ inline void skip_line(std::ostream &o = std::cout)
 
 inline std::string Sz_string(const spin Sz) // custom formatting
 {
-    Expects(Sz == -1.0 || Sz == -0.5 || Sz == 0.0 || Sz == +0.5 || Sz == +1.0);
+    Expects(Sz == -1.5 || Sz == -1.0 || Sz == -0.5 || Sz == 0.0 || Sz == +0.5 || Sz == +1.0 || Sz == +1.5);
+    if (Sz == -1.5) return "-1.5";
     if (Sz == -1.0) return "-1";
     if (Sz == -0.5) return "-0.5";
     if (Sz == 0.0) return "0";
     if (Sz == 0.5) return "0.5";
     if (Sz == 1.0) return "1";
+    if (Sz == 1.5) return "1.5";
     return "xxx";
 }
 
@@ -596,7 +598,6 @@ class single_channel : virtual public problem_type
        std::cout << "V=" << V << std::endl;
        std::cout << "alpha=" << sc->alpha() << std::endl;
        std::cout << "g=" << sc->g() << std::endl;
-       //std::cout << "ys=" << sc->_ys() << std::endl;
      }
      return std::make_pair(eps, V);
    }
@@ -671,7 +672,6 @@ class two_channel : virtual public problem_type
        std::cout << "V1=" << V1 << std::endl << "V2=" << V2 << std::endl;
        std::cout << "alpha1=" << sc1->alpha() << std::endl << "alpha2=" << sc2->alpha() << std::endl;
        std::cout << "g1=" << sc1->g() << std::endl << "g2=" << sc2->g() << std::endl;
-       //std::cout << "ys1=" << sc1->_ys() << std::endl << "ys2=" << sc2->_ys() << std::endl;
      }
      auto eps = concat(eps1, eps2, true); //because eps1 and eps2 are both 1 based. Removes the first element of eps2 and concats.
      auto V = concat(V1, V2, true);
