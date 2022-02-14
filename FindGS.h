@@ -261,7 +261,7 @@ class bath { // normal-state bath
    auto d() const { // inter-level spacing
      return 2.0*_D/_NBath;
    }
-   auto eps(const bool flat_band = false, const double flat_band_factor = 0) const {
+   auto eps(const bool flat_band = false, const double flat_band_factor = 0, bool reverse_eps = false) const {
      std::vector<double> eps;
      for (auto k: range1(_NBath))
        // flat band: half of the levels at some negative energy (set by flat_band_factor),
@@ -272,6 +272,7 @@ class bath { // normal-state bath
          else if (k > NBath()/2) eps.push_back(_D*flat_band_factor); 
        }
        else eps.push_back( -_D + (k-0.5)*d() );
+     if (reverse_eps) std::reverse(eps.begin(), eps.end());  //the eps values are reversed, but still 1-based
      return shift1(eps);
    }
    void set_NBath(const int NBath) { _NBath = NBath; }
@@ -302,8 +303,8 @@ class SCbath : public bath { // superconducting island bath
    auto t() const { return _t; }
    auto lambda() const { return _lambda; }
    auto l() const { return _lambda*d(); } // NOTE: bandwidth incorporated by using d()
-   auto eps(bool band_level_shift = true, bool flat_band = false, double flat_band_factor = 0, double band_rescale = 1.0) const {
-     auto eps = bath::eps(flat_band, flat_band_factor);
+   auto eps(bool band_level_shift = true, bool flat_band = false, double flat_band_factor = 0, double band_rescale = 1.0, bool reverse_eps = false) const {
+     auto eps = bath::eps(flat_band, flat_band_factor, reverse_eps);
      eps = overwrite_special(eps, _special_eps);
      if (band_level_shift)
        for (int i = 1; i <= NBath(); i++)
@@ -384,7 +385,7 @@ struct params {
   int impindex;         // impurity position in the chain (1 based)
   double D;             // half bandwidth
 
-  Hubbard sites;        // itensor object
+  Electron sites;        // itensor object
 
   int result_verbosity; // Quantifies what additional results are computed (quick way to enable various correlators). default=0
   int stdout_verbosity; // Quantifies what results are printed in standard output. default=0
@@ -403,7 +404,7 @@ struct params {
   bool cdag_overlaps;    // compute <i|cdag|j> overlap between subspaces which differ by 1 in total charge and 0.5 in total Sz
   bool charge_susceptibility; // compute <i|nimp|j> overlap table in each subspace
   bool measureChannelsEnergy; // measure the energy gain for each channel separately
-  bool channel_parity;   // prints the channel parity
+  bool measureParity;   // prints the channel parity
 
   bool calcweights;      // calculates the spectral weights of the two closes spectroscopically availabe excitations
   bool excited_state;    // computes excited state
@@ -431,6 +432,7 @@ struct params {
   double sz_even_max, sz_even_min, sz_odd_max, sz_odd_min;
   bool flat_band;        // set energies of half of the levels to -flat_band_factor, and half of the levels to +flat_band_factor
   float flat_band_factor;
+  bool reverse_second_channel_eps; // reverse the eps in the second channel
   double band_rescale;   // rescale the level energies of the band by the factor band_rescale. Note that this does not affect
                          // the rescaling of alpha (pairing strength) and lambda (SOC strength) parameters, thus the effect is
                          // different compared to changing the half-bandwidth D.
@@ -661,7 +663,7 @@ class two_channel : virtual public problem_type
  public:
   auto get_eps_V(auto & sc1, auto & Gamma1, auto & sc2, auto & Gamma2, params &p) const {
      auto eps1 = sc1->eps(p.band_level_shift, p.flat_band, p.flat_band_factor, p.band_rescale);
-     auto eps2 = sc2->eps(p.band_level_shift, p.flat_band, p.flat_band_factor, p.band_rescale);
+     auto eps2 = sc2->eps(p.band_level_shift, p.flat_band, p.flat_band_factor, p.band_rescale, p.reverse_second_channel_eps);
      auto V1 = Gamma1->V(sc1->NBath());
      auto V2 = Gamma2->V(sc2->NBath());
      if (p.verbose) {

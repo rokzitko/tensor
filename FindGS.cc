@@ -171,6 +171,7 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.calcweights = input.getYesNo("calcweights", false);
   p.charge_susceptibility = input.getYesNo("charge_susceptibility", false);
   p.measureChannelsEnergy = input.getYesNo("measureChannelsEnergy", false);
+  p.measureParity = input.getYesNo("measureParity", false);
   // parameters controlling the calculation
   p.save = input.getYesNo("save", false) || (p.solve_ndx >= 0);
   p.nrsweeps = input.getInt("nrsweeps", 15);
@@ -190,6 +191,7 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.flat_band = input.getYesNo("flat_band", false);
   p.flat_band_factor = input.getReal("flat_band_factor", 0);
   p.band_rescale = input.getReal("band_rescale", 1.0);
+  p.reverse_second_channel_eps = input.getYesNo("reverse_second_channel_eps", p.measureParity); //has to be true for measuring parity
 
   // dynamical charge susceptibility calculations
   p.chi = input.getYesNo("chi", false);
@@ -217,7 +219,7 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
     
 
   std::cout << "\nspin conservation: " << (p.problem->spin_conservation() ? "yes" : "no") << "\n";
-  p.sites = Hubbard(p.N, {"ConserveSz", p.problem->spin_conservation()});
+  p.sites = Electron(p.N, {"ConserveSz", p.problem->spin_conservation()});
   // report_Sz_conserved(p.problem.get()); // TO DO: to be fixed
 }
 
@@ -737,7 +739,7 @@ void MeasureEntropy_beforeAfter(MPS& psi, auto & file, std::string path, const p
   H5Easy::dump(file, path + "/entanglement_entropy_imp/after", SvN2);
 }
 
-// Contract all other tensors except one (site indexed by i). The diagonal terms are the squares of the amplitudes for the impurity states |0>, |up>, |dn>, |2>. 
+// Contract all other tensors except one (site indexed by i). The diagonal terms are the squares of the amplitudes for the states |0>, |up>, |dn>, |2>. 
 auto calculate_density_matrix(MPS &psi, const int i, const params &p) {
   psi.position(i);
   auto psidag = dag(psi);
@@ -798,6 +800,115 @@ void MeasureImpDensityMatrix(MPS &psi, auto &file, std::string path, const param
     H5Easy::dump(file, path + "/density_matrix_imp", mat);
 }
 
+ITensor swapF(const int i, const params & p){
+  // This is a local operator wich gives 1 for single occupied levels and 0 elsewhere.
+  // equivalent to N - 2*NupNdn     
+  // could be implemented also as: auto opi = op(p.sites, "Ntot", i) - ( 2 * op(p.sites, "Nupdn", i) );
+
+  Index s = p.sites(i);
+  Index sP = prime(s);
+  
+  ITensor swapF(dag(s),sP);
+
+  swapF.set(s(2), sP(2), 1);
+  swapF.set(s(3), sP(3), 1);
+
+  return swapF;
+}
+
+void applyTwoSiteF(MPS &psi, const int i, const int j, const params &p){
+  // applies the equivalent of 1 - 2 * swapF(i) * swapF(j) 
+  // this returns -1 only if the sites i and j are both singly occupied - as if they were swapped 
+
+  MPS newPsi = psi;
+
+  // applying swapF(i) and swapF(j)
+  newPsi.position(i);
+  auto Ti = noPrime( swapF(i, p) * newPsi(i) );
+  newPsi.set(i, Ti);
+  
+  newPsi.position(j);
+  auto Tj = noPrime( swapF(j, p) * newPsi(j) );
+  newPsi.set(j, Tj);
+
+  psi.position(1); // for sum to work both MPS have to have the same orthogonality center
+  newPsi.position(1);
+
+  psi = sum(psi, -2.0 * newPsi, {"MaxDim",1000,"Cutoff",1E-9});
+  psi.normalize();
+  psi.orthogonalize();
+}
+
+void amplitudes(MPS &psi, const params &p){
+  // Prints all large amplitudes of psi, but is hard coded for N=3!
+  // Left here as might be useful for some other debugging.
+  // 1 - 0, 2 - up, 3 - down, 4 - 2. 
+  Expects(p.N == 3);
+  psi.position(1);
+  auto tot = 0.0;
+  std::cout << "all amplitudes: \n";
+  for (int i=1; i<=4; i++){
+    for (int j=1; j<=4; j++){
+      for (int k=1; k<=4; k++){
+        auto amp = psi.A(1)*dag(setElt(p.sites(1)(i)));
+        amp *= psi.A(2)*dag(setElt(p.sites(2)(j)));
+        amp *= psi.A(3)*dag(setElt(p.sites(3)(k)));
+        //std::cout << "(" << i << ", " << j << ", " << k << "): \n";
+        tot += pow(amp.real(), 2);
+        if (abs(amp.real()) > 1e-8) std::cout << "(" << i << ", " << j << ", " << k << "): " << amp.real() << "\n";
+      }
+    }
+  }
+  std::cout << "total (has to be 1): " << tot << "\n";
+}
+
+MPS reversePsi(MPS psi, const params & p){ // psi MUST NOT BE PASSED AS REFERENCE HERE!
+    
+  // first take psi and apply all the fermionic swap gates to get the correct minus sign structure
+  // to swap the channels, first permute site 1 past all other sites, then 2 past all sites but 1, then 3 past all but 1 and 2, ...
+  for (int i = 1; i <= p.N; i++){
+    for (int j = i+1; j <= p.N; j++){
+      applyTwoSiteF(psi, i, j, p);
+    }
+  }
+
+  // now swap the tensors
+  MPS newPsi = MPS(length(psi));
+    for (int i=1; i<=length(psi); i++){
+    int j = length(psi)-(i-1);
+    newPsi.ref(i) = psi(j);
+  }
+
+  // swap the indices
+  for (int i=1; i<=length(psi); i++){
+    int j = length(psi)-(i-1);
+    if (i!=j){
+      newPsi.ref(i) = newPsi(i) * delta(dag(p.sites(j)), p.sites(i));
+    }
+  }
+  newPsi.position(1);
+  return newPsi;
+}
+
+
+void MeasureParity(MPS &psi, auto &file, std::string path, const params &p) {
+  // Measures the parity by reversing the tensors of the MPS and calculating the overlap.
+  // Only works properly if p.reverse_second_channel_eps is turned on.
+
+  std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+
+
+  MPS reversedPsi = reversePsi(psi, p);
+  auto parity = inner(psi, reversedPsi);
+
+  std::cout << "parity = " << parity << "\n";
+  H5Easy::dump(file, path + "/parity", parity);
+
+  std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+  std::cout << "Parity timing: " << std::chrono::duration_cast<std::chrono::seconds>(end - begin).count() << " s" << std::endl;
+
+}
+
 auto sweeps(params &p)
 {
   auto inputsw = InputGroup(p.inputfn, "sweeps");
@@ -810,7 +921,9 @@ void solve_gs(const state_t &st, store &s, params &p) {
 
   auto H = p.problem->initH(st, p);
   auto state = p.problem->initState(st, p);
+
   MPS psi_init(state);
+
   for(auto i : range1(p.nrH)){
     psi_init = applyMPO(H,psi_init);
     psi_init.noPrime().normalize();
@@ -960,7 +1073,10 @@ void calc_properties(const state_t st, H5Easy::File &file, store &s, params &p)
   if (p.spinCorrelationMatrix   || p.result_verbosity >= 2) MeasureSpinCorrelationMatrix(psi, file, path, p);
   if (p.computeEntropy) MeasureEntropy(psi, file, path, p);
   if (p.computeEntropy_beforeAfter) MeasureEntropy_beforeAfter(psi, file, path, p);
-  if (p.measureChannelsEnergy) MeasureChannelsEnergy(psi, file, path, p);
+  if (p.problem->numChannels() == 2){
+      if (p.measureParity) MeasureParity(psi, file, path, p);
+      if (p.measureChannelsEnergy) MeasureChannelsEnergy(psi, file, path, p);
+  }  
   s.stats[st].dump();
 }
 
