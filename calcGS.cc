@@ -18,9 +18,7 @@ int main(int argc, char* argv[]) {
 
   parse_cmd_line(argc, argv, p);
   auto l = init_subspace_lists(p);
-
   solve(l, s, p);
-
   process_and_save_results(s, p);
   
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();

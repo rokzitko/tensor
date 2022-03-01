@@ -392,7 +392,6 @@ struct params {
   // all bools have default value false
   bool computeEntropy;   // von Neumann entropy at the bond between impurity and next site. Works as intended if p.impindex=1.
   bool computeEntropy_beforeAfter;   // von Neumann entropy at the bond before the impurity and after it. Works as intended if p.impindex!=1.
-  bool measureAllDensityMatrices; // computes local density matrix for each site 
   bool chargeCorrelation;// compute the impurity-superconductor correlation <n_imp n_i>
   bool spinCorrelation;  // compute the impurity-superconductor correlation <S_imp S_i>. NOTE: sum over i includes the impurity site!
   bool spinCorrelationMatrix;  // compute the full correlation matrix <S_i S_j>
@@ -492,18 +491,17 @@ class problem_type {
    virtual ndx_t bath_indexes() = 0;           // all bath indexes
    virtual ndx_t bath_indexes(const int) = 0;  // per channel bath indexes
    virtual void calc_properties(const state_t st, H5Easy::File &file, store &s, params &p) = 0;
-   virtual std::string type() = 0;
 };
 
 class impurity_problem : virtual public problem_type {
  public:
    virtual int numChannels() = 0;
-   void calc_properties(const state_t st, H5Easy::File &file, store &s, params &p) override;
+   virtual void calc_properties(const state_t st, H5Easy::File &file, store &s, params &p);
 };
 
 class chain_problem : virtual public problem_type {
  public:
-   void calc_properties(const state_t st, H5Easy::File &file, store &s, params &p) override;
+   virtual void calc_properties(const state_t st, H5Easy::File &file, store &s, params &p);
 };
 
 class Sz_conserved : virtual public problem_type
@@ -645,11 +643,9 @@ class single_channel : virtual public impurity_problem
      Ensures(Sztot == Sz);
      return state;
    }
-   int numChannels() override {
+   int numChannels() {
     return 1;
    }
-   std::string type() override { return "single channel impurity problem"; }
-
 };
 
 class single_channel_eta : public single_channel
@@ -753,11 +749,9 @@ class two_channel : virtual public impurity_problem
     impOp += Eshift * p.sites.op("Id",p.impindex);
     return impOp;
   }
-  int numChannels() override {
+  int numChannels() {
     return 2;
   }
-  std::string type() override { return "two channel impurity problem"; }
-
 };
 
 
@@ -818,8 +812,7 @@ class alternating_chain_SC_first : virtual chain_problem
       Ensures(Sztot == Sz);
       return state;
     }
-    std::string type() override { return "chain problem"; }
-
+  int numChannels() {return NSC();}
 };
 
 
