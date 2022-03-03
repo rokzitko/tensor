@@ -195,7 +195,6 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.Gamma1 = std::make_unique<hyb>(input.getReal("gamma1", 0), parse_special_levels(input, p.NBath/2, "v", "1"));
   p.Gamma2 = std::make_unique<hyb>(input.getReal("gamma2", 0), parse_special_levels(input, p.NBath/2, "v", "2"));
 
-  
   // parameters for the SC-QD-... chain problem
   for (int i = 1; i <= p.NSC; i++ ){
     p.chain_scis.push_back( parse_chain_sci(i, input, p) );
