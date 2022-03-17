@@ -799,7 +799,7 @@ class alternating_chain_SC_first : virtual chain_problem
       // add electrons to the impurity sites
       for (int i : range(1, NImp())){ 
         auto ndx = imp_index(i);
-        auto add_spin = Sz - Sztot > 0 ? spinm : spinp;
+        auto add_spin = Sz - Sztot >= 0 ? spinp : spinm;
         add_imp_electron(add_spin, ndx, state, tot, Sztot);
       }
 

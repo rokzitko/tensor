@@ -3,9 +3,6 @@ inline void impurityTensor(MPO &H, const int i, const int imp_num, const std::ve
 
     const auto &IMP = p.chain_imps[imp_num-1]; // 0-based vector!
 
-    std::cout << "this is imp on site " << i << "\n";
-    std::cout << "parameters: eps: " << IMP->eps() << " U: " << IMP->U() << "\n";
-
     ITensor& W = H.ref(i);
     Index left = dag( links.at(i-1) );
     Index right = links.at(i);
@@ -50,10 +47,6 @@ inline void middleSC(MPO &H, const int first_site, const int SC_num, const std::
     for (auto i : range1(first_site, first_site + p.SClevels - 1)){ // range1() IS INCLUSIVE, THUS -1!
         j ++; // index of the level in this SC island  
 
-        std::cout << "vL on site " << i << " is " << vl[j] << ", j is " << j << "\n";
-        std::cout << "vR on site " << i << " is " << vr[j] << ", j is " << j << "\n";
-        std::cout << "eps on site " << i << " is " << eps[j] << "\n";
-
         ITensor& W = H.ref(i);
         Index left = dag( links.at(i-1) );
         Index right = links.at(i);
@@ -80,19 +73,27 @@ inline void middleSC(MPO &H, const int first_site, const int SC_num, const std::
         W += p.sites.op("Cup",   i)*setElt(left(9),right(2))* (+vl[j]);
         W += p.sites.op("Cdn",   i)*setElt(left(10),right(2))*(+vl[j]);
 
-        //SC pairing
+        //SC pairing and Ec
         W += p.sites.op("Cdn*Cup",i)        * setElt(left(1),right(11)) * SC->g() * SC->y(j);
         W += p.sites.op("Cdagup*Cdagdn",i)  * setElt(left(1),right(12)) * SC->g() * SC->y(j);
         W += p.sites.op("Ntot",i)           * setElt(left(1),right(13)) * 2*SC->Ec();
 
+        W += p.sites.op("Cdagup*Cdagdn",i) * setElt(left(11),right(2)) * SC->y(j);
+        W += p.sites.op("Cdn*Cup",i)       * setElt(left(12),right(2)) * SC->y(j);
+        W += p.sites.op("Ntot",i)          * setElt(left(13),right(2));
+
         // keep terms
         W += p.sites.op("Id",i)*setElt(left(2),right(2));
 
+        W += p.sites.op("F",i)*setElt(left(3),right(3));
+        W += p.sites.op("F",i)*setElt(left(4),right(4));
+        W += p.sites.op("F",i)*setElt(left(5),right(5));
+        W += p.sites.op("F",i)*setElt(left(6),right(6));
         W += p.sites.op("F",i)*setElt(left(7),right(7));
         W += p.sites.op("F",i)*setElt(left(8),right(8));
         W += p.sites.op("F",i)*setElt(left(9),right(9));
         W += p.sites.op("F",i)*setElt(left(10),right(10));
-
+        
         W += p.sites.op("Id",i)*setElt(left(11),right(11));
         W += p.sites.op("Id",i)*setElt(left(12),right(12));
         W += p.sites.op("Id",i)*setElt(left(13),right(13));
@@ -170,10 +171,6 @@ inline void Fill_SC_BathMPO_chain_alternating_SCFirst(MPO& H, const double Eshif
         W = ITensor(right, p.sites.si(i), p.sites.siP(i) );
         W += p.sites.op("Id",i) * setElt(right(1));
 
-        std::cout << "v on site " << i << " is " << vr[j] << ", j is " << j << "\n";
-        std::cout << "eps on site " << i << " is " << eps[j] << "\n";
-
-
         // local H on site
         W += p.sites.op("Ntot",i)  * setElt(right(2)) * (eps[j] + SC1->Ec()*(1-2*SC1->n0())); // here use index i
         W += p.sites.op("Nup",i)   * setElt(right(2)) * SC1->EZ()/2.0;
@@ -203,9 +200,6 @@ inline void Fill_SC_BathMPO_chain_alternating_SCFirst(MPO& H, const double Eshif
 
         W = ITensor(left, right, p.sites.si(i), p.sites.siP(i) );
 
-        std::cout << "v on site " << i << " is " << vr[j] << ", j is " << j << "\n";
-        std::cout << "eps on site " << i << " is " << eps[j] << "\n";
-
         W += p.sites.op("Id",i) * setElt(left(1), right(1));
 
         // local H on site
@@ -231,9 +225,10 @@ inline void Fill_SC_BathMPO_chain_alternating_SCFirst(MPO& H, const double Eshif
         W += p.sites.op("F" ,i)*setElt(left(4),right(4));
         W += p.sites.op("F" ,i)*setElt(left(5),right(5));
         W += p.sites.op("F" ,i)*setElt(left(6),right(6));
-        W += p.sites.op("Id",i)*setElt(left(10),right(10));
+        
         W += p.sites.op("Id",i)*setElt(left(11),right(11));
         W += p.sites.op("Id",i)*setElt(left(12),right(12));
+        W += p.sites.op("Id",i)*setElt(left(13),right(13));
 
         // add SC pairing terms
         W += p.sites.op("Cdagup*Cdagdn",i)*setElt(left(11),right(2)) * SC1->y(j);
@@ -242,11 +237,7 @@ inline void Fill_SC_BathMPO_chain_alternating_SCFirst(MPO& H, const double Eshif
     }
 
     // Now add the QD-SC pairs. There are (chainLen - 3)/2 of them - the last QD-SC is a bit different and added separately
-    std::cout << "THERE SHOULD BE NOTHING HERE FOR N=3\n";
     for (int pair = 1; pair <= (p.chainLen-3)/2; pair++){
-        std::cout << ((p.SClevels + 1) * pair) << "\n";
-        std::cout << ((p.SClevels + 1) * pair) + 1 << "\n";
-
         impurityTensor(H, ((p.SClevels + 1) * pair), pair, links, p);
         middleSC(H, ((p.SClevels + 1) * pair) + 1 , pair+1, links, p);
     }
@@ -256,10 +247,6 @@ inline void Fill_SC_BathMPO_chain_alternating_SCFirst(MPO& H, const double Eshif
     const auto &IMP = p.chain_imps[p.chain_imps.size()-1];
 
     int i = p.N - p.SClevels;
-
-    std::cout << "this is last imp on site " << i << "\n";
-    std::cout << "parameters: eps: " << IMP->eps() << " U: " << IMP->U() << "\n";
-
 
     ITensor& W = H.ref(i);
     Index left = dag( links.at(i-1) );
@@ -299,9 +286,6 @@ inline void Fill_SC_BathMPO_chain_alternating_SCFirst(MPO& H, const double Eshif
     for (int i : range1( p.N - p.SClevels + 1, p.N-1 )){
         j++;
 
-        std::cout << "v on site " << i << " is " << vl[j] << ", j is " << j << "\n";
-        std::cout << "eps on site " << i << " is " << eps[j] << "\n";
-
         ITensor& W = H.ref(i);
         Index left = dag( links.at(i-1) );
         Index right = links.at(i);
@@ -325,7 +309,7 @@ inline void Fill_SC_BathMPO_chain_alternating_SCFirst(MPO& H, const double Eshif
         // SC pairing
         W += p.sites.op("Cdn*Cup",i)        * setElt(left(1),right(11)) * SCN->g() * SCN->y(j);
         W += p.sites.op("Cdagup*Cdagdn",i)  * setElt(left(1),right(12)) * SCN->g() * SCN->y(j);
-        W += p.sites.op("Ntot",i)           * setElt(left(1),right(13)) * 2.0*SCN->Ec(); // MISSING 2.0 FIXED !!
+        W += p.sites.op("Ntot",i)           * setElt(left(1),right(13)) * 2.0*SCN->Ec();
 
         W += p.sites.op("Id",i)*setElt(left(2),right(2));
         W += p.sites.op("F" ,i)*setElt(left(3),right(3));
@@ -345,9 +329,6 @@ inline void Fill_SC_BathMPO_chain_alternating_SCFirst(MPO& H, const double Eshif
     {
         j++;
         int i = p.N;
-
-        std::cout << "v on site " << i << " is " << vl[j] << ", j is " << j << "\n";
-
 
         ITensor& W = H.ref(i);
         Index left = dag( links.at(i-1) );
