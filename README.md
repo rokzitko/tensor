@@ -17,21 +17,33 @@ The input file is a text file containing two blocks of parameters, one defininin
 
 Here we provide brief descriptions for all parameters that can be defined in the input file.
 
+* a
+* b
+* c
+
+## MPOs implemented
+
+The code implements a number of different Hamiltonians (in the form of their MPO representations):
+
+* a
+* b
+* c
+
 ## Output
 
 The code produces textual output on the standard output, as well as more complete output to a binary HDF5 file.
 
 ## Examples
 
-A number of examples is provided in the directory `testing`.
+A number of examples is provided in the directory `test`.
 
 ## Publications
 
 This code has been used to produce the numerical results that formed the basis for the following publications:
 
-a
-b
-c
+* a
+* b
+* c
 
 ## Contact
 
@@ -41,7 +53,7 @@ Luka
 
 Daniel
 
-Rok
-rok.zitko@ijs.si
-http://auger.ijs.si/nano
+Rok Žitko  
+<mailto:rok.zitko@ijs.si>  
+<http://auger.ijs.si/nano>  
 Jozef Stefan Institute, Ljubljana, Slovenia
