@@ -168,6 +168,18 @@ The code produces textual output on the standard output, as well as more complet
 
 A number of examples is provided in the directory `test`.
 
+## Known problems
+
+Below are some special cases that are known to produce unhysical results or cause other problems.
+
+### gamma = 0
+Setting the hybridization to 0 will prohibit charge fluctuation from the impurity level to the bath. The calculated state will thus have the exact same impurity level as the initial state (ie. typically a single spin up). For a two channel case with the impurity level in the middle of the two channel, setting any gamma to 0 will prohibit charge recombination among the two channels.  
+Correct results can be obtained by setting gamma to a small value, eg., 1e-8.
+
+### Two channel imp middle with large U
+In similar vein as the above, using large values of U with 2 channel MPOs that have the impurity level in the middle greatly increases the computation time. The cause is similiar, large U suppresses charge fluctuations between the two channels, slowing down the optimisation procedure. Somewhat better results are obtained by using MPOs with impurity level at the beggining. 
+
+
 ## Publications
 
 This code has been used to produce the numerical results that formed the basis for the following publications:
