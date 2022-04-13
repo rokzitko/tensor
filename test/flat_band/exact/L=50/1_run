@@ -1,0 +1,9 @@
+#!/bin/bash
+PATH=../../../..:../..:$PATH
+rm -f solution.h5
+calcGS inputFile_flatBand_singlet >result_singlet.dat
+mv solution.h5 solution_singlet.h5
+h5diff -d 1e-6 solution_singlet.h5 solution_singlet.h5.ref
+calcGS inputFile_flatBand_doublet >result_doublet.dat
+mv solution.h5 solution_doublet.h5
+h5diff -d 1e-6 solution_doublet.h5 solution_doublet.h5.ref
