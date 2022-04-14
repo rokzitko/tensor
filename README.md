@@ -7,7 +7,7 @@ The code supports various extensions of the basic problem, including a charging 
 
 ## Requirements
 
-The code requires iTensor. A modern C++ compiler is necessary.
+The code requires [iTensor](https://itensor.org/). A modern C++ compiler is necessary.
 
 ## Input file format
 
@@ -95,7 +95,7 @@ These parameters control the calculation. Their type is given in brackets.
 
 * nrH (int) - before starting the sweeping procedure, H is applied to the initial MPS nrH times. Seems to improve convergence. Default = 5.  
 * nrsweeps (int) - number of DMRG sweeps to perform. If this is larger than the number of specified sweeps, the last one will be repeated untill nrsweeps sweeps are performed.
-* Quiet, Silent - control the verbosity of the dmrg() function. Quiet 
+* Quiet, Silent - control the verbosity of the dmrg() function.
 * EnergyErrgoal (float) - the sweeping will stop when the relative energy difference between consecutive sweeps is smaller than this value. Setting it to 0 will suppress the convergence output for each sweep.
 * Weight (float) - energy cost of the overlap between GS and ES when calculating excited states. 
 
@@ -186,7 +186,7 @@ This code has been used to produce the numerical results that formed the basis f
 
 * Subgap states in superconducting islands, 2021, https://doi.org/10.1103/PhysRevB.104.L241409
 * Qubit based on spin-singlet Yu-Shiba-Rusinov states, 2022, https://doi.org/10.1103/PhysRevB.105.075129
-* ...
+* Excitations in a superconducting Coulombic energy gap, 2022, https://arxiv.org/abs/2101.10794
 
 ## Contact
 
@@ -196,7 +196,8 @@ Luka Pavešić
 <mailto:luka.pavesic@ijs.si>  
 Jozef Stefan Institute, Ljubljana, Slovenia
 
-Daniel
+Daniel Bauernfeind
+Center for Computational Quantum Physics, Simons Foundation Flatiron Institute, New York, New York 10010, USA
 
 Rok Žitko  
 <mailto:rok.zitko@ijs.si>  
