@@ -204,4 +204,6 @@ Rok Žitko
 <http://auger.ijs.si/nano>  
 Jozef Stefan Institute, Ljubljana, Slovenia
 
+The time-dependent variational principle code is a modified (compatibility fixes) version of the code from <https://github.com/ITensor/TDVP>.
+
 Last update LP, April 2022.
