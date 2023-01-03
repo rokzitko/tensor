@@ -19,7 +19,7 @@ Here we provide brief descriptions for all parameters that can be defined in the
 
 ### Physical parameters
 
-* MPO - required parameter defines which MPO to use and thus defines the model. Some models do not have all parameters implemented! The most complete ones are MPO = Ec_V for the single channel model and MPO = 2ch_impFirst_V for the two channel model.  
+* MPO - required parameter defines which MPO to use and thus defines the model. Some models do not have all parameters implemented! The most complete ones are MPO = Ec_V for the single channel model and MPO = 2ch_impFirst_V for the two channel model. The implemented MPOs are described below.
 * N - number of sites.
 * NBath - number of sites in the bath (either N or NBath have to be defined).
 * band_level_shift - (true/false) whether to shift the bath level energies to recover a particle-hole symmetric model. Default = false!
@@ -49,9 +49,9 @@ Capacitive coupling is a special case:
 
 #### Chain
 
-When using the chain MPOs, it is possible to define parameters for each link in the chain separately by appending its number to the parameter name. The impurities, baths and hybridizations are enumerated separately. Assuming an alternating chain starting with a bath (only case implemented as of April 2022), the pairing strenght in the third bath is alpha3, energy level of the second impurity is epsimp2 and the hybridization between the two is gamma4. 
+When using the chain MPOs, it is possible to define parameters for each link in the chain separately by appending its number to the parameter name. The impurities, baths and hybridizations are enumerated separately. Assuming an alternating chain starting with a bath (SC_BathMPO_chain_alternating_SCFirst.h, only case implemented as of April 2022), the pairing strength in the third bath is alpha3, energy level of the second impurity is epsimp2 and the hybridization between the two is gamma4. 
 
-It is also possible to create a homogeneous chain by specifying only a single set of parameters (as in the single channel case). These also act as default values when only a subset of link parameters are specified.
+It is also possible to create a homogeneous chain by specifying only a single set of parameters (as in the single channel case). These also act as default values when only a subset of link parameters are specified. 
 
 #### Level specific parameters
 
@@ -75,7 +75,7 @@ These parameters control the calculation. Their type is given in brackets.
 * solve_ndx (int) - optional parameter parsed directly from the command line. Defines which subproblems to solve. 
 * stop_n (int) - optional parameter parsed directly from the command line. The calculation will stop after computing stop_n excited states.
 * parallel (bool) - enable parallel computation in different subspaces.
-* refisn0 (bool) - computation will center around the subspaces with n = nu + round(n0). For multiple channels, it will be centered around n = nu + round(n01) + round(n02) + ...
+* refisn0 (bool) - computation will center around the subspaces with n = nu + round(n0). For multiple superconducting islands, it will be centered around n = nu + round(n01) + round(n02) + ...
 * sc_only (bool) - will initialize a state with an empty impurity level. Can be used in combination with gamma = 0 to completely decouple the impurity and only compute the bath model.
 
 * spin1 (bool) - include Sz = 1 sectors for even n. 
@@ -90,6 +90,10 @@ These parameters control the calculation. Their type is given in brackets.
  
 * verbose (bool) - verbosity of the calculation. Will print various parameters during MPO creation and calculation.
 * debug (bool) - enables debugging messages.
+
+* enforce_total_spin (bool) - the total spin Sz(Sz + 1) is enforced when calculating eigenstates. Only works for the ground state (Jan 2023). Also not thoroughly tested.
+This is done by minimizing <psi|H - w (S^2 - s^2)|psi> (instead of the standard <psi|H|psi>), where S^2 is the total spin MPO and s^2 = Sz(Sz + 1). w is the weight, set by spin_enforce_weight.
+* spin_enforce_weight (float) - the prefactor in the expression above.
 
 #### Sweep parameters
 
@@ -126,10 +130,10 @@ These parameters set what additional state properties are measured after obtaini
 * charge_susceptibility (bool) - compute <i|nimp|j> overlap table in each subspace.
 * calcweights (bool) - calculates the spectral weights of the two closes spectroscopically availabe excitations.
 
-* transition_dipole_moment (bool) - compute < i | nsc1 - ncs2 | j >. 2 channel only.
-* transition_quadrupole_moment (bool) - compute < i | nsc1 + ncs2 | j >. 2 channel only. 
-* measureChannelsEnergy (bool) - measure the energy gain for each channel separately. Uses special MPO implementations with H for one channel. 2 channel with impurity level first only.
-* measureParity (bool) -  compute the channel parity. Will prolong the calculation for large systems. Automatically turns on the reverse_second_channel_eps parameter. 2 channel only.
+* transition_dipole_moment (bool) - compute < i | nsc1 - ncs2 | j >. Two channel only.
+* transition_quadrupole_moment (bool) - compute < i | nsc1 + ncs2 | j >. Two channel only. 
+* measureChannelsEnergy (bool) - measure the energy gain for each channel separately. Uses special MPO implementations with H for one channel (MPO_2ch_channel1_only.h and MPO_2ch_channel2_only.h). Two channel with impurity level first only.
+* measureParity (bool) - compute the channel parity. WARNING! This calculation is not thoroughly tested and might produce wrong and/or badly converged results! Will prolong the calculation for large systems. Automatically turns on the reverse_second_channel_eps parameter. Two channel only.
 
 
 ## MPOs implemented
