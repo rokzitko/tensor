@@ -1,4 +1,4 @@
-inline void makeS2_MPO(MPO& H, params &p){
+inline void makeS2_MPO(MPO& H, params &p, double additiveFactor = 0, double multiFactor = 1 ){
 
     // Inspired by http://itensor.org/support/641/to-measure-total-spin-angular-momentum-s-2-on-mps
     // Represents a MPO of the total spin operator S^2
@@ -47,11 +47,12 @@ inline void makeS2_MPO(MPO& H, params &p){
         W = ITensor(right, p.sites.si(i), p.sites.siP(i) );        
 
 
-        W += p.sites.op("Id", i) * setElt(right(1));
-        W += p.sites.op("S2", i) * setElt(right(2));
-        W += p.sites.op("Sz", i) * setElt(right(3)) * 2.;
-        W += p.sites.op("S+", i) * setElt(right(4)) ;
-        W += p.sites.op("S-", i) * setElt(right(5)) ;
+        W += p.sites.op("Id", i) * setElt(right(1)) * multiFactor;
+        W += p.sites.op("S2", i) * setElt(right(2)) * multiFactor;
+        W += p.sites.op("Id", i) * setElt(right(2)) * additiveFactor * multiFactor;
+        W += p.sites.op("Sz", i) * setElt(right(3)) * 2. * multiFactor;
+        W += p.sites.op("S+", i) * setElt(right(4)) * multiFactor;
+        W += p.sites.op("S-", i) * setElt(right(5)) * multiFactor;
 
     }
 

@@ -260,6 +260,9 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.flat_band_factor = input.getReal("flat_band_factor", 0);
   p.band_rescale = input.getReal("band_rescale", 1.0);
   p.reverse_second_channel_eps = input.getYesNo("reverse_second_channel_eps", p.measureParity); //has to be true for measuring parity
+  p.enforce_total_spin = input.getYesNo("enforce_total_spin", false);
+  p.spin_enforce_weight = input.getReal("spin_enforce_weight", p.N);
+
 
   // dynamical charge susceptibility calculations
   p.chi = input.getYesNo("chi", false);
@@ -322,7 +325,7 @@ void MeasureChannelsEnergy(MPS& psi, H5Easy::File & file, std::string path, para
 void MeasureTotalSpin(MPS& psi, auto & file, std::string path, params &p) {
 
   MPO S2(p.sites);
-  makeS2_MPO(S2, p);
+  makeS2_MPO(S2, p, 0.0, 1.0);
 
   // res2 is the result of \hat{S}^2 = S(S+1)
   // Actual S is obtained by solving the quadratic equation, always taking the largest solution.
@@ -984,6 +987,23 @@ auto sweeps(params &p)
   return Sweeps(p.nrsweeps, sw_table);
 }
 
+
+// If a vector of MPOs is passed to the dmrg function, the dmrg will act as if these MPOs are sumed up. 
+// The idea is to optimize psi for <psi|H|psi> + spin_weight * (<S^2> - Sz(Sz+1)). This will tend to find a state with total spin close to initial Sz.
+// This should for example minimize the admixture of the Sz=0 triplet state into the singlet at small Gammas.
+// THIS HAS NOT BEEN TESTED (Jan 2023), AND ONLY WORKS FOR THE GROUND STATE. 
+// In May 2022 (Luka) asked a question regarding this on the iTensor discourse server - Miles' explanation should be there.
+void generate_MPO_vector(std::vector<MPO> &MPOvec, const MPO &H, const state_t &st, params &p){
+  MPOvec.push_back(H);
+  if (p.enforce_total_spin){
+    const auto [n, Sz, i] = st;
+    double S = abs(Sz) * (abs(Sz) + 1);
+    MPO S2_subtracted(p.sites);
+    makeS2_MPO(S2_subtracted, p, -1*S, p.spin_enforce_weight);
+    MPOvec.push_back(S2_subtracted);
+  } 
+}
+
 void solve_gs(const state_t &st, store &s, params &p) {
   std::cout << "\nSweeping in the sector " << st <<  std::endl;
 
@@ -996,10 +1016,15 @@ void solve_gs(const state_t &st, store &s, params &p) {
     psi_init = applyMPO(H,psi_init);
     psi_init.noPrime().normalize();
   }
-  auto [GSenergy, psi] = dmrg(H, psi_init, sweeps(p),
+
+  std::vector<MPO> MPOvec;
+  generate_MPO_vector(MPOvec, H, st, p); // if p.enforce_total_spin the MPOvec contains H and S2, the MPO for the total spin, multiplied by the weight
+
+  auto [GSenergy, psi] = dmrg(MPOvec, psi_init, sweeps(p),
                             {"Silent", p.Silent,
                              "Quiet", p.Quiet,
                              "EnergyErrgoal", p.EnergyErrgoal});
+  if (p.enforce_total_spin) GSenergy = inner(psi, H, psi); // take out the spin part of the Hamiltonian
   s.eigen[st] = eigenpair(GSenergy, psi);
   s.stats[st] = psi_stats(psi, H);
 }
@@ -1014,6 +1039,8 @@ void solve_es(const state_t &st, store &s, params &p) {
   std::vector<MPS> wfs(i);
   for (auto m = 0; m < i; m++)
     wfs[m] = s.eigen[es({n, Sz}, m)].psi();
+  //std::vector<MPO> MPOvec;
+  //generate_MPO_vector(MPOvec, H, st, p);
   auto [ESenergy, psi] = dmrg(H, wfs, psi_init_es, sweeps(p),
                             {"Silent", p.Silent,
                              "Quiet", p.Quiet,

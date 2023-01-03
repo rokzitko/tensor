@@ -437,6 +437,8 @@ struct params {
   double band_rescale;   // rescale the level energies of the band by the factor band_rescale. Note that this does not affect
                          // the rescaling of alpha (pairing strength) and lambda (SOC strength) parameters, thus the effect is
                          // different compared to changing the half-bandwidth D.
+  bool enforce_total_spin;  
+  double spin_enforce_weight;
 
   //chain parameters
   int NSC;              // numer of SCs in the chain;
