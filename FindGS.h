@@ -468,9 +468,12 @@ struct params {
   double V12;            // QD-SC capacitive coupling, for MPO_Ec_V
   double V1imp;          // QD-SC capacitive coupling, for MPO_2h_.*_V
   double V2imp;          // QD-SC capacitive coupling, for MPO_2h_.*_V
+  double tQD;            // direct QD-QD hopping, for the qd-sc-qd problem. 
+
   double eta;            // coupling reduction factor, 0<=eta<=1, for MPO_Ec_eta
   int etasite;           // site with reduced pairing
   bool etarescale;       // if true, rescale other couplings to produce the same overall SC pairing strength (default is true)
+
 
   bool magnetic_field() { return qd->EZ() != 0 || qd->EZx() != 0 || sc->EZ() != 0 || sc->EZx() != 0 || sc1->EZ() != 0 || sc1->EZx() != 0 || sc2->EZ() != 0 || sc2->EZx() != 0; } // true if there is magnetic field
 
@@ -482,6 +485,9 @@ struct params {
   std::unique_ptr<SCbath> sc1, sc2;
   std::unique_ptr<hyb> Gamma1, Gamma2;
   double SCSCinteraction = 0.0;  // test parameter for the 2 channel MPO
+
+  std::unique_ptr<hyb> Gamma_L, Gamma_R; //hybridizations for the qd-sc-qd problem
+  std::unique_ptr<imp> qd_L, qd_R; //hybridizations for the qd-sc-qd problem
 };
 
 class problem_type {
@@ -500,10 +506,17 @@ class problem_type {
 class impurity_problem : virtual public problem_type {
  public:
    virtual int numChannels() = 0;
+   virtual int NSC() = 0;
+   virtual int NImp() = 0;
    void calc_properties(const state_t st, H5Easy::File &file, store &s, params &p) override;
 };
 
 class chain_problem : virtual public problem_type {
+ public:
+   void calc_properties(const state_t st, H5Easy::File &file, store &s, params &p) override;
+};
+
+class two_impurity_problem : virtual public problem_type {
  public:
    void calc_properties(const state_t st, H5Easy::File &file, store &s, params &p) override;
 };
@@ -553,7 +566,6 @@ class imp_middle : virtual public impurity_problem
      return ch == 1 ? ndx_t(ndx.begin(), ndx.begin() + NBath/2) : ndx_t(ndx.begin() + NBath/2, ndx.begin() + NBath);
    }
 };
-
 
 inline void add_imp_electron(const double Sz, const int impindex, auto & state, charge & tot, spin & Sztot)
 {
@@ -607,10 +619,13 @@ inline void add_bath_electrons(const int nsc, const spin & Szadd, const ndx_t &b
 #include "autoMPO_1ch.h"
 #include "autoMPO_1ch_so.h"
 #include "autoMPO_2ch.h"
-#include "SC_BathMPO_chain_alternating_SCFirst.h"
+#include "autoMPO_QD_SC_QD.h"
 
 #include "MPO_2ch_channel1_only.h"
 #include "MPO_2ch_channel2_only.h"
+
+#include "SC_BathMPO_chain_alternating_SCFirst.h"
+#include "SC_BathMPO_chain_QD_SC_QD.h"
 
 class single_channel : virtual public impurity_problem
 {
@@ -646,10 +661,16 @@ class single_channel : virtual public impurity_problem
      Ensures(tot == ntot);
      Ensures(Sztot == Sz);
      return state;
-   }
-   int numChannels() override {
+  }
+  int numChannels() override {
     return 1;
-   }
+  }
+  int NSC() override{
+    return numChannels();
+  }
+  int NImp() override{
+    return 1;
+  }
    std::string type() override { return "single channel impurity problem"; }
 
 };
@@ -758,10 +779,15 @@ class two_channel : virtual public impurity_problem
   int numChannels() override {
     return 2;
   }
+  int NSC() override{
+    return numChannels();
+  }
+  int NImp() override{
+    return 1;
+  }
   std::string type() override { return "two channel impurity problem"; }
 
 };
-
 
 // THIS ASSUMES THAT THE CHAIN IS OF ALTERNATING SC-QD-SC-QD ... AND THAT THE FIRST ELEMENT IS THE SC!
 class alternating_chain_SC_first : virtual chain_problem
@@ -821,7 +847,58 @@ class alternating_chain_SC_first : virtual chain_problem
       return state;
     }
     std::string type() override { return "chain problem"; }
+};
 
+class qd_sc_qd_problem : virtual two_impurity_problem
+{
+  private:
+    int _SClevels;
+  public:
+   qd_sc_qd_problem(int SClevels) : _SClevels(SClevels) {};
+
+    int SClevels() const { return _SClevels; }
+    int NImp() const { return 2; } // there are always two impurities
+
+    int imp_index(const int i = -1) override { // this gives the index of the first (left) or second(right) impurity level 
+      Expects(i==1 || i==2 || i==-1);
+      if (i==2) return 2 + SClevels();
+      else return i;
+    }
+    ndx_t all_indexes() override { return range(1, NImp() + SClevels()); }
+    ndx_t bath_indexes() override {
+      ndx_t v = range(2, 1 + SClevels());
+      return v;
+    }
+    ndx_t bath_indexes(int i) override { // this seems non optimal...
+    return bath_indexes(); 
+    }
+    InitState initState(state_t st, params &p) override {
+      const auto [ntot, Sz, ii] = st; // Sz is the z-component of the total spin.
+      Expects(0 <= ntot && ntot <= 2*p.N);
+      int tot = 0;      // electron counter, for assertion test
+      double Sztot = 0; // SZ counter, for assertion test
+      auto state = InitState(p.sites); //this is iTensor's function!
+      int nsci = (ntot - 2); // number of electrons to add to the SC
+
+      // add electrons to the impurity sites    
+      auto add_spin = Sz - Sztot >= 0 ? spinp : spinm;
+      add_imp_electron(add_spin, imp_index(1), state, tot, Sztot);
+      add_spin = Sz - Sztot >= 0 ? spinp : spinm;
+      add_imp_electron(add_spin, imp_index(2), state, tot, Sztot);
+    
+      // add electrons to the SC island
+      ndx_t bath_sites = bath_indexes();
+      add_spin = Sz - Sztot == 0 ? spin0 : (Sz - Sztot > 0 ? spinp : spinm); // if Sz == Sztot, add spin0, else add spinm to lower the difference or spinp to increase it
+      add_bath_electrons(nsci, add_spin, bath_sites, state, tot, Sztot);
+    
+      Ensures(tot == ntot);
+      Ensures(Sztot == Sz);
+      return state;
+    }
+    std::string type() override { return "qd-sc-qd problem"; }
+    int NSC() {
+      return 1;
+  }
 };
 
 
@@ -990,45 +1067,6 @@ namespace prob {
       }
    };
 
-    class autoH_1ch : public imp_first, public single_channel, public Sz_conserved  {
-    public:
-      autoH_1ch(const params &p) : imp_first(p.NBath) {}
-      MPO initH(state_t st, params &p) override {
-        if (p.verbose) std::cout << "Building Hamiltonian, MPO=autoH_1ch" << std::endl;
-        auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
-        MPO H(p.sites);
-        double Eshift = p.qd->U()/2;
-        get_autoMPO_1ch(H, Eshift, eps, V, p);
-        return H;
-      }
-   };
-
-    class autoH_1ch_so : public imp_first, public single_channel, public Sz_non_conserved  {
-    public:
-      autoH_1ch_so(const params &p) : imp_first(p.NBath) {}
-      MPO initH(state_t st, params &p) override {
-        if (p.verbose) std::cout << "Building Hamiltonian, MPO=autoH_1ch_so" << std::endl;
-        auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
-        MPO H(p.sites);
-        double Eshift = p.qd->U()/2;
-        get_autoMPO_1ch_so(H, Eshift, eps, V, p);
-        return H;
-      }
-   };
-
-    class autoH_2ch : public imp_first, public two_channel, public Sz_conserved  {
-    public:
-      autoH_2ch(const params &p) : imp_first(p.NBath) {}
-      MPO initH(state_t st, params &p) override {
-        if (p.verbose) std::cout << "Building Hamiltonian, MPO=autoH_2ch" << std::endl;
-        auto [eps, V] = get_eps_V(p.sc1, p.Gamma1, p.sc2, p.Gamma2, p);
-        MPO H(p.sites);
-        double Eshift = p.qd->U()/2;
-        get_autoMPO_2ch(H, Eshift, eps, V, p);
-        return H;
-      }
-   };
-
    class twoch : public imp_middle, public two_channel, public Sz_conserved  {
     public:
       twoch(const params &p) : imp_middle(p.NBath) {}
@@ -1060,7 +1098,6 @@ namespace prob {
         return H;
       }
    };
-
 
   class twoch_impfirst_V : public imp_first, public two_channel, public Sz_conserved  {
     public:
@@ -1116,7 +1153,78 @@ namespace prob {
       }
    };
 
- }
+   class qd_sc_qd : public qd_sc_qd_problem, public Sz_conserved{
+    public:
+      qd_sc_qd(const params &p) : qd_sc_qd_problem(p.NBath) {}
+
+      MPO initH(state_t st, params &p) override { 
+        if (p.verbose) std::cout << "Building Hamiltonian, MPO=qd_sc_qd" << std::endl;
+        MPO H(p.sites);
+        double Eshift = 0.;
+        Eshift += p.sc->Ec()*pow(p.sc->n0(), 2); 
+        Eshift += p.qd_L->U()/2;
+        Eshift += p.qd_R->U()/2;
+        Fill_SCBath_MPO_qd_sc_qd(H, Eshift, p);
+        return H;
+      }
+   };
+
+  class autoH_1ch : public imp_first, public single_channel, public Sz_conserved  {
+    public:
+      autoH_1ch(const params &p) : imp_first(p.NBath) {}
+      MPO initH(state_t st, params &p) override {
+        if (p.verbose) std::cout << "Building Hamiltonian, MPO=autoH_1ch" << std::endl;
+        auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
+        MPO H(p.sites);
+        double Eshift = p.qd->U()/2;
+        get_autoMPO_1ch(H, Eshift, eps, V, p);
+        return H;
+      }
+   };
+
+  class autoH_1ch_so : public imp_first, public single_channel, public Sz_non_conserved  {
+    public:
+      autoH_1ch_so(const params &p) : imp_first(p.NBath) {}
+      MPO initH(state_t st, params &p) override {
+        if (p.verbose) std::cout << "Building Hamiltonian, MPO=autoH_1ch_so" << std::endl;
+        auto [eps, V] = get_eps_V(p.sc, p.Gamma, p);
+        MPO H(p.sites);
+        double Eshift = p.qd->U()/2;
+        get_autoMPO_1ch_so(H, Eshift, eps, V, p);
+        return H;
+      }
+   };
+
+  class autoH_2ch : public imp_first, public two_channel, public Sz_conserved  {
+    public:
+      autoH_2ch(const params &p) : imp_first(p.NBath) {}
+      MPO initH(state_t st, params &p) override {
+        if (p.verbose) std::cout << "Building Hamiltonian, MPO=autoH_2ch" << std::endl;
+        auto [eps, V] = get_eps_V(p.sc1, p.Gamma1, p.sc2, p.Gamma2, p);
+        MPO H(p.sites);
+        double Eshift = p.qd->U()/2;
+        get_autoMPO_2ch(H, Eshift, eps, V, p);
+        return H;
+      }
+  };
+
+  class autoH_qd_sc_qd : public qd_sc_qd_problem, public Sz_conserved  {
+    public:
+      autoH_qd_sc_qd(const params &p) : qd_sc_qd_problem(p.NBath) {}
+      MPO initH(state_t st, params &p) override {
+        if (p.verbose) std::cout << "Building Hamiltonian, MPO=autoH_sc_qd_sc" << std::endl;
+        MPO H(p.sites);
+        double Eshift = 0.;
+        Eshift += p.sc->Ec()*pow(p.sc->n0(), 2); 
+        Eshift += p.qd_L->U()/2;
+        Eshift += p.qd_R->U()/2;
+        get_autoMPO_qd_sc_qd(H, Eshift, p);
+        return H;
+      }
+    };
+
+};
+
 
 inline type_ptr set_problem(const std::string str, const params &p)
 {
@@ -1132,15 +1240,18 @@ inline type_ptr set_problem(const std::string str, const params &p)
   if (str == "Ec_t") return std::make_unique<prob::Ec_t>(p);
   if (str == "Ec_eta") return std::make_unique<prob::Ec_eta>(p);
   if (str == "Ec_V_eta") return std::make_unique<prob::Ec_V_eta>(p);
-  if (str == "autoH") return std::make_unique<prob::autoH_1ch>(p);
-  if (str == "autoH_so") return std::make_unique<prob::autoH_1ch_so>(p);
-  if (str == "autoH_2ch") return std::make_unique<prob::autoH_2ch>(p);
   if (str == "middle_2channel") return std::make_unique<prob::middle_2channel>(p);
   if (str == "2ch") return std::make_unique<prob::twoch>(p);
   if (str == "2ch_impFirst") return std::make_unique<prob::twoch_impfirst>(p);
   if (str == "2ch_impFirst_V") return std::make_unique<prob::twoch_impfirst_V>(p);
   if (str == "2ch_t") return std::make_unique<prob::twoch_hopping>(p);
   if (str == "alternating_chain") return std::make_unique<prob::alternating_chain_SC_first_and_last>(p);
+  if (str == "qd_sc_qd") return std::make_unique<prob::qd_sc_qd>(p);
+  
+  if (str == "autoH") return std::make_unique<prob::autoH_1ch>(p);
+  if (str == "autoH_so") return std::make_unique<prob::autoH_1ch_so>(p);
+  if (str == "autoH_2ch") return std::make_unique<prob::autoH_2ch>(p);
+  if (str == "autoH_qd_sc_qd") return std::make_unique<prob::autoH_qd_sc_qd>(p);
   throw std::runtime_error("Unknown MPO type");
 }
 

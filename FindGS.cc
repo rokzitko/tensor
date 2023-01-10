@@ -14,9 +14,10 @@ std::vector<subspace_t> init_subspace_lists(params &p)
     else if ( p.problem->type() == "chain problem" ) {
       auto temp_n = 0;
       for (auto &  x : p.chain_scis) temp_n += x->n0();
-      for (auto &  x : p.chain_imps) temp_n += 0.5 - (p.qd->eps()/p.qd->U());
+      for (auto &  x : p.chain_imps) temp_n += 0.5 - (x->eps()/x->U());
       nref = round(temp_n);
     }
+    else if ( p.problem->type() == "qd-sc-qd problem" ) nref = round(p.sc->n0() + (0.5 - (p.qd_L->eps()/p.qd_L->U())) + (0.5 - (p.qd_R->eps()/p.qd_R->U())) );
   }
   std::vector<subspace_t> l;
   std::cout << "Constructing the list of subspace: " << std::endl;
@@ -107,7 +108,7 @@ auto parse_chain_sci(const int i, auto & input, params & p){
   // default values
   auto alpha = input.getReal("alpha", 0.);
   auto ys = parse_ys(input, p.SClevels, stri); 
-  auto eps = parse_special_levels(input, p.SClevels, "eps", stri);
+  auto eps = parse_special_levels(input, p.SClevels, "eps");
   auto Ec = input.getReal("Ec", 0.);
   auto n0 = input.getReal("n0", p.SClevels);
   auto EZ = input.getReal("EZ_bulk", 0.);
@@ -146,15 +147,30 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   auto input = InputGroup{p.inputfn, "params"};            // get input parameters using InputGroup from itensor
   p.N = input.getInt("N", 0);
 
+  // TO DO: FIX THIS MESS WITH NBath INITIALIZATION (Luka, JAN 2023)
+  // To call set_problem() the NBath value has to be set. But it depends on the number of imp levels in the system, which depends on the problem type. 
+  // For the SC-QD-SC-... chain it makes sense to require chainLen, but for the qd-sc-qd problem it is always 3.
+
+  // for now: if the mpo is qd_sc_qd, override chainLen, NImp and NSC manually.
+  std::string mpoType = input.getString("MPO", "std");
   p.chainLen = input.getInt("chainLen", 0); // number of elements in a SC-QD-... chain
-  if (p.chainLen != 0) { // for now assume an alternating chain starting and ending with a SC island
+  
+  if ( mpoType == "qd_sc_qd" || mpoType == "autoH_qd_sc_qd") {
+    p.NImp = 2;
+    p.NSC = 1;
+  }
+  else if ( mpoType == "alternating_chain") {
     p.NImp = (p.chainLen - 1)/2;
     p.NSC = p.chainLen - p.NImp;
   }
   else{
     p.NImp = 1;
-    p.NSC = 1;
-  } 
+    p.NSC = 1; // this is also not great, two channel problems should have NSC=2!
+  }
+
+  //std::cout << "Nimp = " << p.NImp << "\n";
+  //std::cout << "Nsc = " << p.NSC << "\n";
+  ///////////////////
 
   if (p.N != 0)
     p.NBath = p.N-p.NImp;
@@ -166,10 +182,11 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   }
   p.SClevels = p.NBath / p.NSC; 
   
-
   // p.NBath must be determined before calling set_problem()
   p.problem = set_problem(input.getString("MPO", "std"), p);  // problem type
-  p.impindex = p.problem->imp_index(); // XXX: redundant?
+  
+  p.impindex = p.problem->imp_index(); // XXX: redundant? // Jan 2023 - this is getting messy. Chain and qd-sc-qd have multiple imps. p.impindex defaults to 1 in those cases.
+
   p.D = input.getReal("D", 1.0);
   std::cout << "N=" << p.N << " NBath=" << p.NBath << " D=" << p.D << " impindex=" << p.impindex << std::endl;
 
@@ -178,7 +195,7 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.qd = std::make_unique<imp>(U, input.getReal("epsimp", -U/2.), input.getReal("EZ_imp", 0.), input.getReal("EZx_imp", 0.));
   p.Gamma = std::make_unique<hyb>(input.getReal("gamma", 0), parse_special_levels(input, p.NBath, "v", ""));
 
-  p.sc = std::make_unique<SCbath>(p.NBath, p.D, input.getReal("alpha", 0.), parse_ys(input, p.NBath, ""), parse_special_levels(input, p.NBath, "eps"), input.getReal("Ec", 0), input.getReal("n0", p.N-1), input.getReal("EZ_bulk", 0.), input.getReal("EZx_bulk", 0.), input.getReal("t", 0.), input.getReal("lambda", 0.));
+  p.sc = std::make_unique<SCbath>(p.NBath, p.D, input.getReal("alpha", 0.), parse_ys(input, p.NBath, ""), parse_special_levels(input, p.NBath, "eps"), input.getReal("Ec", 0), input.getReal("n0", p.NBath), input.getReal("EZ_bulk", 0.), input.getReal("EZx_bulk", 0.), input.getReal("t", 0.), input.getReal("lambda", 0.));
 
   p.eta = input.getReal("eta", 1.0);
   p.etasite = input.getInt("etasite", p.NBath/2); // Fermi-level !
@@ -188,6 +205,7 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.V12 = input.getReal("V", 0); // handled in a special way
   p.V1imp = input.getReal("V1imp", 0); // capacitive coupling between sc1 and imp
   p.V2imp = input.getReal("V2imp", 0); // capacitive coupling between sc2 and imp
+  p.tQD = input.getReal("tQD", 0); // hopping between the two qds in the qd-sc-qd problem
 
   // parameters for the 2-channel problem
   p.sc1 = std::make_unique<SCbath>(p.NBath/2, p.D, input.getReal("alpha1", 0.), parse_ys(input, p.NBath/2, "1"), parse_special_levels(input, p.NBath/2, "eps", "1"), input.getReal("Ec1", 0), input.getReal("n01", (p.N-1)/2), input.getReal("EZ_bulk1", 0), input.getReal("EZx_bulk1", 0.), input.getReal("t1", 0), input.getReal("lambda1", 0.));
@@ -206,6 +224,17 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
     p.chain_hybs.push_back( parse_chain_hyb(i, input, p) );
   }
 
+  // parameters for the qd-sc-qd problem
+  //p.sc is already parsed above
+  // The left and right qd parameters are parsed here. The default value is always the parameter without _L or _R. Thus specifying just those (like for the normal sc-qd problem) will give two equal qds.
+  const double U_L = input.getReal("U_L", p.qd->U());
+  const double U_R = input.getReal("U_R", p.qd->U());
+  p.qd_L = std::make_unique<imp>(U_L, input.getReal("epsimp_L", -U_L/2.), input.getReal("EZ_imp_L", p.qd->EZ()), input.getReal("EZx_imp_L", p.qd->EZx()));
+  p.qd_R = std::make_unique<imp>(U_R, input.getReal("epsimp_R", -U_R/2.), input.getReal("EZ_imp_R", p.qd->EZ()), input.getReal("EZx_imp_R", p.qd->EZx()));
+
+  double gamma = input.getReal("gamma", 0.); // parse the default gamma again
+  p.Gamma_L = std::make_unique<hyb>(input.getReal("gamma_L", gamma), parse_special_levels(input, p.NSC, "v", "L"));
+  p.Gamma_R = std::make_unique<hyb>(input.getReal("gamma_R", gamma), parse_special_levels(input, p.NSC, "v", "R"));
 
   // parameters controlling the calculation targets
   p.nref = input.getInt("nref", -1);
@@ -489,6 +518,13 @@ auto calcSS(MPS& psi, const int i, const int j, const params &p) {
     const auto mp = vev(psi, i, SmSp);
     return zz + 0.5*(pm + mp);
   }
+}
+
+//for a qd-sc-qd problem, measures the qd-qd spin correlation
+void MeasureImpImpSpinCorrelation(MPS& psi, H5Easy::File & file, std::string path, const params &p) {
+  auto res = calcSS(psi, 1, p.N, p);
+  std::cout << "imp-imp spin correlation = " << res << "\n";
+  H5Easy::dump(file, path + "/imp_imp_spin_correlation", res);
 }
 
 auto calcCdagC(MPS& psi, const int i, const int j, const params &p) {
@@ -961,7 +997,6 @@ MPS reversePsi(MPS psi, const params & p){ // psi MUST NOT BE PASSED AS REFERENC
   return newPsi;
 }
 
-
 void MeasureParity(MPS &psi, auto &file, std::string path, const params &p) {
   // Measures the parity by reversing the tensors of the MPS and calculating the overlap.
   // Only works properly if p.reverse_second_channel_eps is turned on.
@@ -986,7 +1021,6 @@ auto sweeps(params &p)
   auto sw_table = InputGroup(inputsw, "sweeps");
   return Sweeps(p.nrsweeps, sw_table);
 }
-
 
 // If a vector of MPOs is passed to the dmrg function, the dmrg will act as if these MPOs are sumed up. 
 // The idea is to optimize psi for <psi|H|psi> + spin_weight * (<S^2> - Sz(Sz+1)). This will tend to find a state with total spin close to initial Sz.
@@ -1028,7 +1062,6 @@ void solve_gs(const state_t &st, store &s, params &p) {
   s.eigen[st] = eigenpair(GSenergy, psi);
   s.stats[st] = psi_stats(psi, H);
 }
-
 
 void solve_es(const state_t &st, store &s, params &p) {
   std::cout << "\nSweeping in the sector " << st  << std::endl;
@@ -1152,7 +1185,7 @@ void calc_properties(const state_t st, H5Easy::File &file, store &s, params &p)
   const auto E = s.eigen[st].E();
   std::cout << fmt::format("Energy = {}", E) << std::endl;
   H5Easy::dump(file, path + "/E", E);
-  p.problem->calc_properties(st, file, s, p);
+  p.problem->calc_properties(st, file, s, p); // also call the calc_properties function for the specified problem type
   MeasureTotalSpinz(psi, file, path, p);
   if (p.result_verbosity >= 0) MeasureOccupancy(psi, file, path, p);
   if (p.result_verbosity >= 0) MeasureTotalSpin(psi, file, path, p);
@@ -1163,6 +1196,7 @@ void calc_properties(const state_t st, H5Easy::File &file, store &s, params &p)
 }
 
 void impurity_problem::calc_properties(const state_t st, H5Easy::File &file, store &s, params &p) {
+  // these calculations that make sense only for the one impurity problem (one or two channels)
   const auto path = state_path(st);
   auto psi = s.eigen[st].psi();
   MeasureImpurityUpDn(psi, file, path, p);
@@ -1182,6 +1216,14 @@ void impurity_problem::calc_properties(const state_t st, H5Easy::File &file, sto
 }
 
 void chain_problem::calc_properties(const state_t st, H5Easy::File &file, store &s, params &p) {
+  // here add calculations that make sense only for the chain problems
+}
+
+void two_impurity_problem::calc_properties(const state_t st, H5Easy::File &file, store &s, params &p) {
+  // here add calculations that make sense only for the qd-sc-qd problem
+  const auto path = state_path(st);
+  auto psi = s.eigen[st].psi();
+  MeasureImpImpSpinCorrelation(psi, file, path, p);  
 }
 
 auto find_global_GS(store &s, auto & file) {
@@ -1304,7 +1346,6 @@ void calculate_cdag_overlaps(store &s, auto &file, const params &p) {
   }
 } 
 
-
 // THIS IS FOR THE TWO CHANNEL MODEL ONLY - IT TAKES channelNum AS AN ARGUMENT FOR THE bath_indexes()!
 auto one_channel_number_op(const int channelNum, auto &psi1, auto &psi2, const params &p){
 
@@ -1387,7 +1428,6 @@ void calculate_transition_quadrupole_moments(store &s, auto &file, params &p) {
     }
   }
 }
-
 
 auto calculate_charge_susceptibility(MPS &psi1, MPS &psi2, const params &p)
 {
