@@ -320,16 +320,26 @@ class hyb {
  private:
    double _Gamma; // hybridisation strength
    std::map<int, double> _special_vs; // overwrites the hopping in given levels 
+   std::map<int, double> _imag_special_vs; // adds an imaginary part to the hopping in given levels 
  public:
    hyb(double Gamma, std::map<int, double> special_vs) : _Gamma(Gamma), _special_vs(special_vs) {};
+   hyb(double Gamma, std::map<int, double> special_vs, std::map<int, double> imag_special_vs) : _Gamma(Gamma), _special_vs(special_vs), _imag_special_vs(imag_special_vs) {};
    auto Gamma() const { return _Gamma; }
    auto special_vs() const { return _special_vs; } 
+   auto imag_special_vs() const { return _imag_special_vs; } 
    auto V(int NBath) const {
     //already 1-based here!
     std::vector<double> Vvec(NBath, std::sqrt( 2.0*_Gamma/(M_PI*NBath)));
     Vvec = shift1(Vvec);
     Vvec = overwrite_special(Vvec, _special_vs);
     return Vvec;
+   }   
+   auto iV(int NBath) const {
+    // imaginary part of v
+    std::vector<double> Vvec(NBath, 0.0 );
+    Vvec = shift1(Vvec);
+    Vvec = overwrite_special(Vvec, _imag_special_vs);
+    return Vvec;    
    }
 };
 

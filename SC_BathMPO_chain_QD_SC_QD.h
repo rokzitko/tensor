@@ -3,7 +3,9 @@ inline void Fill_SCBath_MPO_qd_sc_qd(MPO& H, const double Eshift, const params &
     // parse eps and vs here to make it more readable
     const auto &eps = p.sc->eps(p.band_level_shift, p.flat_band, p.flat_band_factor, p.band_rescale);
     const auto &vl = p.Gamma_L->V(p.sc->NBath());
+    const auto &ivl = p.Gamma_L->iV(p.sc->NBath());
     const auto &vr = p.Gamma_R->V(p.sc->NBath());
+    const auto &ivr = p.Gamma_R->iV(p.sc->NBath());
 
     //QN objects are necessary to have abelian symmetries in MPS
       QN    qn0  ( {"Sz",  0},{"Nf", 0} ),
@@ -90,16 +92,16 @@ inline void Fill_SCBath_MPO_qd_sc_qd(MPO& H, const double Eshift, const params &
         W += p.sites.op("Nupdn",i)          * setElt(left(1),right(2)) * (p.sc->g() * pow(p.sc->y(j), 2) + 2*p.sc->Ec());
 
         // hybridizations to the right
-        W += p.sites.op("Cup*F",   i)*setElt(left(1),right(3))* (-vr[j]);
-        W += p.sites.op("Cdn*F",   i)*setElt(left(1),right(4))* (-vr[j]);
-        W += p.sites.op("Cdagup*F",i)*setElt(left(1),right(5))* (+vr[j]);
-        W += p.sites.op("Cdagdn*F",i)*setElt(left(1),right(6))* (+vr[j]);
+        W += p.sites.op("Cup*F",   i)*setElt(left(1),right(3))* (-vr[j] - 1_i * ivr[j]);
+        W += p.sites.op("Cdn*F",   i)*setElt(left(1),right(4))* (-vr[j] - 1_i * ivr[j]);
+        W += p.sites.op("Cdagup*F",i)*setElt(left(1),right(5))* (+vr[j] + 1_i * ivr[j]);
+        W += p.sites.op("Cdagdn*F",i)*setElt(left(1),right(6))* (+vr[j] + 1_i * ivr[j]);
 
         // hybridizations to the left
-        W += p.sites.op("Cdagup",i)*setElt(left(7),right(2))    * (+vl[j]);
-        W += p.sites.op("Cdagdn",i)*setElt(left(8),right(2))    * (+vl[j]);
-        W += p.sites.op("Cup",   i)*setElt(left(9),right(2))    * (+vl[j]);
-        W += p.sites.op("Cdn",   i)*setElt(left(10),right(2))   * (+vl[j]);
+        W += p.sites.op("Cdagup",i)*setElt(left(7),right(2))    * (+vl[j] + 1_i * ivl[j]);
+        W += p.sites.op("Cdagdn",i)*setElt(left(8),right(2))    * (+vl[j] + 1_i * ivl[j]);
+        W += p.sites.op("Cup",   i)*setElt(left(9),right(2))    * (+vl[j] + 1_i * ivl[j]);
+        W += p.sites.op("Cdn",   i)*setElt(left(10),right(2))   * (+vl[j] + 1_i * ivl[j]);
 
         //SC pairing and Ec
         W += p.sites.op("Cdn*Cup",i)        * setElt(left(1),right(11)) * p.sc->g() * p.sc->y(j);

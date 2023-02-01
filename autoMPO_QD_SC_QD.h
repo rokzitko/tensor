@@ -3,7 +3,9 @@ inline void get_autoMPO_qd_sc_qd(MPO& H, const double Eshift, const params &p){
     auto ampo = AutoMPO(p.sites);
 
     const auto &vl = p.Gamma_L->V(p.sc->NBath());
+    const auto &ivl = p.Gamma_L->iV(p.sc->NBath());
     const auto &vr = p.Gamma_R->V(p.sc->NBath());
+    const auto &ivr = p.Gamma_R->iV(p.sc->NBath());
 
     ampo += Eshift,"Id",1;
 
@@ -17,16 +19,16 @@ inline void get_autoMPO_qd_sc_qd(MPO& H, const double Eshift, const params &p){
 
     // hopping terms     
     for(auto i: range1(2, p.N-1)){    
-        ampo += vl[i-1],"Cdagup",1,"Cup",i;
-        ampo += vl[i-1],"Cdagdn",1,"Cdn",i;
-        ampo += vl[i-1],"Cdagup",i,"Cup",1;
-        ampo += vl[i-1],"Cdagdn",i,"Cdn",1;
+        ampo += (1_i * ivl[i-1] + vl[i-1]),"Cdagup",1,"Cup",i;
+        ampo += (1_i * ivl[i-1] + vl[i-1]),"Cdagdn",1,"Cdn",i;
+        ampo += (1_i * ivl[i-1] + vl[i-1]),"Cdagup",i,"Cup",1;
+        ampo += (1_i * ivl[i-1] + vl[i-1]),"Cdagdn",i,"Cdn",1;
     }
-    for(auto i: range1(2, p.N-1)){       
-        ampo += vr[i-1],"Cdagup",p.N,"Cup",i;
-        ampo += vr[i-1],"Cdagdn",p.N,"Cdn",i;
-        ampo += vr[i-1],"Cdagup",i,"Cup",p.N;
-        ampo += vr[i-1],"Cdagdn",i,"Cdn",p.N;
+    for(auto i: range1(2, p.N-1)){
+        ampo += (1_i * ivr[i-1] + vr[i-1]),"Cdagup",p.N,"Cup",i;
+        ampo += (1_i * ivr[i-1] + vr[i-1]),"Cdagdn",p.N,"Cdn",i;
+        ampo += (1_i * ivr[i-1] + vr[i-1]),"Cdagup",i,"Cup",p.N;
+        ampo += (1_i * ivr[i-1] + vr[i-1]),"Cdagdn",i,"Cdn",p.N;
     }
 
     // impurity hopping

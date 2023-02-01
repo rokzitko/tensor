@@ -225,7 +225,7 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   }
 
   // parameters for the qd-sc-qd problem
-  //p.sc is already parsed above
+  // p.sc is already parsed above
   // The left and right qd parameters are parsed here. The default value is always the parameter without _L or _R. Thus specifying just those (like for the normal sc-qd problem) will give two equal qds.
   const double U_L = input.getReal("U_L", p.qd->U());
   const double U_R = input.getReal("U_R", p.qd->U());
@@ -233,8 +233,8 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.qd_R = std::make_unique<imp>(U_R, input.getReal("epsimp_R", -U_R/2.), input.getReal("EZ_imp_R", p.qd->EZ()), input.getReal("EZx_imp_R", p.qd->EZx()));
 
   double gamma = input.getReal("gamma", 0.); // parse the default gamma again
-  p.Gamma_L = std::make_unique<hyb>(input.getReal("gamma_L", gamma), parse_special_levels(input, p.NSC, "v", "L"));
-  p.Gamma_R = std::make_unique<hyb>(input.getReal("gamma_R", gamma), parse_special_levels(input, p.NSC, "v", "R"));
+  p.Gamma_L = std::make_unique<hyb>(input.getReal("gamma_L", gamma), parse_special_levels(input, p.SClevels, "v", "L"), parse_special_levels(input, p.SClevels, "iv", "L"));
+  p.Gamma_R = std::make_unique<hyb>(input.getReal("gamma_R", gamma), parse_special_levels(input, p.SClevels, "v", "R"), parse_special_levels(input, p.SClevels, "iv", ""));
 
   // parameters controlling the calculation targets
   p.nref = input.getInt("nref", -1);
