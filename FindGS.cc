@@ -234,7 +234,7 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
 
   double gamma = input.getReal("gamma", 0.); // parse the default gamma again
   p.Gamma_L = std::make_unique<hyb>(input.getReal("gamma_L", gamma), parse_special_levels(input, p.SClevels, "v", "L"), parse_special_levels(input, p.SClevels, "iv", "L"));
-  p.Gamma_R = std::make_unique<hyb>(input.getReal("gamma_R", gamma), parse_special_levels(input, p.SClevels, "v", "R"), parse_special_levels(input, p.SClevels, "iv", ""));
+  p.Gamma_R = std::make_unique<hyb>(input.getReal("gamma_R", gamma), parse_special_levels(input, p.SClevels, "v", "R"), parse_special_levels(input, p.SClevels, "iv", "R"));
 
   // parameters controlling the calculation targets
   p.nref = input.getInt("nref", -1);
