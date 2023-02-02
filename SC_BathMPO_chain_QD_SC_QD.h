@@ -92,16 +92,17 @@ inline void Fill_SCBath_MPO_qd_sc_qd(MPO& H, const double Eshift, const params &
         W += p.sites.op("Nupdn",i)          * setElt(left(1),right(2)) * (p.sc->g() * pow(p.sc->y(j), 2) + 2*p.sc->Ec());
 
         // hybridizations to the right
+        // the convention is: v Ddagup Cup + v^* Cdagup Dup + v^* Ddagdn Cdn + v Cdagdn Ddn
         W += p.sites.op("Cup*F",   i)*setElt(left(1),right(3))* (-vr[j] - 1_i * ivr[j]); //caution: some terms have to be conjugated!
-        W += p.sites.op("Cdn*F",   i)*setElt(left(1),right(4))* (-vr[j] - 1_i * ivr[j]);
+        W += p.sites.op("Cdn*F",   i)*setElt(left(1),right(4))* (-vr[j] + 1_i * ivr[j]);
         W += p.sites.op("Cdagup*F",i)*setElt(left(1),right(5))* (+vr[j] - 1_i * ivr[j]);
-        W += p.sites.op("Cdagdn*F",i)*setElt(left(1),right(6))* (+vr[j] - 1_i * ivr[j]);
+        W += p.sites.op("Cdagdn*F",i)*setElt(left(1),right(6))* (+vr[j] + 1_i * ivr[j]);
 
         // hybridizations to the left
         W += p.sites.op("Cdagup",i)*setElt(left(7),right(2))    * (+vl[j] - 1_i * ivl[j]);
-        W += p.sites.op("Cdagdn",i)*setElt(left(8),right(2))    * (+vl[j] - 1_i * ivl[j]);
+        W += p.sites.op("Cdagdn",i)*setElt(left(8),right(2))    * (+vl[j] + 1_i * ivl[j]);
         W += p.sites.op("Cup",   i)*setElt(left(9),right(2))    * (+vl[j] + 1_i * ivl[j]);
-        W += p.sites.op("Cdn",   i)*setElt(left(10),right(2))   * (+vl[j] + 1_i * ivl[j]);
+        W += p.sites.op("Cdn",   i)*setElt(left(10),right(2))   * (+vl[j] - 1_i * ivl[j]);
 
         //SC pairing and Ec
         W += p.sites.op("Cdn*Cup",i)        * setElt(left(1),right(11)) * p.sc->g() * p.sc->y(j);
