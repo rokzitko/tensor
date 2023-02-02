@@ -18,17 +18,18 @@ inline void get_autoMPO_qd_sc_qd(MPO& H, const double Eshift, const params &p){
     ampo += p.qd_R->eps(),"Ntot",p.N;
 
     // hopping terms     
+    // watch out for conjugation of complex terms!
     for(auto i: range1(2, p.N-1)){    
         ampo += (1_i * ivl[i-1] + vl[i-1]),"Cdagup",1,"Cup",i;
         ampo += (1_i * ivl[i-1] + vl[i-1]),"Cdagdn",1,"Cdn",i;
-        ampo += (1_i * ivl[i-1] + vl[i-1]),"Cdagup",i,"Cup",1;
-        ampo += (1_i * ivl[i-1] + vl[i-1]),"Cdagdn",i,"Cdn",1;
+        ampo += (-1_i * ivl[i-1] + vl[i-1]),"Cdagup",i,"Cup",1;
+        ampo += (-1_i * ivl[i-1] + vl[i-1]),"Cdagdn",i,"Cdn",1;
     }
     for(auto i: range1(2, p.N-1)){
         ampo += (1_i * ivr[i-1] + vr[i-1]),"Cdagup",p.N,"Cup",i;
         ampo += (1_i * ivr[i-1] + vr[i-1]),"Cdagdn",p.N,"Cdn",i;
-        ampo += (1_i * ivr[i-1] + vr[i-1]),"Cdagup",i,"Cup",p.N;
-        ampo += (1_i * ivr[i-1] + vr[i-1]),"Cdagdn",i,"Cdn",p.N;
+        ampo += (-1_i * ivr[i-1] + vr[i-1]),"Cdagup",i,"Cup",p.N;
+        ampo += (-1_i * ivr[i-1] + vr[i-1]),"Cdagdn",i,"Cdn",p.N;
     }
 
     // impurity hopping
