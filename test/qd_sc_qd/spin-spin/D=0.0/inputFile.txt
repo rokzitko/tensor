@@ -1,0 +1,91 @@
+params{
+     band_rescale = 0.0
+
+     parallel = true
+     Weight = 1000
+     enforce_total_spin = true
+     spin_enforce_weight = 1
+     NBath = 100
+     nref = 102
+     nrange = 1
+
+#     U = 1.0
+#     epsimp = EPS
+#     gamma = 1e-6
+
+    U_L = 1.0
+    U_R = 1.0
+
+    gamma_L = 0.1
+    gamma_R = 0.1
+
+     alpha = 0
+     Ec = 0.0
+     n0 = 100
+
+     band_level_shift = true
+
+     impNupNdn = true
+#     chargeCorrelation = true
+#     spinCorrelation = true
+#     pairCorrelation = true
+#     hoppingExpectation = true
+#     calcweights = true
+     printTotSpinZ = true
+
+     MPO = qd_sc_qd
+     sz_override = true
+     sz_even_max = 1
+     sz_even_min = 0
+     sz_odd_min = +0.5
+     sz_odd_max = +0.5
+
+    EZ_imp_L = 0
+    EZ_imp_R = 0
+
+     EnergyErrgoal = 1e-9
+     nrsweeps = 60
+
+     excited_states = 0
+#     overlaps = true
+}
+
+
+sweeps
+{
+
+sweeps
+     {
+     maxdim  mindim  cutoff  niter  noise
+     80      20      1E-8    3     1e-5
+     80      20      1E-8    3     1e-5
+     80      20      1E-8    3     1e-6
+     80      20      1E-8    3     1e-6
+     80      20      1E-8    3     1e-7
+     160      1      1E-8    3     1e-7
+     160      1      1E-8    3     1e-8
+     160      1      1E-8    3     1e-8
+     160      1      1E-8    3     0
+     160      1      1E-8    3     0
+     320      1      1E-8    3     0
+     320      1      1E-8    3     0
+     320      1      1E-10   3     0
+     320      1      1E-10   3     0
+     320      1      1E-10   3     0
+     640     1       1E-10   3       0
+     640     1       1E-10   5       0
+     640     1       1E-10   5       0
+     640     1       1E-10   5       0
+     640     1       1E-10   5       0
+     1500    1       1E-10   5       0
+     1500    1       1E-10   5       0
+     1500    1       1E-10   5       0
+     3000    1       1E-10   5       0
+     3000    1       1E-10   5       0
+     3000    1       1E-10   5       0
+     3000    1       1E-10   5       0
+     4000    1       1E-10   5       0
+     4000    1       1E-10   5       0
+     4000    1       1E-10   5       0
+     }
+}

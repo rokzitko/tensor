@@ -1,0 +1,18 @@
+[extra]
+U=1
+Gamma=10
+delta=0
+deltaeps=0
+
+[param]
+symtype=QS
+model=RING
+discretization=Z
+Lambda=2
+Tmin=1e-10
+keepenergy=8
+keep=5000
+
+ops=n_d SaSd
+
+bandrescale=0.01
