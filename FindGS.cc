@@ -503,7 +503,9 @@ void MeasureImpImpSpinCorrelation(MPS& psi, H5Easy::File & file, std::string pat
 
 auto calcCdagC(MPS& psi, const int i, const int j, const params &p) {
   if (i == j) {
-    auto res = psi(i) * p.sites.op("Ntot",i) * dag(prime(psi(i),"Site"));
+//    auto res = psi(i) * p.sites.op("Ntot",i) * dag(prime(psi(i),"Site"));
+    psi.position(i);
+    const auto res = psi.A(i) * p.sites.op("Ntot",i) * dag(prime(psi.A(i),"Site"));
     return std::real(res.cplx());
   } else {
     auto cdagupi = op(p.sites, "Cdagup", i);
