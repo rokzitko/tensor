@@ -1,6 +1,6 @@
 #!/bin/bash
 rm -f failed.log
 rm -f succeeded.log
-find . -regex ".*S_run" -exec ./run_test {} \;
+find . -regex ".*S_run" -exec time ./run_test {} \;
 wc succeeded.log
 wc failed.log
