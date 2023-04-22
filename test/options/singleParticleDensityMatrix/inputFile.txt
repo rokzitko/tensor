@@ -24,7 +24,9 @@ params{
      calcweights = true
      printTotSpinZ = true
 
-     channelDensityMatrix = true
+     singleParticleDensityMatrix = true
+     singleParticleDensityMatrixSpinUp = true
+     singleParticleDensityMatrixSpinDown = true
 
      MPO = std
 

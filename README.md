@@ -123,7 +123,7 @@ These parameters set what additional state properties are measured after obtaini
 * hoppingExpectation (bool) - compute the hopping expectation value 1/sqrt(N) \sum_sigma \sum_i <d^dag c_i> + <c^dag_i d>. Imp-imp correlation is always given as the first value, irrespective of impindex! 
 
 * spinCorrelationMatrix (bool) - compute the full correlation matrix <S_i S_j>.
-* channelDensityMatrix (bool) - compute the channel correlation matrix <cdag_i c_j>.
+* singleParticleDensityMatrix (bool) - compute the single-particle density matrix <cdag_i c_j>.
 
 * overlaps (bool) - compute <i|j> overlap table in each subspace. Useful measure of convergence of excited states.
 * cdag_overlaps (bool) - compute <i|cdag|j> overlap between subspaces which differ by 1 in total charge and 0.5 in total Sz.

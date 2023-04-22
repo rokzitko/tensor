@@ -406,7 +406,9 @@ struct params {
   bool chargeCorrelation;// compute the impurity-superconductor correlation <n_imp n_i>
   bool spinCorrelation;  // compute the impurity-superconductor correlation <S_imp S_i>. NOTE: sum over i includes the impurity site!
   bool spinCorrelationMatrix;  // compute the full correlation matrix <S_i S_j>
-  bool channelDensityMatrix; // compute the channel correlation matrix <cdag_i c_j>
+  bool singleParticleDensityMatrix; // compute the single-particle density matrix <cdag_i c_j>
+  bool singleParticleDensityMatrixSpinUp; // spin-up part
+  bool singleParticleDensityMatrixSpinDown; // spn-down part
   bool pairCorrelation;  // compute the impurity-superconductor correlation <d d c_i^dag c_i^dag>
   bool hoppingExpectation;//compute the hopping expectation value 1/sqrt(N) \sum_sigma \sum_i <d^dag c_i> + <c^dag_i d>
   bool transition_dipole_moment; // compute < i | nsc1 - ncs2 | j > 

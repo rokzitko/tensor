@@ -249,7 +249,9 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.chargeCorrelation = input.getYesNo("chargeCorrelation", false);
   p.spinCorrelation = input.getYesNo("spinCorrelation", false);
   p.spinCorrelationMatrix = input.getYesNo("spinCorrelationMatrix", false);
-  p.channelDensityMatrix = input.getYesNo("channelDensityMatrix", false);
+  p.singleParticleDensityMatrix = input.getYesNo("singleParticleDensityMatrix", false);
+  p.singleParticleDensityMatrixSpinUp = input.getYesNo("singleParticleDensityMatrixSpinUp", false);
+  p.singleParticleDensityMatrixSpinDown = input.getYesNo("singleParticleDensityMatrixSpinDown", false);
   p.pairCorrelation = input.getYesNo("pairCorrelation", false);
   p.hoppingExpectation = input.getYesNo("hoppingExpectation", false);
   p.calcweights = input.getYesNo("calcweights", false);
@@ -501,19 +503,25 @@ void MeasureImpImpSpinCorrelation(MPS& psi, H5Easy::File & file, std::string pat
   H5Easy::dump(file, path + "/imp_imp_spin_correlation", res);
 }
 
-auto calcCdagC(MPS& psi, const int i, const int j, const params &p) {
+// spin = 0, sum over up and down
+// spin = 1, spin-up
+// spin = 2, spin-down
+auto calcCdagC(MPS& psi, const int i, const int j, const int spin, const params &p) {
   if (i == j) {
-//    auto res = psi(i) * p.sites.op("Ntot",i) * dag(prime(psi(i),"Site"));
     psi.position(i);
-    const auto res = psi.A(i) * p.sites.op("Ntot",i) * dag(prime(psi.A(i),"Site"));
+    std::string op;
+    if (spin == 0) op = "Ntot";
+    if (spin == 1) op = "Nup";
+    if (spin == 2) op = "Ndn";
+    const auto res = psi.A(i) * p.sites.op(op, i) * dag(prime(psi.A(i),"Site"));
     return std::real(res.cplx());
   } else {
     auto cdagupi = op(p.sites, "Cdagup", i);
     auto cupj    = op(p.sites, "Cup", j);
     auto cdagdni = op(p.sites, "Cdagdn", i);
     auto cdnj    = op(p.sites, "Cdn", j);
-    auto corup = Correlator(psi, i, cdagupi, j, cupj, p);
-    auto cordn = Correlator(psi, i, cdagdni, j, cdnj, p);
+    auto corup = (spin == 0 || spin == 1 ? Correlator(psi, i, cdagupi, j, cupj, p) : 0.0);
+    auto cordn = (spin == 0 || spin == 2 ? Correlator(psi, i, cdagdni, j, cdnj, p) : 0.0);
     return corup + cordn;
   }
 }
@@ -525,7 +533,9 @@ auto calcMatrix(const std::string which, MPS& psi, const ndx_t &all_sites, const
     for (const auto j: all_sites) {
       if (full || i <= j) {
         if (which == "spin")  m(i-1, j-1) = calcSS(psi, i, j, p); // 0-based matrix indexing
-        if (which == "density")   m(i-1, j-1) = calcCdagC(psi, i, j, p);
+        if (which == "single_particle_density")           m(i-1, j-1) = calcCdagC(psi, i, j, 0, p);
+        if (which == "single_particle_density_spin_up")   m(i-1, j-1) = calcCdagC(psi, i, j, 1, p);
+        if (which == "single_particle_density_spin_down") m(i-1, j-1) = calcCdagC(psi, i, j, 2, p);
         if (p.debug) { std::cout << fmt::format("m({},{})={:18}\n", i, j, m(i-1, j-1)); }
       } else {
         m(i-1, j-1) = m(j-1, i-1);
@@ -541,10 +551,10 @@ void MeasureSpinCorrelationMatrix(MPS &psi, H5Easy::File &file, std::string path
   h5_dump_matrix(file, path + "/spin_correlation_matrix", m);
 }
 
-// Charge density matrix, <psi| c^\dag_i c_j |psi>
-void MeasureChannelDensityMatrix(MPS &psi, H5Easy::File &file, std::string path, const params &p) {
-  const auto m = calcMatrix("density", psi, p.problem->all_indexes(), p, true);
-  h5_dump_matrix(file, path + "/channel_density_matrix", m);
+// Single-particle density matrix, <psi| c^\dag_i c_j |psi>
+void MeasureSingleParticleDensityMatrix(MPS &psi, const std::string type, H5Easy::File &file, std::string path, const params &p) {
+  const auto m = calcMatrix("single_particle_density" + type, psi, p.problem->all_indexes(), p, true);
+  h5_dump_matrix(file, path + "/single_particle_density_matrix" + type, m);
 }
 
 auto calcPairCorrelation(MPS& psi, const ndx_t &bath_sites, const params &p) {
@@ -1114,9 +1124,11 @@ void calc_properties(const state_t st, H5Easy::File &file, store &s, params &p)
   MeasureTotalSpinz(psi, file, path, p);
   if (p.result_verbosity >= 0) MeasureOccupancy(psi, file, path, p);
   if (p.result_verbosity >= 0) MeasureTotalSpin(psi, file, path, p);
-  if (p.measureAllDensityMatrices || p.result_verbosity >= 2) MeasureOnSiteDensityMatrices(psi, file, path, p);
-  if (p.channelDensityMatrix      || p.result_verbosity >= 2) MeasureChannelDensityMatrix(psi, file, path, p);
-  if (p.spinCorrelationMatrix     || p.result_verbosity >= 2) MeasureSpinCorrelationMatrix(psi, file, path, p);
+  if (p.measureAllDensityMatrices           || p.result_verbosity >= 2) MeasureOnSiteDensityMatrices(psi, file, path, p);
+  if (p.singleParticleDensityMatrix         || p.result_verbosity >= 2) MeasureSingleParticleDensityMatrix(psi, "", file, path, p);
+  if (p.singleParticleDensityMatrixSpinUp   || p.result_verbosity >= 3) MeasureSingleParticleDensityMatrix(psi, "_spin_up", file, path, p);
+  if (p.singleParticleDensityMatrixSpinDown || p.result_verbosity >= 3) MeasureSingleParticleDensityMatrix(psi, "_spin_down", file, path, p);
+  if (p.spinCorrelationMatrix       || p.result_verbosity >= 2) MeasureSpinCorrelationMatrix(psi, file, path, p);
   s.stats[st].dump();
 }
 
