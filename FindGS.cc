@@ -24,7 +24,7 @@ std::vector<subspace_t> init_subspace_lists(params &p)
   for (const auto &ntot : n_list(nref, p.nrange)) {
     spin szmin, szmax;
     // set up the defaults...
-    if (p.problem->spin_conservation()) { 
+    if (p.problem->spin_conservation()) {
       szmax = even(ntot) ? ( p.spin1 ? 1 : 0) : 0.5;
       szmin = p.magnetic_field() ? -szmax : (even(ntot) ? 0 : 0.5);
     } else { // if there is no spin conservation, we ignore the parameter spin1 and the magnetic_field() setting
@@ -40,7 +40,7 @@ std::vector<subspace_t> init_subspace_lists(params &p)
     for (spin sz = szmin; sz <= szmax; sz += 1.0) {
       assert(abs(abs(2.0*sz)-int(abs(2.0*sz))) < 1e-10);
       std::cout << " " << ntot << " " << sz << std::endl;
-      l.push_back({ntot, sz});      
+      l.push_back({ntot, sz});
     }
   }
   std::cout << std::endl;
@@ -69,32 +69,28 @@ void report_Sz_conserved(T *prob) {
 auto parse_ys(auto& input, const int Nlevels, const std::string channel = "") {
   std::vector<double> yvec;
   const std::string y_ch = "y" + channel; // for the two channel problem this is "y1" and "y2", and "y" for single channel.
-  
   std::cout.setstate(std::ios_base::failbit); // stops the output to stdout, from https://stackoverflow.com/questions/30184998/how-to-disable-cout-output-in-the-runtime
   const auto default_value = input.getReal(y_ch, 1.0); // NOTE: default is 1
   for (int i = 1; i <= Nlevels; i++)
     yvec.push_back(input.getReal(y_ch + "_" + std::to_string(i), default_value)); // parse y_NN from the input, if not found fall back to y.
   std::cout.clear();
-  // print out all y in the same line: 
+  // print out all y in the same line:
   std::cout << "Got " << y_ch << ": ";
   for (auto &x : shift1(yvec)) std::cout << x << " ";
   std::cout << "\n";
-
   return shift1(yvec); // convert to 1-based vector
 }
 
 // v_NN is the transition rate from the impurity to the NNth level in the bath. Parsed into a map here and merged with V in class hyb.
 std::map<int, double> parse_special_levels(auto& input, const int Nlevels, const std::string which, const std::string channel = ""){
-  std::map<int, double> special_map; 
+  std::map<int, double> special_map;
   const std::string v_ch = which + channel; // which is the name of parameter, as of Jan 2021 "v" or "eps". For the two channel problem this is "v1" and "v2", and "v" for single channel.
-
   std::cout.setstate(std::ios_base::failbit);
   for (int i = 1; i <= Nlevels; i++){
     double v = input.getReal(v_ch + "_" + std::to_string(i), std::numeric_limits<double>::quiet_NaN()); // have NaN as the default value
-    if (!std::isnan(v)) special_map.insert(std::pair<int, double>(i, v)); // check if this v_i value was given (ie. is not Nan by default), and add it to the map 
+    if (!std::isnan(v)) special_map.insert(std::pair<int, double>(i, v)); // check if this v_i value was given (ie. is not Nan by default), and add it to the map
   }
   std::cout.clear();
-
   std::cout << "Got " << v_ch << ": \n";
   for (auto const & x : special_map){
     std::cout << v_ch << "_" << x.first << " = " << x.second << "\n";
@@ -104,10 +100,9 @@ std::map<int, double> parse_special_levels(auto& input, const int Nlevels, const
 
 auto parse_chain_sci(const int i, auto & input, params & p){
   const std::string stri = std::to_string(i);
-
   // default values
   auto alpha = input.getReal("alpha", 0.);
-  auto ys = parse_ys(input, p.SClevels, stri); 
+  auto ys = parse_ys(input, p.SClevels, stri);
   auto eps = parse_special_levels(input, p.SClevels, "eps");
   auto Ec = input.getReal("Ec", 0.);
   auto n0 = input.getReal("n0", p.SClevels);
@@ -115,19 +110,16 @@ auto parse_chain_sci(const int i, auto & input, params & p){
   auto EZx = input.getReal("EZx_bulk", 0.);
   auto t = input.getReal("t", 0.);
   auto lambda = input.getReal("lambda", 0.);
-
   return std::make_unique<SCbath>(p.SClevels, p.D, input.getReal("alpha"+stri, alpha), parse_ys(input, p.SClevels, stri), parse_special_levels(input, p.SClevels, "eps", stri), input.getReal("Ec"+stri, Ec), 
     input.getReal("n0"+stri, n0), input.getReal("EZ_bulk"+stri, EZ), input.getReal("EZx_bulk"+stri, EZx), input.getReal("t"+stri, t), input.getReal("lambda"+stri, lambda));
 }
 
 auto parse_chain_imp(const int i, auto & input, params & p){
   const std::string stri = std::to_string(i);
-
   auto U = input.getReal("U", 0);
   auto epsimp = input.getReal("epsimp", -U/2.);
   auto EZ = input.getReal("EZ_imp", 0.);
   auto EZx = input.getReal("EZx_imp", 0.);
-
   return std::make_unique<imp>(input.getReal("U"+stri, U), input.getReal("epsimp"+stri, epsimp), input.getReal("EZ_imp"+stri, EZ), input.getReal("EZx_imp"+stri, EZx));
 }
 
@@ -136,7 +128,6 @@ auto parse_chain_hyb(const int i, auto &input, params & p){
   auto gamma = input.getReal("gamma", 0.);
   return std::make_unique<hyb>(input.getReal("gamma"+stri, gamma), parse_special_levels(input, p.SClevels, "v", stri));
 }
-
 
 void parse_cmd_line(int argc, char *argv[], params &p) {
   if (!(argc == 2 || argc == 3 || argc == 4))
@@ -148,7 +139,7 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.N = input.getInt("N", 0);
 
   // TO DO: FIX THIS MESS WITH NBath INITIALIZATION (Luka, JAN 2023)
-  // To call set_problem() the NBath value has to be set. But it depends on the number of imp levels in the system, which depends on the problem type. 
+  // To call set_problem() the NBath value has to be set. But it depends on the number of imp levels in the system, which depends on the problem type.
   // For the SC-QD-SC-... chain it makes sense to require chainLen, but for the qd-sc-qd problem it is always 3.
 
   // for now: if the mpo is qd_sc_qd, override chainLen, NImp and NSC manually.
@@ -168,10 +159,6 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
     p.NSC = 1; // this is also not great, two channel problems should have NSC=2!
   }
 
-  //std::cout << "Nimp = " << p.NImp << "\n";
-  //std::cout << "Nsc = " << p.NSC << "\n";
-  ///////////////////
-
   if (p.N != 0)
     p.NBath = p.N-p.NImp;
   else { // N not specified, try NBath
@@ -180,11 +167,11 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
       throw std::runtime_error("specify either N or NBath!");
     p.N = p.NBath+p.NImp;
   }
-  p.SClevels = p.NBath / p.NSC; 
-  
+  p.SClevels = p.NBath / p.NSC;
+
   // p.NBath must be determined before calling set_problem()
   p.problem = set_problem(input.getString("MPO", "std"), p);  // problem type
-  
+
   p.impindex = p.problem->imp_index(); // XXX: redundant? // Jan 2023 - this is getting messy. Chain and qd-sc-qd have multiple imps. p.impindex defaults to 1 in those cases.
 
   p.D = input.getReal("D", 1.0);
@@ -200,7 +187,7 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.eta = input.getReal("eta", 1.0);
   p.etasite = input.getInt("etasite", p.NBath/2); // Fermi-level !
   p.etarescale = input.getYesNo("etarescale", true);
-  p.band_level_shift = input.getYesNo("band_level_shift", false);  
+  p.band_level_shift = input.getYesNo("band_level_shift", false);
 
   p.V12 = input.getReal("V", 0); // handled in a special way
   p.V1imp = input.getReal("V1imp", 0); // capacitive coupling between sc1 and imp
@@ -292,7 +279,6 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.enforce_total_spin = input.getYesNo("enforce_total_spin", false);
   p.spin_enforce_weight = input.getReal("spin_enforce_weight", p.N);
 
-
   // dynamical charge susceptibility calculations
   p.chi = input.getYesNo("chi", false);
   p.omega_r = input.getReal("omega_r", 0);
@@ -313,35 +299,27 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.MF_precision = input.getReal("MF_precision", 1e-5);
   p.max_iter = input.getReal("max_iter", 5.);
 
-  // sites is an ITensor thing. It defines the local hilbert space and operators living on each site of the lattice.
-  // For example sites.op("N",1) gives the pariticle number operator on the first site.
-  // If spin orbit coupling is turned on in any sc, turn of the spin conservation. 
-    
-
+  // If spin orbit coupling is turned on in any sc, turn of the spin conservation.
   std::cout << "\nspin conservation: " << (p.problem->spin_conservation() ? "yes" : "no") << "\n";
   p.sites = Electron(p.N, {"ConserveSz", p.problem->spin_conservation()});
   // report_Sz_conserved(p.problem.get()); // TO DO: to be fixed
 }
 
-void MeasureChannelsEnergy(MPS& psi, H5Easy::File & file, std::string path, params &p) {  
+void MeasureChannelsEnergy(MPS& psi, H5Easy::File & file, std::string path, params &p) {
   MPO Hch1(p.sites);
   MPO Hch2(p.sites);
-
-  prob::twoch_impfirst_V new2chProblem(p); 
-
+  prob::twoch_impfirst_V new2chProblem(p);
   auto impOp = new2chProblem.get_one_channel_MPOs_and_impOp(Hch1, Hch2, p);
   double ch1EnergyGain = std::real(innerC(psi, Hch1, psi));
   double ch2EnergyGain = std::real(innerC(psi, Hch2, psi));
-
   psi.position(p.impindex);
   auto res = psi(p.impindex) * impOp * dag(prime(psi(p.impindex),"Site"));
   double impEnergy = std::real(res.cplx());
-
   std::cout << std::setprecision(full) << "Energy gain: " << std::endl;
   std::cout << std::setprecision(full) << "channel1 : " <<  ch1EnergyGain << std::endl;
-  std::cout << std::setprecision(full) << "channel2 : " <<  ch2EnergyGain << std::endl;  
-  std::cout << std::setprecision(full) << "impurity : " <<  impEnergy << std::endl;  
-  std::cout << std::setprecision(full) << "sum = " << ch1EnergyGain + ch2EnergyGain + impEnergy << std::endl;  
+  std::cout << std::setprecision(full) << "channel2 : " <<  ch2EnergyGain << std::endl;
+  std::cout << std::setprecision(full) << "impurity : " <<  impEnergy << std::endl;
+  std::cout << std::setprecision(full) << "sum = " << ch1EnergyGain + ch2EnergyGain + impEnergy << std::endl;
   H5Easy::dump(file, path + "/channel_energy_gain/1", ch1EnergyGain);
   H5Easy::dump(file, path + "/channel_energy_gain/2", ch2EnergyGain);
   H5Easy::dump(file, path + "/channel_energy_gain/imp", impEnergy);
@@ -352,16 +330,12 @@ void MeasureChannelsEnergy(MPS& psi, H5Easy::File & file, std::string path, para
 
 //Measures the total spin of a site using a MPO
 void MeasureTotalSpin(MPS& psi, auto & file, std::string path, params &p) {
-
   MPO S2(p.sites);
   makeS2_MPO(S2, p, 0.0, 1.0);
-
   // res2 is the result of \hat{S}^2 = S(S+1)
   // Actual S is obtained by solving the quadratic equation, always taking the largest solution.
-
   auto res2 = std::real(innerC(psi, S2, psi));
   auto res = 0.5 * std::max( -1 + std::sqrt(1 + 4*res2), -1 - std::sqrt(1 + 4*res2) );
-
   std::cout << std::setprecision(full) << "Total S = " <<  res << ", S^2 = " << res2 << std::endl;
   H5Easy::dump(file, path + "/S2", res);
 }
@@ -414,7 +388,7 @@ void MeasureChargeCorrelation(MPS& psi, auto & file, std::string path, const par
   if (p.stdout_verbosity){
     std::cout << "charge correlation = " << std::setprecision(full) << r << std::endl;
     std::cout << "charge correlation tot = " << tot << std::endl;}
-  else std::cout << "charge correlations computed" << std::endl; 
+  else std::cout << "charge correlations computed" << std::endl;
   H5Easy::dump(file, path + "/charge_correlation", r);
   H5Easy::dump(file, path + "/charge_correlation_total", tot);
 }
@@ -528,40 +502,30 @@ void MeasureImpImpSpinCorrelation(MPS& psi, H5Easy::File & file, std::string pat
 }
 
 auto calcCdagC(MPS& psi, const int i, const int j, const params &p) {
-
-  if (i == j){
+  if (i == j) {
     auto res = psi(i) * p.sites.op("Ntot",i) * dag(prime(psi(i),"Site"));
     return std::real(res.cplx());
-  }
-
-  else { 
+  } else {
     auto cdagupi = op(p.sites, "Cdagup", i);
     auto cupj    = op(p.sites, "Cup", j);
     auto cdagdni = op(p.sites, "Cdagdn", i);
     auto cdnj    = op(p.sites, "Cdn", j);
-
     auto corup = Correlator(psi, i, cdagupi, j, cupj, p);
     auto cordn = Correlator(psi, i, cdagdni, j, cdnj, p);
-    
-    return corup + cordn;  
-  }      
+    return corup + cordn;
+  }
 }
 
 auto calcMatrix(const std::string which, MPS& psi, const ndx_t &all_sites, const params &p, const bool full = false) {
   if (p.verbose) { std::cout << "Computing " << which << " correlation matrix" << std::endl; }
   auto m = matrix_t(all_sites.size(), all_sites.size(), 0.0);
   for (const auto i: all_sites) {
-//    if (p.veryverbose) { std::cout << "row " << i << std::endl; }
     for (const auto j: all_sites) {
       if (full || i <= j) {
-//        if (p.veryverbose) { std::cout << "column " << j << std::endl; }
-        
         if (which == "spin")  m(i-1, j-1) = calcSS(psi, i, j, p); // 0-based matrix indexing
         if (which == "density")   m(i-1, j-1) = calcCdagC(psi, i, j, p);
-
         if (p.debug) { std::cout << fmt::format("m({},{})={:18}\n", i, j, m(i-1, j-1)); }
-      } 
-      else {
+      } else {
         m(i-1, j-1) = m(j-1, i-1);
       }
     }
@@ -596,7 +560,7 @@ auto calcPairCorrelation(MPS& psi, const ndx_t &bath_sites, const params &p) {
 
 void MeasurePairCorrelation(MPS& psi, H5Easy::File & file, std::string path, const params &p) {
   const auto [r, tot] = calcPairCorrelation(psi, p.problem->bath_indexes(), p);
-  if (p.stdout_verbosity >= 0){  
+  if (p.stdout_verbosity >= 0){
     std::cout << "pair correlation = " << std::setprecision(full) << r << std::endl;
     std::cout << "pair correlation tot = " << tot << std::endl;}
   else std::cout << "pair correlations computed" << std::endl;
@@ -710,7 +674,6 @@ std::vector<double> calcOccupancy(MPS &psi, const ndx_t &all_sites, const params
 void MeasureOccupancy(MPS& psi, auto & file, std::string path, const params &p) {
   const auto r = calcOccupancy(psi, p.problem->all_indexes(), p);
   const auto tot = std::accumulate(r.cbegin(), r.cend(), 0.0);
-  
   if (p.stdout_verbosity >= 0) {
     std::cout << "site occupancies = " << std::setprecision(full) << r << std::endl;
     std::cout << "tot = " << tot << std::endl;
@@ -733,12 +696,10 @@ auto calcPairing(MPS &psi, const ndx_t &all_sites, const params &p) {
     auto val1d = psi.A(i) * p.sites.op("Cdagdn*Cdn", i) * dag(prime(psi.A(i),"Site"));
     // For Gamma>0, <C+CC+C>-<C+C><C+C> may be negative.
     auto diff = val2.cplx() - val1u.cplx() * val1d.cplx();
-
     auto sq = sqrt(diff) * p.sc->g();
     if (i != p.impindex){
       int bathndx = i < p.impindex ? i : i-1;
       sq *= pow(p.sc->y(bathndx), 2);
-      
       if (bathndx == p.etasite){ //if the eta model is used!
         const double x = p.etarescale ? sqrt( (p.NBath-p.eta*p.eta)/(p.NBath-1.) ) : 1;
         sq *= pow(p.eta * x, 2);
@@ -799,7 +760,7 @@ void MeasureAmplitudes(MPS& psi, auto & file, std::string path, const params &p)
     std::cout << "[v=" << rv[i] << " u=" << ru[i] << " pdt=" << rpdt[i] << "] ";
   std::cout << std::endl << "tot = " << tot << std::endl;
   }
-  else std::cout << "amplitudes computed" << std::endl; 
+  else std::cout << "amplitudes computed" << std::endl;
   dumpreal(file, path + "/amplitudes/u", ru);
   dumpreal(file, path + "/amplitudes/v", rv);
   dumpreal(file, path + "/amplitudes/pdt", rpdt);
@@ -835,18 +796,15 @@ void MeasureEntropy(MPS& psi, auto & file, std::string path, const params &p) {
 
 void MeasureEntropy_beforeAfter(MPS& psi, auto & file, std::string path, const params &p) {
   Expects(p.impindex != 1); // Works as intended only if p.impindex=1.
-
   const auto SvN1 = calcEntropy(psi, p.impindex-1, p);
   const auto SvN2 = calcEntropy(psi, p.impindex, p);
-
   std::cout << fmt::format("Entanglement entropy before the impurity bond b={}, SvN = {:10}", p.impindex-1, SvN1) << std::endl;
   std::cout << fmt::format("Entanglement entropy after the impurity bond b={}, SvN = {:10}", p.impindex, SvN2) << std::endl;
-  
   H5Easy::dump(file, path + "/entanglement_entropy_imp/before", SvN1);
   H5Easy::dump(file, path + "/entanglement_entropy_imp/after", SvN2);
 }
 
-// Contract all other tensors except one (site indexed by i). The diagonal terms are the squares of the amplitudes for the states |0>, |up>, |dn>, |2>. 
+// Contract all other tensors except one (site indexed by i). The diagonal terms are the squares of the amplitudes for the states |0>, |up>, |dn>, |2>.
 auto calculate_density_matrix(MPS &psi, const int i, const params &p) {
   psi.position(i);
   auto psidag = dag(psi);
@@ -874,11 +832,8 @@ void MeasureOnSiteDensityMatrices(MPS &psi, auto &file, std::string path, const 
     const auto Pu = std::real(psipsi.cplx(2,2));
     const auto Pd = std::real(psipsi.cplx(3,3));
     const auto P2 = std::real(psipsi.cplx(4,4));
-    
-    if (p.stdout_verbosity >= 2){
-    std::cout << "site " << i <<" P: " << P0 << " " << Pu << " " << Pd << " " << P2 << "\n";
-    }
-
+    if (p.stdout_verbosity >= 2)
+      std::cout << "site " << i <<" P: " << P0 << " " << Pu << " " << Pd << " " << P2 << "\n";
     H5Easy::dump(file, path + "/" + std::to_string(i) + "/P/0",    P0);
     H5Easy::dump(file, path + "/" + std::to_string(i) + "/P/up",   Pu);
     H5Easy::dump(file, path + "/" + std::to_string(i) + "/P/down", Pd);
@@ -895,10 +850,8 @@ void MeasureImpDensityMatrix(MPS &psi, auto &file, std::string path, const param
     const auto Pu = std::real(psipsi.cplx(2,2));
     const auto Pd = std::real(psipsi.cplx(3,3));
     const auto P2 = std::real(psipsi.cplx(4,4));
-    
     if (p.stdout_verbosity >= 0) std::cout << "P_imp: " << P0 << " " << Pu  << " " << Pd << " " << P2 << "\n";
-    else std::cout << "imp Ps computed" << std::endl;
-
+      else std::cout << "imp Ps computed" << std::endl;
     H5Easy::dump(file, path + "/P_imp/0",    P0);
     H5Easy::dump(file, path + "/P_imp/up",   Pu);
     H5Easy::dump(file, path + "/P_imp/down", Pd);
@@ -909,38 +862,29 @@ void MeasureImpDensityMatrix(MPS &psi, auto &file, std::string path, const param
 
 ITensor swapF(const int i, const params & p){
   // This is a local operator wich gives 1 for single occupied levels and 0 elsewhere.
-  // equivalent to N - 2*NupNdn     
+  // equivalent to N - 2*NupNdn
   // could be implemented also as: auto opi = op(p.sites, "Ntot", i) - ( 2 * op(p.sites, "Nupdn", i) );
-
   Index s = p.sites(i);
   Index sP = prime(s);
-  
   ITensor swapF(dag(s),sP);
-
   swapF.set(s(2), sP(2), 1);
   swapF.set(s(3), sP(3), 1);
-
   return swapF;
 }
 
 void applyTwoSiteF(MPS &psi, const int i, const int j, const params &p){
-  // applies the equivalent of 1 - 2 * swapF(i) * swapF(j) 
-  // this returns -1 only if the sites i and j are both singly occupied - as if they were swapped 
-
+  // applies the equivalent of 1 - 2 * swapF(i) * swapF(j)
+  // this returns -1 only if the sites i and j are both singly occupied - as if they were swapped
   MPS newPsi = psi;
-
   // applying swapF(i) and swapF(j)
   newPsi.position(i);
   auto Ti = noPrime( swapF(i, p) * newPsi(i) );
   newPsi.set(i, Ti);
-  
   newPsi.position(j);
   auto Tj = noPrime( swapF(j, p) * newPsi(j) );
   newPsi.set(j, Tj);
-
   psi.position(1); // for sum to work both MPS have to have the same orthogonality center
   newPsi.position(1);
-
   psi = sum(psi, -2.0 * newPsi, {"MaxDim",1000,"Cutoff",1E-9});
   psi.normalize();
   psi.orthogonalize();
@@ -949,7 +893,7 @@ void applyTwoSiteF(MPS &psi, const int i, const int j, const params &p){
 void amplitudes(MPS &psi, const params &p){
   // Prints all large amplitudes of psi, but is hard coded for N=3!
   // Left here as might be useful for some other debugging.
-  // 1 - 0, 2 - up, 3 - down, 4 - 2. 
+  // 1 - 0, 2 - up, 3 - down, 4 - 2.
   Expects(p.N == 3);
   psi.position(1);
   auto tot = 0.0;
@@ -970,7 +914,6 @@ void amplitudes(MPS &psi, const params &p){
 }
 
 MPS reversePsi(MPS psi, const params & p){ // psi MUST NOT BE PASSED AS REFERENCE HERE!
-    
   // first take psi and apply all the fermionic swap gates to get the correct minus sign structure
   // to swap the channels, first permute site 1 past all other sites, then 2 past all sites but 1, then 3 past all but 1 and 2, ...
   for (int i = 1; i <= p.N; i++){
@@ -978,14 +921,12 @@ MPS reversePsi(MPS psi, const params & p){ // psi MUST NOT BE PASSED AS REFERENC
       applyTwoSiteF(psi, i, j, p);
     }
   }
-
   // now swap the tensors
   MPS newPsi = MPS(length(psi));
     for (int i=1; i<=length(psi); i++){
     int j = length(psi)-(i-1);
     newPsi.ref(i) = psi(j);
   }
-
   // swap the indices
   for (int i=1; i<=length(psi); i++){
     int j = length(psi)-(i-1);
@@ -1000,19 +941,13 @@ MPS reversePsi(MPS psi, const params & p){ // psi MUST NOT BE PASSED AS REFERENC
 void MeasureParity(MPS &psi, auto &file, std::string path, const params &p) {
   // Measures the parity by reversing the tensors of the MPS and calculating the overlap.
   // Only works properly if p.reverse_second_channel_eps is turned on.
-
   std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-
-
   MPS reversedPsi = reversePsi(psi, p);
   auto parity = inner(psi, reversedPsi);
-
   std::cout << "parity = " << parity << "\n";
   H5Easy::dump(file, path + "/parity", parity);
-
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
   std::cout << "Parity timing: " << std::chrono::duration_cast<std::chrono::seconds>(end - begin).count() << " s" << std::endl;
-
 }
 
 auto sweeps(params &p)
@@ -1022,10 +957,10 @@ auto sweeps(params &p)
   return Sweeps(p.nrsweeps, sw_table);
 }
 
-// If a vector of MPOs is passed to the dmrg function, the dmrg will act as if these MPOs are sumed up. 
+// If a vector of MPOs is passed to the dmrg function, the dmrg will act as if these MPOs are sumed up.
 // The idea is to optimize psi for <psi|H|psi> + spin_weight * (<S^2> - Sz(Sz+1)). This will tend to find a state with total spin close to initial Sz.
 // This should for example minimize the admixture of the Sz=0 triplet state into the singlet at small Gammas.
-// THIS HAS NOT BEEN TESTED (Jan 2023), AND ONLY WORKS FOR THE GROUND STATE. 
+// THIS HAS NOT BEEN TESTED (Jan 2023), AND ONLY WORKS FOR THE GROUND STATE.
 // In May 2022 (Luka) asked a question regarding this on the iTensor discourse server - Miles' explanation should be there.
 void generate_MPO_vector(std::vector<MPO> &MPOvec, const MPO &H, const state_t &st, params &p){
   MPOvec.push_back(H);
@@ -1040,20 +975,15 @@ void generate_MPO_vector(std::vector<MPO> &MPOvec, const MPO &H, const state_t &
 
 void solve_gs(const state_t &st, store &s, params &p) {
   std::cout << "\nSweeping in the sector " << st <<  std::endl;
-
   auto H = p.problem->initH(st, p);
   auto state = p.problem->initState(st, p);
-
   MPS psi_init(state);
-
   for(auto i : range1(p.nrH)){
     psi_init = applyMPO(H,psi_init);
     psi_init.noPrime().normalize();
   }
-
   std::vector<MPO> MPOvec;
   generate_MPO_vector(MPOvec, H, st, p); // if p.enforce_total_spin the MPOvec contains H and S2, the MPO for the total spin, multiplied by the weight
-
   auto [GSenergy, psi] = dmrg(MPOvec, psi_init, sweeps(p),
                             {"Silent", p.Silent,
                              "Quiet", p.Quiet,
@@ -1065,8 +995,7 @@ void solve_gs(const state_t &st, store &s, params &p) {
 
 void solve_es(const state_t &st, store &s, params &p) {
   std::cout << "\nSweeping in the sector " << st  << std::endl;
-  const auto [n, Sz, i] = st;  
-  
+  const auto [n, Sz, i] = st;
   auto H = p.problem->initH(st, p);
   MPS psi_init_es = s.eigen[es({n, Sz}, i-1)].psi();
   std::vector<MPS> wfs(i);
@@ -1101,7 +1030,6 @@ std::optional<eigenpair> load(const state_t &st, params &p, const subspace_t &su
 {
   const auto &[n, S, i] = st;
   const auto path = fmt::format("n{}_S{}_i{}", n, S, i);
-
   /*
   THIS IS CRITICAL!
   iTensor tensors (MPS, MPO, sites objects, ...) have indeces, labeled by QN etc, and an id - a random number attributed at creation.
@@ -1110,29 +1038,24 @@ std::optional<eigenpair> load(const state_t &st, params &p, const subspace_t &su
   initiated with the exact same sites object. Also, this exact object has to be used when applying operators etc., so the p.sites has
   to be overwritten with the loaded one.
   */
-
   const auto fn_sites = "SITES_" + path;
   Hubbard sites;
   if (!file_exists(fn_sites)) return std::nullopt;
   readFromFile(fn_sites, sites);
   p.sites = sites;
-
   const auto fn_mps = "MPS_" + path;
   if (!file_exists(fn_mps)) return std::nullopt;
   MPS psi(p.sites);
   readFromFile(fn_mps, psi);
-
   std::cout<<"psi loaded\n";
-
   auto H = p.problem->initH(st, p);
   auto E = inner(psi, H, psi);
-
   return eigenpair(E, psi);
 }
 
 void solve_state(const state_t &st, store &s, params &p)
 {
-  const auto [n, Sz, i] = st;  
+  const auto [n, Sz, i] = st;
   if (i == 0)
     solve_gs(st, s, p);
   else
@@ -1223,7 +1146,7 @@ void two_impurity_problem::calc_properties(const state_t st, H5Easy::File &file,
   // here add calculations that make sense only for the qd-sc-qd problem
   const auto path = state_path(st);
   auto psi = s.eigen[st].psi();
-  MeasureImpImpSpinCorrelation(psi, file, path, p);  
+  MeasureImpImpSpinCorrelation(psi, file, path, p);
 }
 
 auto find_global_GS(store &s, auto & file) {
@@ -1329,17 +1252,13 @@ void calculate_cdag_overlaps(store &s, auto &file, const params &p) {
   for (const auto & [st1, st2] : itertools::product(s.eigen, s.eigen)) {
     const auto [ntot1, Sz1, i] = st1.first;
     const auto [ntot2, Sz2, j] = st2.first;
-    
     if ( ntot1 == ntot2 + 1 ){
       auto sz_change = Sz1 == Sz2 + 0.5 ? "up" : "dn";
-
       auto res = calculate_cdag_overlap(st1.second.psi(), st2.second.psi(), sz_change, p);
       double tot = std::accumulate(res.begin(), res.end(), 0.0);
-
       std::cout << fmt::format("<{}, {}, {}| cdag |{}, {}, {}>:\n", ntot1, Sz1, i, ntot2, Sz2, j);
       std::cout << "ci overlaps = " << std::setprecision(full) << res << std::endl;
       std::cout << "tot = " << tot << std::endl;
-      
       H5Easy::dump(file, "cdag_overlaps/" + n1n2S1S2ij_path(ntot1, ntot2, Sz1, Sz2, i, j), res);
       H5Easy::dump(file, "cdag_overlaps/tot/" + n1n2S1S2ij_path(ntot1, ntot2, Sz1, Sz2, i, j), tot);
     }
@@ -1348,60 +1267,45 @@ void calculate_cdag_overlaps(store &s, auto &file, const params &p) {
 
 // THIS IS FOR THE TWO CHANNEL MODEL ONLY - IT TAKES channelNum AS AN ARGUMENT FOR THE bath_indexes()!
 auto one_channel_number_op(const int channelNum, auto &psi1, auto &psi2, const params &p){
-
   double res = 0.0;
-
   for (int i : p.problem->bath_indexes(channelNum)){
-
     MPS newpsi = psi2;
     newpsi.position(i);
-
     // Apply the n operator to a copy of psi2
     auto newT = p.sites.op("Ntot", i) * newpsi(i);
     newT.noPrime();
-
     newpsi.set(i, newT);
-
     psi1.position(i);
-
-    res += abs(innerC(psi1, newpsi)); 
+    res += abs(innerC(psi1, newpsi));
   }
   return res;
 }
 
 auto calculate_transition_dipole_moment(auto &psi1, auto &psi2, params &p){
-  // < i | nsc1 | j > - < i | nsc2 | j > 
-
+  // < i | nsc1 | j > - < i | nsc2 | j >
   double res = 0.0;
   res += one_channel_number_op(1, psi1, psi2, p);
   res -= one_channel_number_op(2, psi1, psi2, p);
-  
   return res;
 }
 
 auto calculate_transition_quadrupole_moment(auto &psi1, auto &psi2, params &p){
-  // < i | nsc1 | j > + < i | nsc2 | j > 
-
+  // < i | nsc1 | j > + < i | nsc2 | j >
   double res = 0.0;
   res += one_channel_number_op(1, psi1, psi2, p);
   res += one_channel_number_op(2, psi1, psi2, p);
-  
   return res;
 }
 
 void calculate_transition_dipole_moments(store &s, auto &file, params &p) {
-
-  skip_line();  
+  skip_line();
   std::cout << "Transition dipole moments:\n";
-
   for (const auto & [st1, st2] : itertools::product(s.eigen, s.eigen)) {
     const auto [ntot1, Sz1, i] = st1.first;
     const auto [ntot2, Sz2, j] = st2.first;
-    
     if (ntot1 == ntot2 && Sz1 == Sz2 && i < j) { // for now only for Sz1==Sz2
       auto o = calculate_transition_dipole_moment(st1.second.psi(), st2.second.psi(), p);
       o = abs(o);
-
       std::cout << fmt::format(FMT_STRING("n = {:<5}  Sz = {:4}  i = {:<3}  j = {:<3}  |<i|nsc1 - nsc2|j>| = {:<22.15}"),
                                ntot1, Sz_string(Sz1), i, j, o) << std::endl;
       H5Easy::dump(file, "transition_dipole_moment/" + ij_path(ntot1, Sz1, i, j), o);
@@ -1410,18 +1314,14 @@ void calculate_transition_dipole_moments(store &s, auto &file, params &p) {
 }
 
 void calculate_transition_quadrupole_moments(store &s, auto &file, params &p) {
-
-  skip_line();  
+  skip_line();
   std::cout << "Transition quadrupole moments:\n";
-
   for (const auto & [st1, st2] : itertools::product(s.eigen, s.eigen)) {
     const auto [ntot1, Sz1, i] = st1.first;
     const auto [ntot2, Sz2, j] = st2.first;
-    
     if (ntot1 == ntot2 && Sz1 == Sz2 && i < j) { // for now only for Sz1==Sz2
       auto o = calculate_transition_quadrupole_moment(st1.second.psi(), st2.second.psi(), p);
       o = abs(o);
-      
       std::cout << fmt::format(FMT_STRING("n = {:<5}  Sz = {:4}  i = {:<3}  j = {:<3}  |<i|nsc1 + nsc2|j>| = {:<22.15}"),
                                ntot1, Sz_string(Sz1), i, j, o) << std::endl;
       H5Easy::dump(file, "transition_quadrupole_moment/" + ij_path(ntot1, Sz1, i, j), o);
@@ -1585,7 +1485,6 @@ void calculate_dynamical_charge_susceptibility(store &s, const state_t GS, const
         const auto BAtau = inner(psiB, psiAtau);
         std::cout << "<B|A(tau)>=" << BAtau << std::endl;
       }
-      
       evolve(psiAptau, H2p, cnt, p.tau_step, p);
       if (p.debug) {
         const auto AptauAptau = inner(psiAptau, psiAptau);
