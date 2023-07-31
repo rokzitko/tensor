@@ -47,6 +47,17 @@ inline void h5_dump_matrix(H5Easy::File &file, const std::string &path, const ma
   dataset.write(m);
 }
 
+// sum all elements of a matrix
+inline double matrix_sum_all(const matrix_t &mat){
+    double tot = 0;
+    for(auto it1 = mat.begin1(); it1 != mat.end1(); ++it1) {
+      for(auto it2 = it1.begin(); it2 !=it1.end(); ++it2) {
+        tot += *it2;
+    }
+  }
+  return tot;
+}
+
 constexpr auto full = std::numeric_limits<double>::max_digits10;
 
 using charge = int;

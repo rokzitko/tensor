@@ -242,6 +242,7 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.chargeCorrelation = input.getYesNo("chargeCorrelation", false);
   p.spinCorrelation = input.getYesNo("spinCorrelation", false);
   p.spinCorrelationMatrix = input.getYesNo("spinCorrelationMatrix", false);
+  p.measurePartialSumsOfSpinSpinMatrix = input.getYesNo("measurePartialSumsOfSpinSpinMatrix", false);
   p.channelDensityMatrix = input.getYesNo("channelDensityMatrix", false);
   p.pairCorrelation = input.getYesNo("pairCorrelation", false);
   p.hoppingExpectation = input.getYesNo("hoppingExpectation", false);
@@ -514,11 +515,16 @@ auto calcCdagC(MPS& psi, const int i, const int j, const params &p) {
 auto calcMatrix(const std::string which, MPS& psi, const ndx_t &all_sites, const params &p, const bool full = false) {
   if (p.verbose) { std::cout << "Computing " << which << " correlation matrix" << std::endl; }
   auto m = matrix_t(all_sites.size(), all_sites.size(), 0.0);
-  for (const auto i: all_sites) {
-    for (const auto j: all_sites) {
+
+  int i = -1; //-1 because immediately i++
+  for (const auto site_i: all_sites) {
+    i++;
+    int j = -1;
+    for (const auto site_j: all_sites) {
+      j++;
       if (full || i <= j) {
-        if (which == "spin")  m(i-1, j-1) = calcSS(psi, i, j, p); // 0-based matrix indexing
-        if (which == "density")   m(i-1, j-1) = calcCdagC(psi, i, j, p);
+        if (which == "spin")  m(i, j) = calcSS(psi, site_i, site_j, p); // 0-based matrix indexing
+        if (which == "density")   m(i, j) = calcCdagC(psi, site_i, site_j, p);
         if (p.debug) { std::cout << fmt::format("m({},{})={:18}\n", i, j, m(i-1, j-1)); }
       } else {
         m(i-1, j-1) = m(j-1, i-1);
@@ -538,6 +544,53 @@ void MeasureSpinCorrelationMatrix(MPS &psi, H5Easy::File &file, std::string path
 void MeasureChannelDensityMatrix(MPS &psi, H5Easy::File &file, std::string path, const params &p) {
   const auto m = calcMatrix("density", psi, p.problem->all_indexes(), p, true);
   h5_dump_matrix(file, path + "/channel_density_matrix", m);
+}
+
+void MeasurePartialSumsOfSpinSpinMatrix(MPS &psi, H5Easy::File &file, std::string path, const params &p) {
+
+  double res;
+  matrix_t mat;
+  std::vector<double> allSCres;
+  std::vector<double> allImpres;
+
+  // handle the single channel problem separately
+  if (p.problem->type() == "single channel impurity problem") {
+    // SC
+    mat = calcMatrix("spin", psi, p.problem->bath_indexes(), p, true);
+    auto resSC = matrix_sum_all(mat);
+    H5Easy::dump(file, path + "/spin_correlation_matrix_partial_sums/SC/1", resSC);
+
+    // impurity level
+    ndx_t index_vec { p.problem->imp_index() }; // make this a ndx_t == vector of one element to pass to calcMatrix()
+    mat = calcMatrix("spin", psi, index_vec, p, true);
+    auto resImp = matrix_sum_all(mat);
+    H5Easy::dump(file, path + "/spin_correlation_matrix_partial_sums/imp/1", resImp);
+    
+    if (p.stdout_verbosity >= 0) {
+      std::cout << "imp-imp spin correlation = " << std::setprecision(full) << resImp << std::endl;
+      std::cout << "sc-sc spin correlation = " << std::setprecision(full) << resSC << std::endl;
+    }
+  }
+
+  else { // general case
+    for(int i : range1(p.NSC)) { // iterate across all SCs
+      mat = calcMatrix("spin", psi, p.problem->bath_indexes(i), p, true);
+      res = matrix_sum_all(mat);
+      allSCres.push_back(res);
+      H5Easy::dump(file, path + "/spin_correlation_matrix_partial_sums/SC/" + std::to_string(i), res);
+    }
+    for (int i : range1(p.NImp)) { // iterate across all imp sites
+      ndx_t index_vec { p.problem->imp_index(i) }; // make this a ndx_t == vector of one element to pass to calcMatrix()
+      mat = calcMatrix("spin", psi, index_vec, p, true);
+      res = matrix_sum_all(mat);
+      allImpres.push_back(res);
+      H5Easy::dump(file, path + "/spin_correlation_matrix_partial_sums/imp/" + std::to_string(i), res);
+    }
+    if (p.stdout_verbosity >= 0) {
+      std::cout << "IMP spin correlations = " << std::setprecision(full) << allImpres << std::endl;
+      std::cout << "SC spin correlations = " << std::setprecision(full) << allSCres << std::endl;
+    }
+  }
 }
 
 auto calcPairCorrelation(MPS& psi, const ndx_t &bath_sites, const params &p) {
@@ -1110,6 +1163,7 @@ void calc_properties(const state_t st, H5Easy::File &file, store &s, params &p)
   if (p.measureAllDensityMatrices || p.result_verbosity >= 2) MeasureOnSiteDensityMatrices(psi, file, path, p);
   if (p.channelDensityMatrix      || p.result_verbosity >= 2) MeasureChannelDensityMatrix(psi, file, path, p);
   if (p.spinCorrelationMatrix     || p.result_verbosity >= 2) MeasureSpinCorrelationMatrix(psi, file, path, p);
+  if (p.measurePartialSumsOfSpinSpinMatrix) MeasurePartialSumsOfSpinSpinMatrix(psi, file, path, p);
   s.stats[st].dump();
 }
 
@@ -1130,7 +1184,6 @@ void impurity_problem::calc_properties(const state_t st, H5Easy::File &file, sto
   if (numChannels() == 2){
       if (p.measureParity) MeasureParity(psi, file, path, p);
       if (p.measureChannelsEnergy) MeasureChannelsEnergy(psi, file, path, p);
-      //if (p.measurePartialSumsOfSpinSpinMatrix) MeasurePartialSumsOfSpinSpinMatrix(psi, file, path, p); //here
   }
 }
 
