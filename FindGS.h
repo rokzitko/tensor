@@ -406,6 +406,7 @@ struct params {
   bool chargeCorrelation;// compute the impurity-superconductor correlation <n_imp n_i>
   bool spinCorrelation;  // compute the impurity-superconductor correlation <S_imp S_i>. NOTE: sum over i includes the impurity site!
   bool spinCorrelationMatrix;  // compute the full correlation matrix <S_i S_j>
+  bool measurePartialSumsOfSpinSpinMatrix; // compute the full correlation matrix, but only save partial sums over each SC and QD 
   bool channelDensityMatrix; // compute the channel correlation matrix <cdag_i c_j>
   bool pairCorrelation;  // compute the impurity-superconductor correlation <d d c_i^dag c_i^dag>
   bool hoppingExpectation;//compute the hopping expectation value 1/sqrt(N) \sum_sigma \sum_i <d^dag c_i> + <c^dag_i d>
@@ -511,13 +512,13 @@ class problem_type {
    virtual ndx_t bath_indexes(const int) = 0;  // per channel bath indexes
    virtual void calc_properties(const state_t st, H5Easy::File &file, store &s, params &p) = 0;
    virtual std::string type() = 0;
+   virtual int NSC() = 0;
+   virtual int NImp() = 0;
 };
 
 class impurity_problem : virtual public problem_type {
  public:
    virtual int numChannels() = 0;
-   virtual int NSC() = 0;
-   virtual int NImp() = 0;
    void calc_properties(const state_t st, H5Easy::File &file, store &s, params &p) override;
 };
 
@@ -803,16 +804,22 @@ class two_channel : virtual public impurity_problem
 class alternating_chain_SC_first : virtual chain_problem
 {
   private:
-    int _NImp;
-    int _NSC;
+    int _chainLen;
     int _SClevels;
   public:
-   alternating_chain_SC_first(int NImp, int NSC, int SClevels) :
-     _NImp(NImp), _NSC(NSC), _SClevels(SClevels) {};
+   alternating_chain_SC_first(int chainLen, int SClevels) :
+     _chainLen(chainLen), _SClevels(SClevels) {};
 
-    auto NImp() const { return _NImp; }
-    auto NSC() const { return _NSC; }
-    auto SClevels() const { return _SClevels; }
+    // if chainLen is even half are SCs and half imps. Else, there is one more SC because the chain starts with SC
+    int NImp() override { 
+      if (_chainLen % 2 == 0) return _chainLen/2;
+      else return (_chainLen - 1) / 2;
+    }            
+    int NSC() override { 
+      if (_chainLen % 2 == 0) return _chainLen/2;
+      else return (_chainLen + 1) / 2;
+    }            
+    int SClevels() const { return _SClevels; }
 
     int imp_index(const int i = -1) override { 
       if (i==-1) return 1;
@@ -867,7 +874,8 @@ class qd_sc_qd_problem : virtual two_impurity_problem
    qd_sc_qd_problem(int SClevels) : _SClevels(SClevels) {};
 
     int SClevels() const { return _SClevels; }
-    int NImp() const { return 2; } // there are always two impurities
+    int NImp() override { return 2; }  // there are always two impurities
+    int NSC() override { return 1; }   // there is always one SC
 
     int imp_index(const int i = -1) override { // this gives the index of the first (left) or second(right) impurity level 
       Expects(i==1 || i==2 || i==-1);
@@ -906,9 +914,6 @@ class qd_sc_qd_problem : virtual two_impurity_problem
       return state;
     }
     std::string type() override { return "qd-sc-qd problem"; }
-    int NSC() {
-      return 1;
-  }
 };
 
 
@@ -1146,7 +1151,7 @@ namespace prob {
 
    class alternating_chain_SC_first_and_last : public alternating_chain_SC_first, public Sz_conserved{
     public:
-      alternating_chain_SC_first_and_last(const params &p) : alternating_chain_SC_first(p.NImp, p.NSC, p.SClevels) {}
+      alternating_chain_SC_first_and_last(const params &p) : alternating_chain_SC_first(p.chainLen, p.SClevels) {}
 
       MPO initH(state_t st, params &p) override { 
         if (p.verbose) std::cout << "Building Hamiltonian, MPO=alternating_chain" << std::endl;

@@ -140,39 +140,32 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
 
   // TO DO: FIX THIS MESS WITH NBath INITIALIZATION (Luka, JAN 2023)
   // To call set_problem() the NBath value has to be set. But it depends on the number of imp levels in the system, which depends on the problem type.
-  // For the SC-QD-SC-... chain it makes sense to require chainLen, but for the qd-sc-qd problem it is always 3.
+  // Here define a dummy_problem, read out the number of imp levels - 
 
   // for now: if the mpo is qd_sc_qd, override chainLen, NImp and NSC manually.
   std::string mpoType = input.getString("MPO", "std");
   p.chainLen = input.getInt("chainLen", 0); // number of elements in a SC-QD-... chain
-  
-  if ( mpoType == "qd_sc_qd" || mpoType == "autoH_qd_sc_qd") {
-    p.NImp = 2;
-    p.NSC = 1;
-  }
-  else if ( mpoType == "alternating_chain") {
-    p.NImp = (p.chainLen - 1)/2;
-    p.NSC = p.chainLen - p.NImp;
-  }
-  else{
-    p.NImp = 1;
-    p.NSC = 1; // this is also not great, two channel problems should have NSC=2!
-  }
 
-  if (p.N != 0)
-    p.NBath = p.N-p.NImp;
+  std::cout << "HERE\n";
+
+  auto dummy_problem = set_problem(input.getString("MPO", "std"), p); // set a dummy problem only to get NImp and NSC, and with it NBath or N
+  p.NImp = dummy_problem->NImp();
+  p.NSC = dummy_problem->NSC();  
+  
+  if (p.N != 0){
+    p.NBath = p.N - p.NImp; 
+  }
   else { // N not specified, try NBath
     p.NBath = input.getInt("NBath", 0);
-    if (p.NBath == 0)
-      throw std::runtime_error("specify either N or NBath!");
-    p.N = p.NBath+p.NImp;
+    if (p.NBath == 0) throw std::runtime_error("specify either N or NBath!");
+    p.N = p.NBath + p.NImp;
   }
   p.SClevels = p.NBath / p.NSC;
 
-  // p.NBath must be determined before calling set_problem()
+  // NOW DEFINE THE REAL PROBLEM, p.NBath is set
   p.problem = set_problem(input.getString("MPO", "std"), p);  // problem type
 
-  p.impindex = p.problem->imp_index(); // XXX: redundant? // Jan 2023 - this is getting messy. Chain and qd-sc-qd have multiple imps. p.impindex defaults to 1 in those cases.
+  p.impindex = p.problem->imp_index(); // XXX: redundant? // Jan 2023 - this is messy. Chain and qd-sc-qd have multiple imps. p.impindex defaults to 1 in those cases.
 
   p.D = input.getReal("D", 1.0);
   std::cout << "N=" << p.N << " NBath=" << p.NBath << " D=" << p.D << " impindex=" << p.impindex << std::endl;
@@ -1137,6 +1130,7 @@ void impurity_problem::calc_properties(const state_t st, H5Easy::File &file, sto
   if (numChannels() == 2){
       if (p.measureParity) MeasureParity(psi, file, path, p);
       if (p.measureChannelsEnergy) MeasureChannelsEnergy(psi, file, path, p);
+      //if (p.measurePartialSumsOfSpinSpinMatrix) MeasurePartialSumsOfSpinSpinMatrix(psi, file, path, p); //here
   }
 }
 
