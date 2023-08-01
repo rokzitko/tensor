@@ -516,10 +516,12 @@ auto calcMatrix(const std::string which, MPS& psi, const ndx_t &all_sites, const
   if (p.verbose) { std::cout << "Computing " << which << " correlation matrix" << std::endl; }
   auto m = matrix_t(all_sites.size(), all_sites.size(), 0.0);
 
-  int i = -1; //-1 because immediately i++
+  int i, j; // these are the counters of the matrix elements
+
+  i = -1; //-1 because immediately i++
   for (const auto site_i: all_sites) {
     i++;
-    int j = -1;
+    j = -1;
     for (const auto site_j: all_sites) {
       j++;
       if (full || i <= j) {
@@ -527,7 +529,7 @@ auto calcMatrix(const std::string which, MPS& psi, const ndx_t &all_sites, const
         if (which == "density")   m(i, j) = calcCdagC(psi, site_i, site_j, p);
         if (p.debug) { std::cout << fmt::format("m({},{})={:18}\n", i, j, m(i-1, j-1)); }
       } else {
-        m(i-1, j-1) = m(j-1, i-1);
+        m(i, j) = m(j, i);
       }
     }
   }
@@ -572,7 +574,7 @@ void MeasurePartialSumsOfSpinSpinMatrix(MPS &psi, H5Easy::File &file, std::strin
     }
   }
 
-  else { // general case
+  else { // general case    
     for(int i : range1(p.NSC)) { // iterate across all SCs
       mat = calcMatrix("spin", psi, p.problem->bath_indexes(i), p, true);
       res = matrix_sum_all(mat);
