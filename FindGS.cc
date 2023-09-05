@@ -2,6 +2,9 @@
 #include <cxxabi.h>
 #include <type_traits>
 
+#include "my_local_MPO_class.h"
+
+
 std::vector<subspace_t> init_subspace_lists(params &p)
 {
   const int nhalf = p.N;  // total nr of electrons at half-filling
@@ -1032,7 +1035,7 @@ void solve_gs(const state_t &st, store &s, params &p) {
     psi_init = applyMPO(H,psi_init);
     psi_init.noPrime().normalize();
   }
-  std::vector<MPO> MPOvec;
+  std::vector<MPO> MPOvec; // this only contains the H, unless p.enforce_total_spin, then the S^2 MPO is also added with appropriate weights
   generate_MPO_vector(MPOvec, H, st, p); // if p.enforce_total_spin the MPOvec contains H and S2, the MPO for the total spin, multiplied by the weight
   auto [GSenergy, psi] = dmrg(MPOvec, psi_init, sweeps(p),
                             {"Silent", p.Silent,
@@ -1051,13 +1054,20 @@ void solve_es(const state_t &st, store &s, params &p) {
   std::vector<MPS> wfs(i);
   for (auto m = 0; m < i; m++)
     wfs[m] = s.eigen[es({n, Sz}, m)].psi();
-  //std::vector<MPO> MPOvec;
-  //generate_MPO_vector(MPOvec, H, st, p);
-  auto [ESenergy, psi] = dmrg(H, wfs, psi_init_es, sweeps(p),
-                            {"Silent", p.Silent,
-                             "Quiet", p.Quiet,
-                             "EnergyErrgoal", p.EnergyErrgoal,
-                             "Weight", p.Weight});
+  
+  std::vector<MPO> MPOvec;
+  generate_MPO_vector(MPOvec, H, st, p);
+  auto [ESenergy, psi] = dmrg(MPOvec, wfs, psi_init_es, sweeps(p),
+                                            {"Silent", p.Silent,
+                                            "Quiet", p.Quiet,
+                                            "EnergyErrgoal", p.EnergyErrgoal,
+                                            "Weight", p.Weight});
+  //auto [ESenergy, psi] = dmrg(H, wfs, psi_init_es, sweeps(p),
+  //                          {"Silent", p.Silent,
+  //                           "Quiet", p.Quiet,
+  //                           "EnergyErrgoal", p.EnergyErrgoal,
+  //                           "Weight", p.Weight});
+  
   s.eigen[st] = eigenpair(ESenergy, psi);
   s.stats[st] = psi_stats(psi, H);
 }
