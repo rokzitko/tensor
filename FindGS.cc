@@ -84,13 +84,14 @@ auto parse_ys(auto& input, const int Nlevels, const std::string channel = "") {
   return shift1(yvec); // convert to 1-based vector
 }
 
-// v_NN is the transition rate from the impurity to the NNth level in the bath. Parsed into a map here and merged with V in class hyb.
-std::map<int, double> parse_special_levels(auto& input, const int Nlevels, const std::string which, const std::string channel = ""){
+// Parses quantities with name which_ch_i, where ch is an string of an integer denoting a channel, and i is the number referring to a level.For no channel use the default empty string.
+// The result is parsed into a map of (i, value).
+std::map<int, double> parse_special_levels(auto& input, const int Nlevels, const std::string which, const std::string channel = "", const double defaultVal = std::numeric_limits<double>::quiet_NaN(), const int firstInput = 1){
   std::map<int, double> special_map;
   const std::string v_ch = which + channel; // which is the name of parameter, as of Jan 2021 "v" or "eps". For the two channel problem this is "v1" and "v2", and "v" for single channel.
   std::cout.setstate(std::ios_base::failbit);
-  for (int i = 1; i <= Nlevels; i++){
-    double v = input.getReal(v_ch + "_" + std::to_string(i), std::numeric_limits<double>::quiet_NaN()); // have NaN as the default value
+  for (int i = firstInput; i <= Nlevels; i++){
+    double v = input.getReal(v_ch + "_" + std::to_string(i), defaultVal); // have NaN as the default value
     if (!std::isnan(v)) special_map.insert(std::pair<int, double>(i, v)); // check if this v_i value was given (ie. is not Nan by default), and add it to the map
   }
   std::cout.clear();
@@ -148,9 +149,6 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   // for now: if the mpo is qd_sc_qd, override chainLen, NImp and NSC manually.
   std::string mpoType = input.getString("MPO", "std");
   p.chainLen = input.getInt("chainLen", 0); // number of elements in a SC-QD-... chain
-
-  std::cout << "HERE\n";
-
   auto dummy_problem = set_problem(input.getString("MPO", "std"), p); // set a dummy problem only to get NImp and NSC, and with it NBath or N
   p.NImp = dummy_problem->NImp();
   p.NSC = dummy_problem->NSC();  
@@ -275,6 +273,8 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.reverse_second_channel_eps = input.getYesNo("reverse_second_channel_eps", p.measureParity); //has to be true for measuring parity
   p.enforce_total_spin = input.getYesNo("enforce_total_spin", false);
   p.spin_enforce_weight = input.getReal("spin_enforce_weight", p.N);
+  p.spin_to_enforce_even = parse_special_levels(input, p.excited_states, "spin_to_enforce_even", "", 0., 0);  // parse the values of spin to enforce in spin_enforce
+  p.spin_to_enforce_odd = parse_special_levels(input, p.excited_states, "spin_to_enforce_odd", "", 0.5, 0);
 
   // dynamical charge susceptibility calculations
   p.chi = input.getYesNo("chi", false);
@@ -1019,9 +1019,10 @@ void generate_MPO_vector(std::vector<MPO> &MPOvec, const MPO &H, const state_t &
   MPOvec.push_back(H);
   if (p.enforce_total_spin){
     const auto [n, Sz, i] = st;
-    double S = abs(Sz) * (abs(Sz) + 1);
+    double spin = even(n) ? p.spin_to_enforce_even[i] : p.spin_to_enforce_odd[i];
+    double Ssquared = spin * (spin + 1);
     MPO S2_subtracted(p.sites);
-    makeS2_MPO(S2_subtracted, p, -1*S, p.spin_enforce_weight);
+    makeS2_MPO(S2_subtracted, p, -1*Ssquared, p.spin_enforce_weight);
     MPOvec.push_back(S2_subtracted);
   } 
 }
