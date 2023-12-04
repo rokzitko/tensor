@@ -464,8 +464,8 @@ struct params {
                          // different compared to changing the half-bandwidth D.
   bool enforce_total_spin;  
   double spin_enforce_weight;
-  std::map<int, double> spin_to_enforce_even; // a map of pairs (i, S), setting the value of spin S to enforce for the i-th excited state 
-  std::map<int, double> spin_to_enforce_odd;  // same, but used for odd n
+  std::map<int, double> spin_enforce_weight_even; // a map of pairs (i, S), setting the value of spin S to enforce for the i-th excited state 
+  std::map<int, double> spin_enforce_weight_odd;  // same, but used for odd n
   //chain parameters
   int NSC;              // numer of SCs in the chain;
   int chainLen;         // number of elements (SC + QD) in the chain

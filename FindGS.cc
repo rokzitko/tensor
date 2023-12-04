@@ -275,9 +275,9 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.band_rescale = input.getReal("band_rescale", 1.0);
   p.reverse_second_channel_eps = input.getYesNo("reverse_second_channel_eps", p.measureParity); //has to be true for measuring parity
   p.enforce_total_spin = input.getYesNo("enforce_total_spin", false);
-  p.spin_enforce_weight = input.getReal("spin_enforce_weight", p.N);
-  p.spin_to_enforce_even = parse_special_levels(input, p.excited_states, "spin_to_enforce_even", "", 0., 0);  // parse the values of spin to enforce in spin_enforce
-  p.spin_to_enforce_odd = parse_special_levels(input, p.excited_states, "spin_to_enforce_odd", "", 0.5, 0);
+  p.spin_enforce_weight = input.getReal("spin_enforce_weight", 1.);
+  p.spin_enforce_weight_even = parse_special_levels(input, p.excited_states, "spin_enforce_weight_even", "", p.spin_enforce_weight, 0);  // parse the weights for spin_enforce. Default value is p.spin_enforce_weight
+  p.spin_enforce_weight_odd = parse_special_levels(input, p.excited_states, "spin_enforce_weight_odd", "", p.spin_enforce_weight, 0);
 
   // dynamical charge susceptibility calculations
   p.chi = input.getYesNo("chi", false);
@@ -1024,18 +1024,16 @@ auto sweeps(params &p)
 }
 
 // If a vector of MPOs is passed to the dmrg function, the dmrg will act as if these MPOs are sumed up.
-// The idea is to optimize psi for <psi|H|psi> + spin_weight * (<S^2> - Sz(Sz+1)). This will tend to find a state with total spin close to initial Sz.
+// The idea is to optimize psi for <psi|H|psi> + spin_weight * <S^2>. This will tend to find a state with the lowest total spin - S=0 for even n and S=1/2 for odd n.
 // This should for example minimize the admixture of the Sz=0 triplet state into the singlet at small Gammas.
-// THIS HAS NOT BEEN TESTED (Jan 2023), AND ONLY WORKS FOR THE GROUND STATE.
-// In May 2022 (Luka) asked a question regarding this on the iTensor discourse server - Miles' explanation should be there.
+// If you want to eg. find the triplet as the excited state, set spin_enforce_weight_1 = 0. Then dmrg finds the state orthogonal to the singlet with minimal energy - this should be the triplet.
 void generate_MPO_vector(std::vector<MPO> &MPOvec, const MPO &H, const state_t &st, params &p){
   MPOvec.push_back(H);
   if (p.enforce_total_spin){
     const auto [n, Sz, i] = st;
-    double spin = even(n) ? p.spin_to_enforce_even[i] : p.spin_to_enforce_odd[i];
-    double Ssquared = spin * (spin + 1);
+    double weight = even(n) ? p.spin_enforce_weight_even[i] : p.spin_enforce_weight_odd[i];
     MPO S2_subtracted(p.sites);
-    makeS2_MPO(S2_subtracted, p, -1*Ssquared, p.spin_enforce_weight);
+    makeS2_MPO(S2_subtracted, p, 0., weight);
     MPOvec.push_back(S2_subtracted);
   } 
 }
@@ -1081,7 +1079,7 @@ void solve_es(const state_t &st, store &s, params &p) {
   //                           "Quiet", p.Quiet,
   //                           "EnergyErrgoal", p.EnergyErrgoal,
   //                           "Weight", p.Weight});
-  
+  if (p.enforce_total_spin) ESenergy = inner(psi, H, psi); // take out the spin part of the Hamiltonian
   s.eigen[st] = eigenpair(ESenergy, psi);
   s.stats[st] = psi_stats(psi, H);
 }
