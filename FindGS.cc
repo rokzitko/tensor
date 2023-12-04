@@ -2,6 +2,9 @@
 #include <cxxabi.h>
 #include <type_traits>
 
+#include "my_local_MPO_class.h"
+
+
 std::vector<subspace_t> init_subspace_lists(params &p)
 {
   const int nhalf = p.N;  // total nr of electrons at half-filling
@@ -81,13 +84,14 @@ auto parse_ys(auto& input, const int Nlevels, const std::string channel = "") {
   return shift1(yvec); // convert to 1-based vector
 }
 
-// v_NN is the transition rate from the impurity to the NNth level in the bath. Parsed into a map here and merged with V in class hyb.
-std::map<int, double> parse_special_levels(auto& input, const int Nlevels, const std::string which, const std::string channel = ""){
+// Parses quantities with name which_ch_i, where ch is an string of an integer denoting a channel, and i is the number referring to a level.For no channel use the default empty string.
+// The result is parsed into a map of (i, value).
+std::map<int, double> parse_special_levels(auto& input, const int Nlevels, const std::string which, const std::string channel = "", const double defaultVal = std::numeric_limits<double>::quiet_NaN(), const int firstInput = 1){
   std::map<int, double> special_map;
   const std::string v_ch = which + channel; // which is the name of parameter, as of Jan 2021 "v" or "eps". For the two channel problem this is "v1" and "v2", and "v" for single channel.
   std::cout.setstate(std::ios_base::failbit);
-  for (int i = 1; i <= Nlevels; i++){
-    double v = input.getReal(v_ch + "_" + std::to_string(i), std::numeric_limits<double>::quiet_NaN()); // have NaN as the default value
+  for (int i = firstInput; i <= Nlevels; i++){
+    double v = input.getReal(v_ch + "_" + std::to_string(i), defaultVal); // have NaN as the default value
     if (!std::isnan(v)) special_map.insert(std::pair<int, double>(i, v)); // check if this v_i value was given (ie. is not Nan by default), and add it to the map
   }
   std::cout.clear();
@@ -140,39 +144,29 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
 
   // TO DO: FIX THIS MESS WITH NBath INITIALIZATION (Luka, JAN 2023)
   // To call set_problem() the NBath value has to be set. But it depends on the number of imp levels in the system, which depends on the problem type.
-  // For the SC-QD-SC-... chain it makes sense to require chainLen, but for the qd-sc-qd problem it is always 3.
+  // Here define a dummy_problem, read out the number of imp levels - 
 
   // for now: if the mpo is qd_sc_qd, override chainLen, NImp and NSC manually.
   std::string mpoType = input.getString("MPO", "std");
   p.chainLen = input.getInt("chainLen", 0); // number of elements in a SC-QD-... chain
+  auto dummy_problem = set_problem(input.getString("MPO", "std"), p); // set a dummy problem only to get NImp and NSC, and with it NBath or N
+  p.NImp = dummy_problem->NImp();
+  p.NSC = dummy_problem->NSC();  
   
-  if ( mpoType == "qd_sc_qd" || mpoType == "autoH_qd_sc_qd") {
-    p.NImp = 2;
-    p.NSC = 1;
+  if (p.N != 0){
+    p.NBath = p.N - p.NImp; 
   }
-  else if ( mpoType == "alternating_chain") {
-    p.NImp = (p.chainLen - 1)/2;
-    p.NSC = p.chainLen - p.NImp;
-  }
-  else{
-    p.NImp = 1;
-    p.NSC = 1; // this is also not great, two channel problems should have NSC=2!
-  }
-
-  if (p.N != 0)
-    p.NBath = p.N-p.NImp;
   else { // N not specified, try NBath
     p.NBath = input.getInt("NBath", 0);
-    if (p.NBath == 0)
-      throw std::runtime_error("specify either N or NBath!");
-    p.N = p.NBath+p.NImp;
+    if (p.NBath == 0) throw std::runtime_error("specify either N or NBath!");
+    p.N = p.NBath + p.NImp;
   }
   p.SClevels = p.NBath / p.NSC;
 
-  // p.NBath must be determined before calling set_problem()
+  // NOW DEFINE THE REAL PROBLEM, p.NBath is set
   p.problem = set_problem(input.getString("MPO", "std"), p);  // problem type
 
-  p.impindex = p.problem->imp_index(); // XXX: redundant? // Jan 2023 - this is getting messy. Chain and qd-sc-qd have multiple imps. p.impindex defaults to 1 in those cases.
+  p.impindex = p.problem->imp_index(); // XXX: redundant? // Jan 2023 - this is messy. Chain and qd-sc-qd have multiple imps. p.impindex defaults to 1 in those cases.
 
   p.D = input.getReal("D", 1.0);
   std::cout << "N=" << p.N << " NBath=" << p.NBath << " D=" << p.D << " impindex=" << p.impindex << std::endl;
@@ -252,6 +246,8 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.singleParticleDensityMatrix = input.getYesNo("singleParticleDensityMatrix", false);
   p.singleParticleDensityMatrixSpinUp = input.getYesNo("singleParticleDensityMatrixSpinUp", false);
   p.singleParticleDensityMatrixSpinDown = input.getYesNo("singleParticleDensityMatrixSpinDown", false);
+  p.measurePartialSumsOfSpinSpinMatrix = input.getYesNo("measurePartialSumsOfSpinSpinMatrix", false);
+  p.channelDensityMatrix = input.getYesNo("channelDensityMatrix", false);
   p.pairCorrelation = input.getYesNo("pairCorrelation", false);
   p.hoppingExpectation = input.getYesNo("hoppingExpectation", false);
   p.calcweights = input.getYesNo("calcweights", false);
@@ -280,6 +276,8 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.reverse_second_channel_eps = input.getYesNo("reverse_second_channel_eps", p.measureParity); //has to be true for measuring parity
   p.enforce_total_spin = input.getYesNo("enforce_total_spin", false);
   p.spin_enforce_weight = input.getReal("spin_enforce_weight", p.N);
+  p.spin_to_enforce_even = parse_special_levels(input, p.excited_states, "spin_to_enforce_even", "", 0., 0);  // parse the values of spin to enforce in spin_enforce
+  p.spin_to_enforce_odd = parse_special_levels(input, p.excited_states, "spin_to_enforce_odd", "", 0.5, 0);
 
   // dynamical charge susceptibility calculations
   p.chi = input.getYesNo("chi", false);
@@ -529,16 +527,25 @@ auto calcCdagC(MPS& psi, const int i, const int j, const int spin, const params 
 auto calcMatrix(const std::string which, MPS& psi, const ndx_t &all_sites, const params &p, const bool full = false) {
   if (p.verbose) { std::cout << "Computing " << which << " correlation matrix" << std::endl; }
   auto m = matrix_t(all_sites.size(), all_sites.size(), 0.0);
-  for (const auto i: all_sites) {
-    for (const auto j: all_sites) {
+
+  int i, j; // these are the counters of the matrix elements
+
+  i = -1; //-1 because immediately i++
+  for (const auto site_i: all_sites) {
+    i++;
+    j = -1;
+    for (const auto site_j: all_sites) {
+      j++;
       if (full || i <= j) {
         if (which == "spin")  m(i-1, j-1) = calcSS(psi, i, j, p); // 0-based matrix indexing
         if (which == "single_particle_density")           m(i-1, j-1) = calcCdagC(psi, i, j, 0, p);
         if (which == "single_particle_density_spin_up")   m(i-1, j-1) = calcCdagC(psi, i, j, 1, p);
         if (which == "single_particle_density_spin_down") m(i-1, j-1) = calcCdagC(psi, i, j, 2, p);
+//        if (which == "spin")  m(i, j) = calcSS(psi, site_i, site_j, p); // 0-based matrix indexing
+//        if (which == "density")   m(i, j) = calcCdagC(psi, site_i, site_j, p);
         if (p.debug) { std::cout << fmt::format("m({},{})={:18}\n", i, j, m(i-1, j-1)); }
       } else {
-        m(i-1, j-1) = m(j-1, i-1);
+        m(i, j) = m(j, i);
       }
     }
   }
@@ -555,6 +562,53 @@ void MeasureSpinCorrelationMatrix(MPS &psi, H5Easy::File &file, std::string path
 void MeasureSingleParticleDensityMatrix(MPS &psi, const std::string type, H5Easy::File &file, std::string path, const params &p) {
   const auto m = calcMatrix("single_particle_density" + type, psi, p.problem->all_indexes(), p, true);
   h5_dump_matrix(file, path + "/single_particle_density_matrix" + type, m);
+}
+
+void MeasurePartialSumsOfSpinSpinMatrix(MPS &psi, H5Easy::File &file, std::string path, const params &p) {
+
+  double res;
+  matrix_t mat;
+  std::vector<double> allSCres;
+  std::vector<double> allImpres;
+
+  // handle the single channel problem separately
+  if (p.problem->type() == "single channel impurity problem") {
+    // SC
+    mat = calcMatrix("spin", psi, p.problem->bath_indexes(), p, true);
+    auto resSC = matrix_sum_all(mat);
+    H5Easy::dump(file, path + "/spin_correlation_matrix_partial_sums/SC/1", resSC);
+
+    // impurity level
+    ndx_t index_vec { p.problem->imp_index() }; // make this a ndx_t == vector of one element to pass to calcMatrix()
+    mat = calcMatrix("spin", psi, index_vec, p, true);
+    auto resImp = matrix_sum_all(mat);
+    H5Easy::dump(file, path + "/spin_correlation_matrix_partial_sums/imp/1", resImp);
+    
+    if (p.stdout_verbosity >= 0) {
+      std::cout << "imp-imp spin correlation = " << std::setprecision(full) << resImp << std::endl;
+      std::cout << "sc-sc spin correlation = " << std::setprecision(full) << resSC << std::endl;
+    }
+  }
+
+  else { // general case    
+    for(int i : range1(p.NSC)) { // iterate across all SCs
+      mat = calcMatrix("spin", psi, p.problem->bath_indexes(i), p, true);
+      res = matrix_sum_all(mat);
+      allSCres.push_back(res);
+      H5Easy::dump(file, path + "/spin_correlation_matrix_partial_sums/SC/" + std::to_string(i), res);
+    }
+    for (int i : range1(p.NImp)) { // iterate across all imp sites
+      ndx_t index_vec { p.problem->imp_index(i) }; // make this a ndx_t == vector of one element to pass to calcMatrix()
+      mat = calcMatrix("spin", psi, index_vec, p, true);
+      res = matrix_sum_all(mat);
+      allImpres.push_back(res);
+      H5Easy::dump(file, path + "/spin_correlation_matrix_partial_sums/imp/" + std::to_string(i), res);
+    }
+    if (p.stdout_verbosity >= 0) {
+      std::cout << "IMP spin correlations = " << std::setprecision(full) << allImpres << std::endl;
+      std::cout << "SC spin correlations = " << std::setprecision(full) << allSCres << std::endl;
+    }
+  }
 }
 
 auto calcPairCorrelation(MPS& psi, const ndx_t &bath_sites, const params &p) {
@@ -978,9 +1032,10 @@ void generate_MPO_vector(std::vector<MPO> &MPOvec, const MPO &H, const state_t &
   MPOvec.push_back(H);
   if (p.enforce_total_spin){
     const auto [n, Sz, i] = st;
-    double S = abs(Sz) * (abs(Sz) + 1);
+    double spin = even(n) ? p.spin_to_enforce_even[i] : p.spin_to_enforce_odd[i];
+    double Ssquared = spin * (spin + 1);
     MPO S2_subtracted(p.sites);
-    makeS2_MPO(S2_subtracted, p, -1*S, p.spin_enforce_weight);
+    makeS2_MPO(S2_subtracted, p, -1*Ssquared, p.spin_enforce_weight);
     MPOvec.push_back(S2_subtracted);
   } 
 }
@@ -994,7 +1049,7 @@ void solve_gs(const state_t &st, store &s, params &p) {
     psi_init = applyMPO(H,psi_init);
     psi_init.noPrime().normalize();
   }
-  std::vector<MPO> MPOvec;
+  std::vector<MPO> MPOvec; // this only contains the H, unless p.enforce_total_spin, then the S^2 MPO is also added with appropriate weights
   generate_MPO_vector(MPOvec, H, st, p); // if p.enforce_total_spin the MPOvec contains H and S2, the MPO for the total spin, multiplied by the weight
   auto [GSenergy, psi] = dmrg(MPOvec, psi_init, sweeps(p),
                             {"Silent", p.Silent,
@@ -1013,13 +1068,20 @@ void solve_es(const state_t &st, store &s, params &p) {
   std::vector<MPS> wfs(i);
   for (auto m = 0; m < i; m++)
     wfs[m] = s.eigen[es({n, Sz}, m)].psi();
-  //std::vector<MPO> MPOvec;
-  //generate_MPO_vector(MPOvec, H, st, p);
-  auto [ESenergy, psi] = dmrg(H, wfs, psi_init_es, sweeps(p),
-                            {"Silent", p.Silent,
-                             "Quiet", p.Quiet,
-                             "EnergyErrgoal", p.EnergyErrgoal,
-                             "Weight", p.Weight});
+  
+  std::vector<MPO> MPOvec;
+  generate_MPO_vector(MPOvec, H, st, p);
+  auto [ESenergy, psi] = dmrg(MPOvec, wfs, psi_init_es, sweeps(p),
+                                            {"Silent", p.Silent,
+                                            "Quiet", p.Quiet,
+                                            "EnergyErrgoal", p.EnergyErrgoal,
+                                            "Weight", p.Weight});
+  //auto [ESenergy, psi] = dmrg(H, wfs, psi_init_es, sweeps(p),
+  //                          {"Silent", p.Silent,
+  //                           "Quiet", p.Quiet,
+  //                           "EnergyErrgoal", p.EnergyErrgoal,
+  //                           "Weight", p.Weight});
+  
   s.eigen[st] = eigenpair(ESenergy, psi);
   s.stats[st] = psi_stats(psi, H);
 }
@@ -1129,6 +1191,8 @@ void calc_properties(const state_t st, H5Easy::File &file, store &s, params &p)
   if (p.singleParticleDensityMatrixSpinUp   || p.result_verbosity >= 3) MeasureSingleParticleDensityMatrix(psi, "_spin_up", file, path, p);
   if (p.singleParticleDensityMatrixSpinDown || p.result_verbosity >= 3) MeasureSingleParticleDensityMatrix(psi, "_spin_down", file, path, p);
   if (p.spinCorrelationMatrix       || p.result_verbosity >= 2) MeasureSpinCorrelationMatrix(psi, file, path, p);
+//  if (p.channelDensityMatrix      || p.result_verbosity >= 2) MeasureChannelDensityMatrix(psi, file, path, p);
+  if (p.measurePartialSumsOfSpinSpinMatrix) MeasurePartialSumsOfSpinSpinMatrix(psi, file, path, p);
   s.stats[st].dump();
 }
 
