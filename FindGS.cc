@@ -114,7 +114,7 @@ auto parse_chain_sci(const int i, auto & input, params & p){
   auto EZx = input.getReal("EZx_bulk", 0.);
   auto t = input.getReal("t", 0.);
   auto lambda = input.getReal("lambda", 0.);
-  return std::make_unique<SCbath>(p.SClevels, p.D, input.getReal("alpha"+stri, alpha), parse_ys(input, p.SClevels, stri), parse_special_levels(input, p.SClevels, "eps", stri), input.getReal("Ec"+stri, Ec), 
+  return std::make_unique<SCbath>(p.SClevels, p.D, input.getReal("alpha"+stri, alpha), parse_ys(input, p.SClevels, stri), parse_special_levels(input, p.SClevels, "eps", stri), input.getReal("Ec"+stri, Ec),
     input.getReal("n0"+stri, n0), input.getReal("EZ_bulk"+stri, EZ), input.getReal("EZx_bulk"+stri, EZx), input.getReal("t"+stri, t), input.getReal("lambda"+stri, lambda));
 }
 
@@ -144,17 +144,17 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
 
   // TO DO: FIX THIS MESS WITH NBath INITIALIZATION (Luka, JAN 2023)
   // To call set_problem() the NBath value has to be set. But it depends on the number of imp levels in the system, which depends on the problem type.
-  // Here define a dummy_problem, read out the number of imp levels - 
+  // Here define a dummy_problem, read out the number of imp levels -
 
   // for now: if the mpo is qd_sc_qd, override chainLen, NImp and NSC manually.
   std::string mpoType = input.getString("MPO", "std");
   p.chainLen = input.getInt("chainLen", 0); // number of elements in a SC-QD-... chain
-  auto dummy_problem = set_problem(input.getString("MPO", "std"), p); // set a dummy problem only to get NImp and NSC, and with it NBath or N
+  auto dummy_problem = set_problem(mpoType, p); // set a dummy problem only to get NImp and NSC, and with it NBath or N
   p.NImp = dummy_problem->NImp();
-  p.NSC = dummy_problem->NSC();  
-  
+  p.NSC = dummy_problem->NSC();
+
   if (p.N != 0){
-    p.NBath = p.N - p.NImp; 
+    p.NBath = p.N - p.NImp;
   }
   else { // N not specified, try NBath
     p.NBath = input.getInt("NBath", 0);
@@ -164,7 +164,7 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.SClevels = p.NBath / p.NSC;
 
   // NOW DEFINE THE REAL PROBLEM, p.NBath is set
-  p.problem = set_problem(input.getString("MPO", "std"), p);  // problem type
+  p.problem = set_problem(mpoType, p);  // problem type
 
   p.impindex = p.problem->imp_index(); // XXX: redundant? // Jan 2023 - this is messy. Chain and qd-sc-qd have multiple imps. p.impindex defaults to 1 in those cases.
 
@@ -265,7 +265,7 @@ void parse_cmd_line(int argc, char *argv[], params &p) {
   p.EnergyErrgoal = input.getReal("EnergyErrgoal", 0);
   p.nrH = input.getInt("nrH", 5);
   p.sc_only = input.getYesNo("sc_only", false);
-  p.Weight = input.getReal("Weight", p.N);  // weight is implemented as the energy cost of the overlap between the GS and the ES; as energy of the GS is on the order of -N/2, the default weight should probs be on this scale.  
+  p.Weight = input.getReal("Weight", p.N);  // weight is implemented as the energy cost of the overlap between the GS and the ES; as energy of the GS is on the order of -N/2, the default weight should probs be on this scale.
   p.transition_dipole_moment = input.getYesNo("transition_dipole_moment", false);
   p.transition_quadrupole_moment = input.getYesNo("transition_quadrupole_moment", false);
   p.overlaps = input.getYesNo("overlaps", false);
@@ -537,12 +537,11 @@ auto calcMatrix(const std::string which, MPS& psi, const ndx_t &all_sites, const
     for (const auto site_j: all_sites) {
       j++;
       if (full || i <= j) {
-        if (which == "spin")  m(i-1, j-1) = calcSS(psi, i, j, p); // 0-based matrix indexing
-        if (which == "single_particle_density")           m(i-1, j-1) = calcCdagC(psi, i, j, 0, p);
-        if (which == "single_particle_density_spin_up")   m(i-1, j-1) = calcCdagC(psi, i, j, 1, p);
-        if (which == "single_particle_density_spin_down") m(i-1, j-1) = calcCdagC(psi, i, j, 2, p);
-//        if (which == "spin")  m(i, j) = calcSS(psi, site_i, site_j, p); // 0-based matrix indexing
-//        if (which == "density")   m(i, j) = calcCdagC(psi, site_i, site_j, p);
+        // i and site_i do not necessarily agree! (eg. )
+        if (which == "spin")  m(i-1, j-1) = calcSS(psi, site_i, site_j, p); // 0-based matrix indexing
+        if (which == "single_particle_density")           m(i-1, j-1) = calcCdagC(psi, site_i, site_j, 0, p);
+        if (which == "single_particle_density_spin_up")   m(i-1, j-1) = calcCdagC(psi, site_i, site_j, 1, p);
+        if (which == "single_particle_density_spin_down") m(i-1, j-1) = calcCdagC(psi, site_i, site_j, 2, p);
         if (p.debug) { std::cout << fmt::format("m({},{})={:18}\n", i, j, m(i-1, j-1)); }
       } else {
         m(i, j) = m(j, i);
@@ -583,14 +582,14 @@ void MeasurePartialSumsOfSpinSpinMatrix(MPS &psi, H5Easy::File &file, std::strin
     mat = calcMatrix("spin", psi, index_vec, p, true);
     auto resImp = matrix_sum_all(mat);
     H5Easy::dump(file, path + "/spin_correlation_matrix_partial_sums/imp/1", resImp);
-    
+
     if (p.stdout_verbosity >= 0) {
       std::cout << "imp-imp spin correlation = " << std::setprecision(full) << resImp << std::endl;
       std::cout << "sc-sc spin correlation = " << std::setprecision(full) << resSC << std::endl;
     }
   }
 
-  else { // general case    
+  else { // general case
     for(int i : range1(p.NSC)) { // iterate across all SCs
       mat = calcMatrix("spin", psi, p.problem->bath_indexes(i), p, true);
       res = matrix_sum_all(mat);
@@ -779,7 +778,7 @@ auto calcPairing(MPS &psi, const ndx_t &all_sites, const params &p) {
 
 void MeasurePairing(MPS& psi, auto & file, std::string path, const params &p) {
   const auto [r, tot] = calcPairing(psi, p.problem->all_indexes(), p);
-  
+
   if (p.stdout_verbosity >= 0){
   std::cout << "site pairing = " << std::setprecision(full) << r << std::endl;
   std::cout << "tot = " << tot << std::endl;}
@@ -820,7 +819,7 @@ auto calcAmplitudes(MPS &psi, const ndx_t &all_sites, const params &p) {
 void MeasureAmplitudes(MPS& psi, auto & file, std::string path, const params &p) {
   const auto [rv, ru, rpdt, tot] = calcAmplitudes(psi, p.problem->all_indexes(), p);
   std::cout << "amplitudes vu = " << std::setprecision(full);
- 
+
   if (p.stdout_verbosity >= 0){
   for (size_t i = 0; i < rv.size(); i++)
     std::cout << "[v=" << rv[i] << " u=" << ru[i] << " pdt=" << rpdt[i] << "] ";
@@ -1035,7 +1034,7 @@ void generate_MPO_vector(std::vector<MPO> &MPOvec, const MPO &H, const state_t &
     MPO S2_subtracted(p.sites);
     makeS2_MPO(S2_subtracted, p, 0., weight);
     MPOvec.push_back(S2_subtracted);
-  } 
+  }
 }
 
 void solve_gs(const state_t &st, store &s, params &p) {
@@ -1066,7 +1065,7 @@ void solve_es(const state_t &st, store &s, params &p) {
   std::vector<MPS> wfs(i);
   for (auto m = 0; m < i; m++)
     wfs[m] = s.eigen[es({n, Sz}, m)].psi();
-  
+
   std::vector<MPO> MPOvec;
   generate_MPO_vector(MPOvec, H, st, p);
   auto [ESenergy, psi] = dmrg(MPOvec, wfs, psi_init_es, sweeps(p),
@@ -1339,7 +1338,7 @@ void calculate_cdag_overlaps(store &s, auto &file, const params &p) {
       H5Easy::dump(file, "cdag_overlaps/tot/" + n1n2S1S2ij_path(ntot1, ntot2, Sz1, Sz2, i, j), tot);
     }
   }
-} 
+}
 
 // THIS IS FOR THE TWO CHANNEL MODEL ONLY - IT TAKES channelNum AS AN ARGUMENT FOR THE bath_indexes()!
 auto one_channel_number_op(const int channelNum, auto &psi1, auto &psi2, const params &p){
@@ -1461,7 +1460,7 @@ void evolve(MPS &psiAtau, const MPO &H2, const int cnt, const double tau, params
 
 void calculate_dynamical_charge_susceptibility(store &s, const state_t GS, const double EGS, auto &file, params &p) {
   std::cout << "\nDynamical charge susceptibility:" << std::endl;
-  
+
   const auto psi0 = s.eigen[GS].psi();
   if (p.debug) {
     const auto norm = inner(psi0, psi0);
@@ -1534,9 +1533,9 @@ void calculate_dynamical_charge_susceptibility(store &s, const state_t GS, const
     const auto AH2pA = inner(psiA, H2p, psiA);
     std::cout << "<A|(H-omega'_0)^2|A>=" << AH2pA << std::endl;
   }
-  
+
   std::cout << std::endl;
-  
+
   auto psiAtau = psiA;
   auto psiAptau = psiA;
 
@@ -1571,11 +1570,11 @@ void calculate_dynamical_charge_susceptibility(store &s, const state_t GS, const
     }
   }
   H5Easy::dump(file, "dynamical_charge_susceptibilty/nr", cnt);
-  
+
   boost::math::interpolators::cardinal_cubic_b_spline<double> spline(table.begin(), table.end(), 0.0, p.tau_step);
   if (p.debug)
     std::cout << "intg(" << p.tau_max/2 << ")=" << spline(p.tau_max/2) << std::endl;
-  
+
   double error {};
   const auto rechi = boost::math::quadrature::gauss_kronrod<double, 15>::integrate(spline, 0, p.tau_max, 5, 1e-9, &error);
 

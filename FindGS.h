@@ -224,7 +224,7 @@ inline ndx_t range(int a, int b) // non-const because of swap!
 template<typename T>
 auto concat(const std::vector<T> &t1, const std::vector<T> &t2, const bool one_based = false)
 {
-  
+
   int t2_shift = one_based ? 1 : 0; //if this is 1, the first elemenet of the second vector is skipped
 
    std::vector<T> t;
@@ -280,7 +280,7 @@ class bath { // normal-state bath
        if (flat_band) {
          if (k < NBath()/2) eps.push_back(-(_D) * flat_band_factor);
          else if (k == NBath()/2) eps.push_back(0);
-         else if (k > NBath()/2) eps.push_back(_D*flat_band_factor); 
+         else if (k > NBath()/2) eps.push_back(_D*flat_band_factor);
        }
        else eps.push_back( -_D + (k-0.5)*d() );
      if (reverse_eps) std::reverse(eps.begin(), eps.end());  //the eps values are reversed, but still 1-based
@@ -294,9 +294,9 @@ class SCbath : public bath { // superconducting island bath
  private:
    double _alpha; //pairing strenght
    std::vector<double> _ys; // pairing strength renormalization vector
-   std::map<int, double> _special_eps; // overwrites the eps in given levels 
+   std::map<int, double> _special_eps; // overwrites the eps in given levels
    double _Ec;    // charging energy
-   double _n0;    // offset 
+   double _n0;    // offset
    double _EZ;    // Zeeman energy (z-axis)
    double _EZx;   // Zeeman energy (x-axis)
    double _t;     // nearest neighbour hopping in SC
@@ -330,27 +330,27 @@ class SCbath : public bath { // superconducting island bath
 class hyb {
  private:
    double _Gamma; // hybridisation strength
-   std::map<int, double> _special_vs; // overwrites the hopping in given levels 
-   std::map<int, double> _imag_special_vs; // adds an imaginary part to the hopping in given levels 
+   std::map<int, double> _special_vs; // overwrites the hopping in given levels
+   std::map<int, double> _imag_special_vs; // adds an imaginary part to the hopping in given levels
  public:
    hyb(double Gamma, std::map<int, double> special_vs) : _Gamma(Gamma), _special_vs(special_vs) {};
    hyb(double Gamma, std::map<int, double> special_vs, std::map<int, double> imag_special_vs) : _Gamma(Gamma), _special_vs(special_vs), _imag_special_vs(imag_special_vs) {};
    auto Gamma() const { return _Gamma; }
-   auto special_vs() const { return _special_vs; } 
-   auto imag_special_vs() const { return _imag_special_vs; } 
+   auto special_vs() const { return _special_vs; }
+   auto imag_special_vs() const { return _imag_special_vs; }
    auto V(int NBath) const {
     //already 1-based here!
     std::vector<double> Vvec(NBath, std::sqrt( 2.0*_Gamma/(M_PI*NBath)));
     Vvec = shift1(Vvec);
     Vvec = overwrite_special(Vvec, _special_vs);
     return Vvec;
-   }   
+   }
    auto iV(int NBath) const {
     // imaginary part of v
     std::vector<double> Vvec(NBath, 0.0 );
     Vvec = shift1(Vvec);
     Vvec = overwrite_special(Vvec, _imag_special_vs);
-    return Vvec;    
+    return Vvec;
    }
 };
 
@@ -413,19 +413,19 @@ struct params {
   // all bools have default value false
   bool computeEntropy;   // von Neumann entropy at the bond between impurity and next site. Works as intended if p.impindex=1.
   bool computeEntropy_beforeAfter;   // von Neumann entropy at the bond before the impurity and after it. Works as intended if p.impindex!=1.
-  bool measureAllDensityMatrices; // computes local density matrix for each site 
+  bool measureAllDensityMatrices; // computes local density matrix for each site
   bool chargeCorrelation;// compute the impurity-superconductor correlation <n_imp n_i>
   bool spinCorrelation;  // compute the impurity-superconductor correlation <S_imp S_i>. NOTE: sum over i includes the impurity site!
   bool spinCorrelationMatrix;  // compute the full correlation matrix <S_i S_j>
   bool singleParticleDensityMatrix; // compute the single-particle density matrix <cdag_i c_j>
   bool singleParticleDensityMatrixSpinUp; // spin-up part
   bool singleParticleDensityMatrixSpinDown; // spn-down part
-  bool measurePartialSumsOfSpinSpinMatrix; // compute the full correlation matrix, but only save partial sums over each SC and QD 
+  bool measurePartialSumsOfSpinSpinMatrix; // compute the full correlation matrix, but only save partial sums over each SC and QD
   bool channelDensityMatrix; // compute the channel correlation matrix <cdag_i c_j>
   bool pairCorrelation;  // compute the impurity-superconductor correlation <d d c_i^dag c_i^dag>
   bool hoppingExpectation;//compute the hopping expectation value 1/sqrt(N) \sum_sigma \sum_i <d^dag c_i> + <c^dag_i d>
-  bool transition_dipole_moment; // compute < i | nsc1 - ncs2 | j > 
-  bool transition_quadrupole_moment; // compute < i | nsc1 + ncs2 | j > 
+  bool transition_dipole_moment; // compute < i | nsc1 - ncs2 | j >
+  bool transition_quadrupole_moment; // compute < i | nsc1 + ncs2 | j >
   bool overlaps;         // compute <i|j> overlap table in each subspace
   bool cdag_overlaps;    // compute <i|cdag|j> overlap between subspaces which differ by 1 in total charge and 0.5 in total Sz
   bool charge_susceptibility; // compute <i|nimp|j> overlap table in each subspace
@@ -462,9 +462,9 @@ struct params {
   double band_rescale;   // rescale the level energies of the band by the factor band_rescale. Note that this does not affect
                          // the rescaling of alpha (pairing strength) and lambda (SOC strength) parameters, thus the effect is
                          // different compared to changing the half-bandwidth D.
-  bool enforce_total_spin;  
+  bool enforce_total_spin;
   double spin_enforce_weight;
-  std::map<int, double> spin_enforce_weight_even; // a map of pairs (i, S), setting the value of spin S to enforce for the i-th excited state 
+  std::map<int, double> spin_enforce_weight_even; // a map of pairs (i, S), setting the value of spin S to enforce for the i-th excited state
   std::map<int, double> spin_enforce_weight_odd;  // same, but used for odd n
   //chain parameters
   int NSC;              // numer of SCs in the chain;
@@ -494,7 +494,7 @@ struct params {
   double V12;            // QD-SC capacitive coupling, for MPO_Ec_V
   double V1imp;          // QD-SC capacitive coupling, for MPO_2h_.*_V
   double V2imp;          // QD-SC capacitive coupling, for MPO_2h_.*_V
-  double tQD;            // direct QD-QD hopping, for the qd-sc-qd problem. 
+  double tQD;            // direct QD-QD hopping, for the qd-sc-qd problem.
 
   double eta;            // coupling reduction factor, 0<=eta<=1, for MPO_Ec_eta
   int etasite;           // site with reduced pairing
@@ -505,7 +505,7 @@ struct params {
 
   std::map<state_t, double> MFnSCs; // Maps an approximate nSC to a given state (n, Sz, i). Used for the iterative mean field calculation.
 
-  double MF_precision;  // convergence precision required to stop the MF iteration 
+  double MF_precision;  // convergence precision required to stop the MF iteration
   double max_iter;        // maximum number of iterations in the mf loop
 
   std::unique_ptr<SCbath> sc1, sc2;
@@ -522,7 +522,7 @@ class problem_type {
    virtual InitState initState(state_t, params &) = 0;
    virtual bool spin_conservation() = 0;
    virtual ndx_t all_indexes() = 0;            // all indexes
-   virtual int imp_index(const int i = -1) = 0; 
+   virtual int imp_index(const int i = -1) = 0;
    virtual ndx_t bath_indexes() = 0;           // all bath indexes
    virtual ndx_t bath_indexes(const int) = 0;  // per channel bath indexes
    virtual void calc_properties(const state_t st, H5Easy::File &file, store &s, params &p) = 0;
@@ -611,10 +611,10 @@ inline void add_bath_electrons(const int nsc, const spin & Szadd, const ndx_t &b
 {
   const size_t npair = (nsc - (2.0 * abs(Szadd)))/2;
   Expects(bath.size() >= npair);
-  
+
   // add pairs
   for (size_t j = 0; j < npair; j++){
-    state.set(bath[j], "UpDn");    
+    state.set(bath[j], "UpDn");
   }
   tot += npair*2;
 
@@ -716,11 +716,11 @@ class single_channel_eta : public single_channel
    auto get_eps_V(auto & sc, auto & Gamma, params &p) const {
      auto eps = sc->eps(false, p.flat_band, p.flat_band_factor, 1.0); // no band_level_shift here, no band_rescale either
      if (p.band_level_shift) { // we do it here, in a site-dependent way
-       for (int i = 1; i <= p.NBath; i++) 
+       for (int i = 1; i <= p.NBath; i++)
          eps[i] += -(sc->g()/2.0 ) * pow(y(i, p), 2);
      }
      // rescale the band energy levels here, because we did not do it in sc->eps() call
-     for (auto &x: eps) 
+     for (auto &x: eps)
        x *= p.band_rescale;
      auto V = Gamma->V(sc->NBath());
      if (p.verbose) {
@@ -790,12 +790,12 @@ class two_channel : virtual public impurity_problem
     double epsishift2 = - p.V2imp * p.qd->nu();
     double epseff = p.qd->eps() - p.V1imp * p.sc1->n0() - p.V2imp * p.sc2->n0();
     // initialize the MPOs
-    
+
     channel1_only(Hch1, Eshift, epsishift1, epsishift2, epseff, eps, V, p);
     channel2_only(Hch2, Eshift, epsishift1, epsishift2, epseff, eps, V, p);
- 
+
     //accumulate the imp operator
-    auto impOp = epseff * p.sites.op("Ntot",p.impindex);  
+    auto impOp = epseff * p.sites.op("Ntot",p.impindex);
     impOp += p.qd->U() * p.sites.op("Nupdn",p.impindex);
     impOp += 0.5 * p.qd->EZ() * p.sites.op("Nup",p.impindex);
     impOp += (-1) * 0.5 * p.qd->EZ() * p.sites.op("Ndn",p.impindex);
@@ -826,17 +826,17 @@ class alternating_chain_SC_first : virtual chain_problem
      _chainLen(chainLen), _SClevels(SClevels) {};
 
     // if chainLen is even half are SCs and half imps. Else, there is one more SC because the chain starts with SC
-    int NImp() override { 
+    int NImp() override {
       if (_chainLen % 2 == 0) return _chainLen/2;
       else return (_chainLen - 1) / 2;
-    }            
-    int NSC() override { 
+    }
+    int NSC() override {
       if (_chainLen % 2 == 0) return _chainLen/2;
       else return (_chainLen + 1) / 2;
-    }            
+    }
     int SClevels() const { return _SClevels; }
 
-    int imp_index(const int i = -1) override { 
+    int imp_index(const int i = -1) override {
       if (i==-1) return 1;
       else return i * (SClevels() + 1) ;}
     ndx_t all_indexes() override { return range(1, NImp() + (NSC() * SClevels())); }
@@ -857,7 +857,7 @@ class alternating_chain_SC_first : virtual chain_problem
       int nsci = (ntot - NImp()) / NSC(); // number of electrons to add to each SC
 
       // add electrons to the impurity sites
-      for (int i : range(1, NImp())){ 
+      for (int i : range(1, NImp())){
         auto ndx = imp_index(i);
         auto add_spin = Sz - Sztot >= 0 ? spinp : spinm;
         add_imp_electron(add_spin, ndx, state, tot, Sztot);
@@ -892,7 +892,7 @@ class qd_sc_qd_problem : virtual two_impurity_problem
     int NImp() override { return 2; }  // there are always two impurities
     int NSC() override { return 1; }   // there is always one SC
 
-    int imp_index(const int i = -1) override { // this gives the index of the first (left) or second(right) impurity level 
+    int imp_index(const int i = -1) override { // this gives the index of the first (left) or second(right) impurity level
       Expects(i==1 || i==2 || i==-1);
       if (i==2) return 2 + SClevels();
       else return i;
@@ -903,7 +903,7 @@ class qd_sc_qd_problem : virtual two_impurity_problem
       return v;
     }
     ndx_t bath_indexes(int i) override { // this seems non optimal...
-    return bath_indexes(); 
+    return bath_indexes();
     }
     InitState initState(state_t st, params &p) override {
       const auto [ntot, Sz, ii] = st; // Sz is the z-component of the total spin.
@@ -913,17 +913,17 @@ class qd_sc_qd_problem : virtual two_impurity_problem
       auto state = InitState(p.sites); //this is iTensor's function!
       int nsci = (ntot - 2); // number of electrons to add to the SC
 
-      // add electrons to the impurity sites    
+      // add electrons to the impurity sites
       auto add_spin = Sz - Sztot >= 0 ? spinp : spinm;
       add_imp_electron(add_spin, imp_index(1), state, tot, Sztot);
       add_spin = Sz - Sztot >= 0 ? spinp : spinm;
       add_imp_electron(add_spin, imp_index(2), state, tot, Sztot);
-    
+
       // add electrons to the SC island
       ndx_t bath_sites = bath_indexes();
       add_spin = Sz - Sztot == 0 ? spin0 : (Sz - Sztot > 0 ? spinp : spinm); // if Sz == Sztot, add spin0, else add spinm to lower the difference or spinp to increase it
       add_bath_electrons(nsci, add_spin, bath_sites, state, tot, Sztot);
-    
+
       Ensures(tot == ntot);
       Ensures(Sztot == Sz);
       return state;
@@ -1074,7 +1074,7 @@ namespace prob {
         return H;
       }
    };
-   
+
 #include "SC_BathMPO_Ec_eta.h"
 #include "SC_BathMPO_Ec_V_eta.h"
 
@@ -1168,12 +1168,12 @@ namespace prob {
     public:
       alternating_chain_SC_first_and_last(const params &p) : alternating_chain_SC_first(p.chainLen, p.SClevels) {}
 
-      MPO initH(state_t st, params &p) override { 
+      MPO initH(state_t st, params &p) override {
         if (p.verbose) std::cout << "Building Hamiltonian, MPO=alternating_chain" << std::endl;
         MPO H(p.sites);
         double Eshift = 0.;
         for (auto & SC : p.chain_scis){
-          Eshift += SC->Ec()*pow(SC->n0(), 2); 
+          Eshift += SC->Ec()*pow(SC->n0(), 2);
         }
         for (auto & IMP : p.chain_imps){
           Eshift += IMP->U()/2;
@@ -1187,11 +1187,11 @@ namespace prob {
     public:
       qd_sc_qd(const params &p) : qd_sc_qd_problem(p.NBath) {}
 
-      MPO initH(state_t st, params &p) override { 
+      MPO initH(state_t st, params &p) override {
         if (p.verbose) std::cout << "Building Hamiltonian, MPO=qd_sc_qd" << std::endl;
         MPO H(p.sites);
         double Eshift = 0.;
-        Eshift += p.sc->Ec()*pow(p.sc->n0(), 2); 
+        Eshift += p.sc->Ec()*pow(p.sc->n0(), 2);
         Eshift += p.qd_L->U()/2;
         Eshift += p.qd_R->U()/2;
         Fill_SCBath_MPO_qd_sc_qd(H, Eshift, p);
@@ -1245,7 +1245,7 @@ namespace prob {
         if (p.verbose) std::cout << "Building Hamiltonian, MPO=autoH_sc_qd_sc" << std::endl;
         MPO H(p.sites);
         double Eshift = 0.;
-        Eshift += p.sc->Ec()*pow(p.sc->n0(), 2); 
+        Eshift += p.sc->Ec()*pow(p.sc->n0(), 2);
         Eshift += p.qd_L->U()/2;
         Eshift += p.qd_R->U()/2;
         get_autoMPO_qd_sc_qd(H, Eshift, p);
@@ -1277,7 +1277,7 @@ inline type_ptr set_problem(const std::string str, const params &p)
   if (str == "2ch_t") return std::make_unique<prob::twoch_hopping>(p);
   if (str == "alternating_chain") return std::make_unique<prob::alternating_chain_SC_first_and_last>(p);
   if (str == "qd_sc_qd") return std::make_unique<prob::qd_sc_qd>(p);
-  
+
   if (str == "autoH") return std::make_unique<prob::autoH_1ch>(p);
   if (str == "autoH_so") return std::make_unique<prob::autoH_1ch_so>(p);
   if (str == "autoH_2ch") return std::make_unique<prob::autoH_2ch>(p);
