@@ -7,7 +7,16 @@ The code supports various extensions of the basic problem, including a charging 
 
 ## Requirements
 
-The code requires [iTensor](https://itensor.org/). A modern C++ compiler is necessary.
+The code requires [iTensor](https://itensor.org/) version 3. 
+A modern C++ compiler is necessary (tested with gcc 11.3).
+The code makes use of HDF5 library (tested with hDF5 1.12.2), Boost
+(tested with 1.79.0). Other dependencies come bundled with the code.
+
+Use "make build" to build the code. Typical compilation time is under a minute.
+
+The code is portable and should run on any unix-compatible operating
+system. We mostly run it on CentOS 7.9 and Rocky 8.8.
+
 
 ## Input file format
 
@@ -168,9 +177,12 @@ MPOs implemented using the autoMPO functionality of ITensor. Useful for catching
 
 The code produces textual output on the standard output, as well as more complete output to a binary HDF5 file.
 
-## Examples
+## Examples (demo)
 
-A number of examples is provided in the directory `test`.
+A number of examples is provided in the directory `test`. The expected
+output files are included with the code. This can serve as a "known
+answer" test of the code. The expected run time on a normal desktop
+computer for all the tests is of the order of an hour.
 
 ## Known problems
 
@@ -182,6 +194,7 @@ Correct results can be obtained by setting gamma to a small value, eg., 1e-8.
 
 ### Two channel imp middle with large U
 In similar vein as the above, using large values of U with 2 channel MPOs that have the impurity level in the middle greatly increases the computation time. The cause is similiar, large U suppresses charge fluctuations between the two channels, slowing down the optimisation procedure. Somewhat better results are obtained by using MPOs with impurity level at the beggining. 
+
 
 
 ## Publications
